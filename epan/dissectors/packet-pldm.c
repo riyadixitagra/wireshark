@@ -84,7 +84,7 @@ dissect_pldm(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree _U_, void *data
         guint direction = tvb_get_guint8(tvb, 2);
         // if (direction==01){
             proto_tree_add_item(foo_tree, hf_destination, tvb, offset, 1, ENC_LITTLE_ENDIAN);
-            guint8 dest = tvb_get_guint8(tvb, offset);
+            // guint8 dest = tvb_get_guint8(tvb, offset);
             // col_clear(pinfo->destport,COL_DESTINATION);
             // col_add_fstr(pinfo->destport, COL_DESTINATION, "d ", dest);
             offset+=1;
