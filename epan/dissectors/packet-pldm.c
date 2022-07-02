@@ -2,6 +2,7 @@
 #include <epan/packet.h>
 
 #define PLDM_MIN_LENGTH 6
+#define PLDM_MAX_TYPES 64
 
 static int proto_pldm = -1;
 static gint ett_pldm = -1;
@@ -20,6 +21,34 @@ static int hf_DataTransferHandle=-1;
 static int hf_TransferOperationFlag=-1;
 static int hf_NextDataTransferHandle=-1;
 static int hf_TransferFlag=-1;
+static int hf_death=-1;
+
+
+enum pldm_supported_types {
+        PLDM_BASE = 0x00,
+        PLDM_PLATFORM = 0x02,
+        PLDM_BIOS = 0x03,
+        PLDM_FRU = 0x04,
+        PLDM_FWUP = 0x05,
+        PLDM_OEM = 0x3F,
+};
+// const std::map<const char*, pldm_supported_types> pldmTypes {
+//     {"base", PLDM_BASE},   {"platform", PLDM_PLATFORM},
+//     {"bios", PLDM_BIOS},   {"fru", PLDM_FRU},
+// };
+// typedef union {
+//         uint8_t byte;
+//         struct {
+//                 uint8_t bit0 : 1;
+//                 uint8_t bit1 : 1;
+//                 uint8_t bit2 : 1;
+//                 uint8_t bit3 : 1;
+//                 uint8_t bit4 : 1;
+//                 uint8_t bit5 : 1;
+//                 uint8_t bit6 : 1;
+//                 uint8_t bit7 : 1;
+//         } __attribute__((packed)) bits;
+//   } bitfield8_t;
 
 
 static const value_string directions[]={
@@ -62,6 +91,27 @@ static const value_string transferFlags[]={
     {5, "StartAndEnd"}
 };
 
+guint* getpldmType(guint byte){
+    static guint types[8];
+    int j=0;
+    for (int i = 0; i < PLDM_MAX_TYPES; i++){
+        if(byte & (1<<(i%8))){
+            // auto it = std::find_if(
+            //     pldmTypes.begin(), pldmTypes.end(),
+            //     [i](const auto& typePair) {
+            //     return typePair.second == i; 
+            //     }); 
+            // if(it != pldmTypes.end()){
+            //     types[j]=pldm_supported_types{it->second};
+            // }
+            if(arr[i]!=-1){
+                type[j]=i;
+                j++;
+            }
+        }
+    }
+    return types;
+}
 
 static int
 dissect_pldm(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree _U_, void *data _U_)
@@ -75,14 +125,15 @@ dissect_pldm(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree _U_, void *data
         col_add_fstr(pinfo->cinfo, COL_INFO, "Packet length %u, minimum %u",
                      len, PLDM_MIN_LENGTH);
         return tvb_captured_length(tvb);
-    }else{
+    }
+    else{
          proto_item *ti = proto_tree_add_item(tree, proto_pldm, tvb, 0, -1, ENC_NA);
     
         proto_tree *foo_tree = proto_item_add_subtree(ti, ett_pldm);
     
         gint offset = 0;
         guint direction = tvb_get_guint8(tvb, 2);
-        // if (direction==01){
+        
             proto_tree_add_item(foo_tree, hf_destination, tvb, offset, 1, ENC_LITTLE_ENDIAN);
             // guint8 dest = tvb_get_guint8(tvb, offset);
             // col_clear(pinfo->destport,COL_DESTINATION);
@@ -90,12 +141,7 @@ dissect_pldm(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree _U_, void *data
             offset+=1;
             proto_tree_add_item(foo_tree, hf_source, tvb, offset, 1, ENC_LITTLE_ENDIAN);
             offset+=1;
-        // }else{
-        //     proto_tree_add_item(foo_tree, hf_source, tvb, offset, 1, ENC_LITTLE_ENDIAN);
-        //     offset+=1;
-        //     proto_tree_add_item(foo_tree, hf_destination, tvb, offset, 1, ENC_LITTLE_ENDIAN);
-        //     offset+=1;
-        // }
+       
 
         proto_tree_add_item(foo_tree, hf_direction, tvb, offset, 1, ENC_LITTLE_ENDIAN);
         offset+=1;
@@ -114,7 +160,7 @@ dissect_pldm(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree _U_, void *data
         
         
         int reported_length = tvb_reported_length_remaining(tvb, 6);
-	if (reported_length >= 1) {
+	    if (reported_length >= 1) {
         	// guint resp = tvb_get_guint8(tvb, 6);
         	if (direction== 0) {//completion byte in response
             		offset+=1;
@@ -142,17 +188,25 @@ dissect_pldm(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree _U_, void *data
                                 proto_tree_add_item(foo_tree, hf_NextDataTransferHandle, tvb, offset, 4, ENC_LITTLE_ENDIAN);
                                 offset+=4;
                                 proto_tree_add_item(foo_tree, hf_TransferFlag, tvb, offset, 1, ENC_LITTLE_ENDIAN);
-                                // offset+=1;
-                                // proto_tree_add_item()
+                                offset+=1;
+                               
+
                             }
-                }
+                            break;
+                    // case 04: //GetPLDMType
+                    //         if(){
+                    //              guint b1 = tvb_get_guint8(tvb, offset);
+                    //             guint* types;
+                    //             types=getpldmType(b1);
+                    //         }
                 
-            }
+                }
             
-    	}
+    	    }
     		
     	
-	}
+	    }
+    }
     // if(tree){
     	 
     // }
@@ -250,6 +304,12 @@ proto_register_foo(void)
             VALS(transferFlags), 0x0,
             NULL, HFILL
         }},
+        { &hf_death,{
+         	"PLDM Type Allowed", "pldm.pType",
+         	FT_UINT8, BASE_DEC,
+         	VALS(pldmNames), 0x0,
+         	NULL, HFILL}
+         },
     };
     
     static gint *ett[] = {
