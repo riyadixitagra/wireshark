@@ -176,21 +176,38 @@ void ver2str(const ver32_t *version, char *buffer, size_t buffer_size)
     if(version-> major != 0xff){
 	rc = print_version_field(version->major, buffer, buffer_size);
 	POINTER_MOVE(rc, buffer, buffer_size, original_size);
-	rc = g_snprintf(buffer, buffer_size, ".");}
+	rc = g_snprintf(buffer, buffer_size, ".");
+    }else{
+       
+        rc = g_snprintf(buffer, buffer_size, "-");
+        POINTER_MOVE(rc, buffer, buffer_size, original_size);//reach minor
+    }
+    if(version-> minor != 0xff){
 	POINTER_MOVE(rc, buffer, buffer_size, original_size);
 	rc = print_version_field(version->minor, buffer, buffer_size);
 	POINTER_MOVE(rc, buffer, buffer_size, original_size);
+    }else{
+        
+        rc = g_snprintf(buffer, buffer_size, "-");
+        POINTER_MOVE(rc, buffer, buffer_size, original_size);//reach update
+    }
 	if (version->update != 0xff) {
 		rc = g_snprintf(buffer, buffer_size, ".");
 		POINTER_MOVE(rc, buffer, buffer_size, original_size);
 		rc = print_version_field(version->update, buffer, buffer_size);
 		POINTER_MOVE(rc, buffer, buffer_size, original_size);
-	}
-	if (version->alpha != 0) {
+	}else{
+        rc = g_snprintf(buffer, buffer_size, "-");
+        POINTER_MOVE(rc, buffer, buffer_size, original_size);//reach alpha
+
+    }
+	if (version->alpha != 0xff) {
 		rc = g_snprintf(buffer, buffer_size, "%c", version->alpha);
 		POINTER_MOVE(rc, buffer, buffer_size, original_size);
 	}
-	// return original_size - buffer_size;
+    else{
+        rc = g_snprintf(buffer, buffer_size, "-");
+    }
 }
 
 
