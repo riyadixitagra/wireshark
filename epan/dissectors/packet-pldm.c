@@ -37,10 +37,10 @@ dissect_pldm(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *data)
                      len, PLDM_MIN_LENGTH);
         return tvb_captured_length(tvb);
     }
-    // if(direction!=0 || direction !=1){
-    //     col_add_fstr( pinfo->cinfo, COL_INFO, "Packet invalid" );
-    //     return tvb_captured_length(tvb);
-    // }
+   if(direction>1){
+        col_add_fstr( pinfo->cinfo, COL_INFO, "Packet invalid" );
+        return tvb_captured_length(tvb);
+    }
     else if (tree){
         proto_item *ti = proto_tree_add_item(tree, proto_pldm, tvb, 0, -1, ENC_NA);
         proto_tree *foo_tree = proto_item_add_subtree(ti, ett_pldm);
