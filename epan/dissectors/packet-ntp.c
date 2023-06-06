@@ -218,11 +218,6 @@ static const struct {
 	{ NULL,		NULL}
 };
 
-static const value_string ext_r_types[] = {
-	{ 0,		"Request" },
-	{ 1,		"Response" },
-	{ 0,		NULL}
-};
 
 #define NTPCTRL_R_MASK 0x80
 
@@ -394,8 +389,6 @@ static const value_string err_values_types[] = {
 
 #define NTPPRIV_R_MASK 0x80
 
-#define priv_r_types ext_r_types
-
 #define NTPPRIV_MORE_MASK 0x40
 
 #define NTPPRIV_AUTH_MASK 0x80
@@ -533,13 +526,13 @@ static value_string_ext priv_rc_types_ext = VALUE_STRING_EXT_INIT(priv_rc_types)
 #define PRIV_SYS_FLAG_AUTH       0x40
 #define PRIV_SYS_FLAG_CAL        0x80
 
-#define PRIV_RESET_FLAG_ALLPEERS 0x01
-#define PRIV_RESET_FLAG_IO       0x02
-#define PRIV_RESET_FLAG_SYS      0x04
-#define PRIV_RESET_FLAG_MEM      0x08
-#define PRIV_RESET_FLAG_TIMER    0x10
-#define PRIV_RESET_FLAG_AUTH     0x20
-#define PRIV_RESET_FLAG_CTL      0x40
+#define PRIV_RESET_FLAG_ALLPEERS 0x00000001
+#define PRIV_RESET_FLAG_IO       0x00000002
+#define PRIV_RESET_FLAG_SYS      0x00000004
+#define PRIV_RESET_FLAG_MEM      0x00000008
+#define PRIV_RESET_FLAG_TIMER    0x00000010
+#define PRIV_RESET_FLAG_AUTH     0x00000020
+#define PRIV_RESET_FLAG_CTL      0x00000040
 
 static const range_string stratum_rvals[] = {
 	{ 0,	0, "unspecified or invalid" },
@@ -1137,7 +1130,7 @@ static void
 dissect_ntp_std(tvbuff_t *tvb, packet_info *pinfo, proto_tree *ntp_tree, ntp_conv_info_t *ntp_conv)
 {
 	guint8 stratum;
-	guint8 ppoll;
+	gint8 ppoll;
 	gint8 precision;
 	guint32 rootdelay;
 	double rootdelay_double;
@@ -1211,21 +1204,17 @@ dissect_ntp_std(tvbuff_t *tvb, packet_info *pinfo, proto_tree *ntp_tree, ntp_con
 	 * between successive messages, in seconds to the nearest
 	 * power of two.
 	 */
-	ppoll = tvb_get_guint8(tvb, 2);
-	if ((ppoll >= 4) && (ppoll <= 17)) {
-		proto_tree_add_uint_format_value(ntp_tree, hf_ntp_ppoll, tvb, 2, 1,
-			ppoll, "%u (%u seconds)", ppoll, 1 << ppoll);
-	} else {
-		proto_tree_add_uint_format_value(ntp_tree, hf_ntp_ppoll, tvb, 2, 1,
-			ppoll, "invalid (%u)", ppoll);
-	}
+	ppoll = tvb_get_gint8(tvb, 2);
+	proto_tree_add_int_format_value(ntp_tree, hf_ntp_ppoll, tvb, 2, 1,
+		ppoll, ppoll >= 0 ? "%d (%.0f seconds)" : "%d (%5.3f seconds)",
+		ppoll, pow(2, ppoll));
 
 	/* Precision, 1 byte field indicating the precision of the
 	 * local clock, in seconds to the nearest power of two.
 	 */
-	precision = tvb_get_guint8(tvb, 3);
-	proto_tree_add_uint_format_value(ntp_tree, hf_ntp_precision, tvb, 3, 1,
-		(guint8)precision, "%8.6f seconds", pow(2, precision));
+	precision = tvb_get_gint8(tvb, 3);
+	proto_tree_add_int_format_value(ntp_tree, hf_ntp_precision, tvb, 3, 1,
+		precision, "%d (%11.9f seconds)", precision, pow(2, precision));
 
 	/* Root Delay is a 32-bit signed fixed-point number indicating
 	 * the total roundtrip delay to the primary reference source,
@@ -1257,7 +1246,7 @@ dissect_ntp_std(tvbuff_t *tvb, packet_info *pinfo, proto_tree *ntp_tree, ntp_con
 		snprintf (buff, NTP_TS_SIZE, "Unidentified reference source '%s'",
 			tvb_get_string_enc(wmem_packet_scope(), tvb, 12, 4, ENC_ASCII));
 		for (i = 0; primary_sources[i].id; i++) {
-			if (tvb_memeql(tvb, 12, primary_sources[i].id, 4) == 0) {
+			if (tvb_memeql(tvb, 12, (const guint8*)primary_sources[i].id, 4) == 0) {
 				snprintf(buff, NTP_TS_SIZE, "%s",
 					primary_sources[i].data);
 				break;
@@ -2646,10 +2635,10 @@ proto_register_ntp(void)
 			"Peer Clock Stratum", "ntp.stratum", FT_UINT8, BASE_DEC|BASE_RANGE_STRING,
 			RVALS(stratum_rvals), 0, NULL, HFILL }},
 		{ &hf_ntp_ppoll, {
-			"Peer Polling Interval", "ntp.ppoll", FT_UINT8, BASE_DEC,
+			"Peer Polling Interval", "ntp.ppoll", FT_INT8, BASE_DEC,
 			NULL, 0, "Maximum interval between successive messages", HFILL }},
 		{ &hf_ntp_precision, {
-			"Peer Clock Precision", "ntp.precision", FT_UINT8, BASE_DEC,
+			"Peer Clock Precision", "ntp.precision", FT_INT8, BASE_DEC,
 			NULL, 0, "The precision of the system clock", HFILL }},
 		{ &hf_ntp_rootdelay, {
 			"Root Delay", "ntp.rootdelay", FT_UINT32, BASE_DEC,
@@ -2717,8 +2706,8 @@ proto_register_ntp(void)
 			"Flags 2", "ntp.ctrl.flags2", FT_UINT8, BASE_HEX,
 			NULL, 0, "Flags (Response/Error/More/Opcode)", HFILL }},
 		{ &hf_ntpctrl_flags2_r, {
-			"Response bit", "ntp.ctrl.flags2.r", FT_UINT8, BASE_DEC,
-			VALS(ctrl_r_types), NTPCTRL_R_MASK, NULL, HFILL }},
+			"Response bit", "ntp.ctrl.flags2.r", FT_BOOLEAN, 8,
+			TFS(&tfs_response_request), NTPCTRL_R_MASK, NULL, HFILL }},
 		{ &hf_ntpctrl_flags2_error, {
 			"Error bit", "ntp.ctrl.flags2.error", FT_UINT8, BASE_DEC,
 			NULL, NTPCTRL_ERROR_MASK, NULL, HFILL }},
@@ -2811,8 +2800,8 @@ proto_register_ntp(void)
 			NULL, 0, NULL, HFILL }},
 
 		{ &hf_ntppriv_flags_r, {
-			"Response bit", "ntp.priv.flags.r", FT_UINT8, BASE_DEC,
-			VALS(priv_r_types), NTPPRIV_R_MASK, NULL, HFILL }},
+			"Response bit", "ntp.priv.flags.r", FT_BOOLEAN, 8,
+			TFS(&tfs_response_request), NTPPRIV_R_MASK, NULL, HFILL }},
 		{ &hf_ntppriv_flags_more, {
 			"More bit", "ntp.priv.flags.more", FT_UINT8, BASE_DEC,
 			NULL, NTPPRIV_MORE_MASK, NULL, HFILL }},

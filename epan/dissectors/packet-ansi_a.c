@@ -1362,6 +1362,9 @@ static expert_field ei_ansi_a_unknown_bsmap_msg = EI_INIT;
 static expert_field ei_ansi_a_undecoded = EI_INIT;
 
 static dissector_handle_t dtap_handle;
+static dissector_handle_t bsmap_handle;
+static dissector_handle_t sip_dtap_bsmap_handle;
+
 static dissector_table_t is637_dissector_table; /* IS-637-A Transport Layer (SMS) */
 static dissector_table_t is683_dissector_table; /* IS-683-A (OTA) */
 static dissector_table_t is801_dissector_table; /* IS-801 (PLD) */
@@ -10570,8 +10573,12 @@ typedef enum
     COUNT_COLUMN
 } ansi_a_stat_columns;
 
-static stat_tap_table_item dtap_stat_fields[] = {{TABLE_ITEM_UINT, TAP_ALIGN_RIGHT, "IEI", "0x%02x  "}, {TABLE_ITEM_STRING, TAP_ALIGN_LEFT, "Message Name", "%-50s"},
-    {TABLE_ITEM_UINT, TAP_ALIGN_RIGHT, "Count", "%d"}};
+static stat_tap_table_item dtap_stat_fields[] =
+{
+    {TABLE_ITEM_UINT,   TAP_ALIGN_RIGHT, "IEI",          "0x%02x  "},
+    {TABLE_ITEM_STRING, TAP_ALIGN_LEFT,  "Message Name", "%-50s"},
+    {TABLE_ITEM_UINT,   TAP_ALIGN_RIGHT, "Count",        "%d"}
+};
 
 static void ansi_a_dtap_stat_init(stat_tap_table_ui* new_stat)
 {
@@ -10586,14 +10593,22 @@ static void ansi_a_dtap_stat_init(stat_tap_table_ui* new_stat)
     items[COUNT_COLUMN].type = TABLE_ITEM_UINT;
     items[COUNT_COLUMN].value.uint_value = 0;
 
+    /* N.B. user-data field not used by this protocol, but init anyway */
+    items[IEI_COLUMN].user_data.uint_value = 0;
+    items[MESSAGE_NAME_COLUMN].user_data.uint_value = 0;
+    items[COUNT_COLUMN].user_data.uint_value = 0;
+
+    /* Look for existing table */
     table = stat_tap_find_table(new_stat, table_name);
     if (table) {
         if (new_stat->stat_tap_reset_table_cb) {
             new_stat->stat_tap_reset_table_cb(table);
         }
+        /* Nothing more to do */
         return;
     }
 
+    /* Initialize table */
     table = stat_tap_init_table(table_name, num_fields, 0, NULL);
     stat_tap_add_table(new_stat, table);
 
@@ -10609,7 +10624,7 @@ static void ansi_a_dtap_stat_init(stat_tap_table_ui* new_stat)
 }
 
 static tap_packet_status
-ansi_a_dtap_stat_packet(void *tapdata, packet_info *pinfo _U_, epan_dissect_t *edt _U_, const void *data)
+ansi_a_dtap_stat_packet(void *tapdata, packet_info *pinfo _U_, epan_dissect_t *edt _U_, const void *data, tap_flags_t flags _U_)
 {
     stat_data_t* stat_data = (stat_data_t*)tapdata;
     const ansi_a_tap_rec_t      *data_p = (const ansi_a_tap_rec_t *)data;
@@ -10688,7 +10703,7 @@ static void ansi_a_bsmap_stat_init(stat_tap_table_ui* new_stat)
 }
 
 static tap_packet_status
-ansi_a_bsmap_stat_packet(void *tapdata, packet_info *pinfo _U_, epan_dissect_t *edt _U_, const void *data)
+ansi_a_bsmap_stat_packet(void *tapdata, packet_info *pinfo _U_, epan_dissect_t *edt _U_, const void *data, tap_flags_t flags _U_)
 {
     stat_data_t* stat_data = (stat_data_t*)tapdata;
     const ansi_a_tap_rec_t      *data_p = (const ansi_a_tap_rec_t *)data;
@@ -11351,7 +11366,7 @@ proto_register_ansi_a(void)
         },
         { &hf_ansi_a_mid_broadcast_message_id,
             { "Message ID", "ansi_a_bsmap.mid.broadcast.message_id",
-            FT_UINT8, BASE_DEC, NULL, 0x2f,
+            FT_UINT8, BASE_DEC, NULL, 0x3f,
             NULL, HFILL }
         },
         { &hf_ansi_a_mid_broadcast_zone_id,
@@ -11546,7 +11561,7 @@ proto_register_ansi_a(void)
         },
         { &hf_ansi_a_is2000_chan_id_chan_walsh_code_chan_idx,
             { "Walsh Code Channel Index", "ansi_a_bsmap.is2000_chan_id.chan.walsh_code_chan_idx",
-            FT_UINT16, BASE_DEC, NULL, 0x7ff,
+            FT_UINT16, BASE_DEC, NULL, 0x07ff,
             NULL, HFILL }
         },
         { &hf_ansi_a_is2000_chan_id_chan_pilot_pn_code,
@@ -12860,8 +12875,13 @@ proto_register_ansi_a(void)
         expert_register_protocol(proto_a_bsmap);
     expert_register_field_array(expert_a_bsmap, ei, array_length(ei));
 
+    bsmap_handle = register_dissector("ansi_a_bsmap", dissect_bsmap, proto_a_bsmap);
+
     proto_a_dtap =
         proto_register_protocol("ANSI A-I/F DTAP", "ANSI DTAP", "ansi_a_dtap");
+
+    dtap_handle = register_dissector("ansi_a_dtap", dissect_dtap, proto_a_dtap);
+    sip_dtap_bsmap_handle = register_dissector("ansi_a_dtap_bsmap", dissect_sip_dtap_bsmap, proto_a_dtap);
 
     is637_dissector_table =
         register_dissector_table("ansi_a.sms", "IS-637-A (SMS)",
@@ -12910,12 +12930,6 @@ proto_reg_handoff_ansi_a(void)
 
     if (!ansi_a_prefs_initialized)
     {
-        dissector_handle_t      bsmap_handle, sip_dtap_bsmap_handle;
-
-        bsmap_handle = create_dissector_handle(dissect_bsmap, proto_a_bsmap);
-        dtap_handle = create_dissector_handle(dissect_dtap, proto_a_dtap);
-        sip_dtap_bsmap_handle = create_dissector_handle(dissect_sip_dtap_bsmap, proto_a_dtap);
-
         dissector_add_uint("bsap.pdu_type",  BSSAP_PDU_TYPE_BSMAP, bsmap_handle);
         dissector_add_uint("bsap.pdu_type",  BSSAP_PDU_TYPE_DTAP, dtap_handle);
         dissector_add_string("media_type", "application/femtointerfacemsg", sip_dtap_bsmap_handle);

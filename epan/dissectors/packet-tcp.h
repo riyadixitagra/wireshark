@@ -27,9 +27,9 @@ extern "C" {
 #define TH_PUSH 0x0008
 #define TH_ACK  0x0010
 #define TH_URG  0x0020
-#define TH_ECN  0x0040
+#define TH_ECE  0x0040
 #define TH_CWR  0x0080
-#define TH_NS   0x0100
+#define TH_AE   0x0100
 #define TH_RES  0x0E00 /* 3 reserved bits */
 #define TH_MASK 0x0FFF
 
@@ -89,6 +89,7 @@ typedef struct tcpheader {
 	guint16 th_sport;
 	guint16 th_dport;
 	guint8  th_hlen;
+	gboolean th_use_ace;
 	guint16 th_flags;
 	guint32 th_stream; /* this stream index field is included to help differentiate when address/port pairs are reused */
 	address ip_src;
@@ -170,6 +171,9 @@ struct tcp_acked {
 	guint32 dupack_frame;	/* dup ack to frame # */
 	guint32 bytes_in_flight; /* number of bytes in flight */
 	guint32 push_bytes_sent; /* bytes since the last PSH flag */
+
+	guint32 new_data_seq; /* For segments with old data,
+				 where new data starts */
 };
 
 /* One instance of this structure is created for each pdu that spans across
@@ -300,14 +304,14 @@ typedef enum {
 typedef struct tcp_analyze_seq_flow_info_t {
 	tcp_unacked_t *segments;/* List of segments for which we haven't seen an ACK */
 	guint16 segment_count;	/* How many unacked segments we're currently storing */
-    guint32 lastack;	/* Last seen ack for the reverse flow */
+	guint32 lastack;	/* Last seen ack for the reverse flow */
 	nstime_t lastacktime;	/* Time of the last ack packet */
 	guint32 lastnondupack;	/* frame number of last seen non dupack */
 	guint32 dupacknum;	/* dupack number */
 	guint32 nextseq;	/* highest seen nextseq */
 	guint32 maxseqtobeacked;/* highest seen continuous seq number (without hole in the stream) from the fwd party,
 				 * this is the maximum seq number that can be acked by the rev party in normal case.
-				 * If the rev party sends an ACK beyond this seq number it indicates TCP_A_ACK_LOST_PACKET contition */
+				 * If the rev party sends an ACK beyond this seq number it indicates TCP_A_ACK_LOST_PACKET condition */
 	guint32 nextseqframe;	/* frame number for segment with highest
 				 * sequence number
 				 */
@@ -315,6 +319,8 @@ typedef struct tcp_analyze_seq_flow_info_t {
 				 * distinguish between retransmission,
 				 * fast retransmissions and outoforder
 				 */
+
+	guint8  lastacklen;     /* length of the last fwd ACK packet - 0 means pure ACK */
 
 	/*
 	 * Handling of SACK blocks
@@ -371,6 +377,9 @@ typedef struct _tcp_flow_t {
 	 * all pdus spanning multiple segments for this flow.
 	 */
 	wmem_tree_t *multisegment_pdus;
+
+	/* A sorted list of pending out-of-order segments. */
+	wmem_list_t *ooo_segments;
 
 	/* Process info, currently discovered via IPFIX */
 	tcp_process_info_t* process_info;
@@ -484,6 +493,11 @@ struct tcp_analysis {
 	 * connection or left before it was terminated explicitly
 	 */
 	guint8          conversation_completeness;
+
+	/* Track AccECN support */
+	gboolean had_acc_ecn_setup_syn;
+	gboolean had_acc_ecn_setup_syn_ack;
+	gboolean had_acc_ecn_option;
 };
 
 /* Structure that keeps per packet data. First used to be able
@@ -492,6 +506,7 @@ struct tcp_analysis {
  */
 struct tcp_per_packet_data_t {
 	nstime_t	ts_del;
+	guint8		tcp_snd_manual_analysis;
 };
 
 /* Structure that keeps per packet data. Some operations are cpu-intensive and are

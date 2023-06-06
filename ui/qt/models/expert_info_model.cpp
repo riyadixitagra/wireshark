@@ -71,13 +71,13 @@ ExpertPacketItem* ExpertPacketItem::child(QString hash)
 
 int ExpertPacketItem::childCount() const
 {
-    return childItems_.count();
+    return static_cast<int>(childItems_.count());
 }
 
 int ExpertPacketItem::row() const
 {
     if (parentItem_)
-        return parentItem_->childItems_.indexOf(const_cast<ExpertPacketItem*>(this));
+        return static_cast<int>(parentItem_->childItems_.indexOf(const_cast<ExpertPacketItem*>(this)));
 
     return 0;
 }
@@ -105,13 +105,13 @@ ExpertInfoModel::~ExpertInfoModel()
 
 void ExpertInfoModel::clear()
 {
-    emit beginResetModel();
+    beginResetModel();
 
     eventCounts_.clear();
     delete root_;
     root_ = createRootItem();
 
-    emit endResetModel();
+    endResetModel();
 }
 
 ExpertPacketItem* ExpertInfoModel::createRootItem()
@@ -305,9 +305,9 @@ QVariant ExpertInfoModel::data(const QModelIndex &index, int role) const
 //GUI helpers
 void ExpertInfoModel::setGroupBySummary(bool group_by_summary)
 {
-    emit beginResetModel();
+    beginResetModel();
     group_by_summary_ = group_by_summary;
-    emit endResetModel();
+    endResetModel();
 }
 
 int ExpertInfoModel::rowCount(const QModelIndex &parent) const
@@ -395,7 +395,7 @@ void ExpertInfoModel::tapReset(void *eid_ptr)
     model->clear();
 }
 
-tap_packet_status ExpertInfoModel::tapPacket(void *eid_ptr, struct _packet_info *pinfo, struct epan_dissect *, const void *data)
+tap_packet_status ExpertInfoModel::tapPacket(void *eid_ptr, struct _packet_info *pinfo, struct epan_dissect *, const void *data, tap_flags_t)
 {
     ExpertInfoModel *model = static_cast<ExpertInfoModel*>(eid_ptr);
     const expert_info_t *expert_info = (const expert_info_t *) data;
@@ -406,8 +406,7 @@ tap_packet_status ExpertInfoModel::tapPacket(void *eid_ptr, struct _packet_info 
 
     model->addExpertInfo(*expert_info);
 
-    if (model->numEvents((enum ExpertSeverity)expert_info->severity) < 1)
-        status = TAP_PACKET_REDRAW;
+    status = TAP_PACKET_REDRAW;
 
     model->eventCounts_[(enum ExpertSeverity)expert_info->severity]++;
 
@@ -420,6 +419,6 @@ void ExpertInfoModel::tapDraw(void *eid_ptr)
     if (!model)
         return;
 
-    emit model->beginResetModel();
-    emit model->endResetModel();
+    model->beginResetModel();
+    model->endResetModel();
 }

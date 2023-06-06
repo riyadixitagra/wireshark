@@ -8,10 +8,11 @@
  */
 
 #include "config.h"
+#include "epan.h"
 
 #include <stdarg.h>
 
-#include <wsutil/wsgcrypt.h>
+#include <gcrypt.h>
 
 #ifdef HAVE_LIBGNUTLS
 #include <gnutls/gnutls.h>
@@ -23,7 +24,6 @@
 
 #include <epan/exceptions.h>
 
-#include "epan.h"
 #include "epan/frame_data.h"
 
 #include "dfilter/dfilter.h"
@@ -32,14 +32,13 @@
 #include <wsutil/nstime.h>
 #include <wsutil/wslog.h>
 #include <wsutil/ws_assert.h>
-
-#include <ui/version_info.h>
+#include <wsutil/version_info.h>
 
 #include "conversation.h"
 #include "except.h"
 #include "packet.h"
 #include "prefs.h"
-#include "column-utils.h"
+#include "column-info.h"
 #include "tap.h"
 #include "addr_resolv.h"
 #include "oids.h"
@@ -178,6 +177,12 @@ epan_plugin_init(gpointer data, gpointer user_data _U_)
 }
 
 static void
+epan_plugin_post_init(gpointer data, gpointer user_data _U_)
+{
+	((epan_plugin *)data)->post_init();
+}
+
+static void
 epan_plugin_dissect_init(gpointer data, gpointer user_data)
 {
 	((epan_plugin *)data)->dissect_init((epan_dissect_t *)user_data);
@@ -214,7 +219,7 @@ void epan_register_plugin(const epan_plugin *plug _U_)
 int epan_plugins_supported(void)
 {
 #ifdef HAVE_PLUGINS
-	return g_module_supported() ? 0 : 1;
+	return plugins_supported() ? 0 : 1;
 #else
 	return -1;
 #endif
@@ -302,6 +307,7 @@ epan_init(register_cb cb, gpointer client_data, gboolean load_plugins)
 		conversation_init();
 		capture_dissector_init();
 		reassembly_tables_init();
+		conversation_filters_init();
 		g_slist_foreach(epan_plugins, epan_plugin_init, NULL);
 		proto_init(epan_plugin_register_all_procotols, epan_plugin_register_all_handoffs, cb, client_data);
 		g_slist_foreach(epan_plugins, epan_plugin_register_all_tap_listeners, NULL);
@@ -314,6 +320,7 @@ epan_init(register_cb cb, gpointer client_data, gboolean load_plugins)
 #ifdef HAVE_LUA
 		wslua_init(cb, client_data);
 #endif
+		g_slist_foreach(epan_plugins, epan_plugin_post_init, NULL);
 	}
 	CATCH(DissectorError) {
 		/*
@@ -769,10 +776,17 @@ epan_dissect_packet_contains_field(epan_dissect_t* edt,
 void
 epan_gather_compile_info(feature_list l)
 {
+	gather_zlib_compile_info(l);
+	gather_pcre2_compile_info(l);
+
 	/* Lua */
 #ifdef HAVE_LUA
+#ifdef HAVE_LUA_UNICODE
+	with_feature(l, "%s", LUA_RELEASE" (with UfW patches)");
+#else /* HAVE_LUA_UNICODE */
 	with_feature(l, "%s", LUA_RELEASE);
-#else
+#endif /* HAVE_LUA_UNICODE */
+#else /* HAVE_LUA */
 	without_feature(l, "Lua");
 #endif /* HAVE_LUA */
 
@@ -862,6 +876,9 @@ epan_gather_compile_info(feature_list l)
 void
 epan_gather_runtime_info(feature_list l)
 {
+	gather_zlib_runtime_info(l);
+	gather_pcre2_runtime_info(l);
+
 	/* c-ares */
 	with_feature(l, "c-ares %s", ares_version(NULL));
 

@@ -21,7 +21,7 @@ guid_fvalue_set_guid(fvalue_t *fv, const e_guid_t *value)
     fv->value.guid = *value;
 }
 
-static gpointer
+static const e_guid_t *
 value_get(fvalue_t *fv)
 {
     return &(fv->value.guid);
@@ -87,10 +87,17 @@ guid_to_repr(wmem_allocator_t *scope, const fvalue_t *fv, ftrepr_t rtype _U_, in
     return guid_to_str(scope, &fv->value.guid);
 }
 
-static int
-cmp_order(const fvalue_t *a, const fvalue_t *b)
+static enum ft_result
+cmp_order(const fvalue_t *a, const fvalue_t *b, int *cmp)
 {
-    return memcmp(&a->value.guid, &b->value.guid, sizeof(e_guid_t));
+    *cmp = memcmp(&a->value.guid, &b->value.guid, sizeof(e_guid_t));
+    return FT_OK;
+}
+
+static guint
+value_hash(const fvalue_t *fv)
+{
+    return guid_hash(&fv->value.guid);
 }
 
 void
@@ -103,26 +110,54 @@ ftype_register_guid(void)
         "Globally Unique Identifier",            /* pretty_name */
         GUID_LEN,            /* wire_size */
         NULL,                /* new_value */
+        NULL,                /* copy_value */
         NULL,                /* free_value */
         guid_from_literal,   /* val_from_literal */
         NULL,                /* val_from_string */
         NULL,                /* val_from_charconst */
         guid_to_repr,        /* val_to_string_repr */
 
+        NULL,                /* val_to_uinteger64 */
+        NULL,                /* val_to_sinteger64 */
+
         { .set_value_guid = guid_fvalue_set_guid }, /* union set_value */
-        { .get_value_ptr = value_get },             /* union get_value */
+        { .get_value_guid = value_get },             /* union get_value */
 
         cmp_order,
         NULL,
         NULL,                /* cmp_matches */
 
+        value_hash,          /* hash */
         NULL,
         NULL,
         NULL,
         NULL,
+        NULL,
+        NULL,                /* unary_minus */
+        NULL,                /* add */
+        NULL,                /* subtract */
+        NULL,                /* multiply */
+        NULL,                /* divide */
+        NULL,                /* modulo */
     };
 
     ftype_register(FT_GUID, &guid_type);
+}
+
+void
+ftype_register_pseudofields_guid(int proto)
+{
+    static int hf_ft_guid;
+
+    static hf_register_info hf_ftypes[] = {
+            { &hf_ft_guid,
+                { "FT_GUID", "_ws.ftypes.guid",
+                    FT_GUID, BASE_NONE, NULL, 0x00,
+                    NULL, HFILL }
+            },
+    };
+
+    proto_register_field_array(proto, hf_ftypes, array_length(hf_ftypes));
 }
 
 /*

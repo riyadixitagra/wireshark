@@ -25,20 +25,20 @@
 
 #include <glib.h>
 
+#include <ws_exit_codes.h>
+
 #include "capture_opts.h"
 #include "ringbuffer.h"
 
-#include <ui/clopts_common.h>
-#include <ui/cmdarg_err.h>
-#include <ui/exit_codes.h>
+#include <wsutil/clopts_common.h>
+#include <wsutil/cmdarg_err.h>
 #include <wsutil/file_util.h>
 #include <wsutil/ws_pipe.h>
 #include <wsutil/ws_assert.h>
+#include <wsutil/filter_files.h>
 
 #include "capture/capture_ifinfo.h"
 #include "capture/capture-pcap-util.h"
-
-#include "ui/filter_files.h"
 
 static gboolean capture_opts_output_to_pipe(const char *save_file, gboolean *is_pipe);
 
@@ -63,8 +63,11 @@ capture_opts_init(capture_options *capture_opts)
     capture_opts->default_options.extcap          = NULL;
     capture_opts->default_options.extcap_fifo     = NULL;
     capture_opts->default_options.extcap_args     = NULL;
-    capture_opts->default_options.extcap_pipedata = NULL;
     capture_opts->default_options.extcap_pid      = WS_INVALID_PID;
+    capture_opts->default_options.extcap_pipedata = NULL;
+    capture_opts->default_options.extcap_stderr   = NULL;
+    capture_opts->default_options.extcap_stdout_watch = 0;
+    capture_opts->default_options.extcap_stderr_watch = 0;
 #ifdef _WIN32
     capture_opts->default_options.extcap_pipe_h   = INVALID_HANDLE_VALUE;
     capture_opts->default_options.extcap_control_in_h  = INVALID_HANDLE_VALUE;
@@ -96,6 +99,7 @@ capture_opts_init(capture_options *capture_opts)
     capture_opts->save_file                       = NULL;
     capture_opts->group_read_access               = FALSE;
     capture_opts->use_pcapng                      = TRUE;             /* Save as pcapng by default */
+    capture_opts->update_interval                 = DEFAULT_UPDATE_INTERVAL; /* 100 ms */
     capture_opts->real_time_mode                  = TRUE;
     capture_opts->show_info                       = TRUE;
     capture_opts->restart                         = FALSE;
@@ -125,10 +129,14 @@ capture_opts_init(capture_options *capture_opts)
 
     capture_opts->output_to_pipe                  = FALSE;
     capture_opts->capture_child                   = FALSE;
+    capture_opts->stop_after_extcaps              = FALSE;
+    capture_opts->wait_for_extcap_cbs             = FALSE;
     capture_opts->print_file_names                = FALSE;
     capture_opts->print_name_to                   = NULL;
     capture_opts->temp_dir                        = NULL;
     capture_opts->compress_type                   = NULL;
+    capture_opts->closed_msg                      = NULL;
+    capture_opts->extcap_terminate_id             = 0;
 }
 
 void
@@ -155,6 +163,15 @@ capture_opts_cleanup(capture_options *capture_opts)
     }
     g_free(capture_opts->save_file);
     g_free(capture_opts->temp_dir);
+
+    if (capture_opts->closed_msg) {
+        g_free(capture_opts->closed_msg);
+        capture_opts->closed_msg = NULL;
+    }
+    if (capture_opts->extcap_terminate_id > 0) {
+        g_source_remove(capture_opts->extcap_terminate_id);
+        capture_opts->extcap_terminate_id = 0;
+    }
 }
 
 /* log content of capture_opts */
@@ -178,7 +195,7 @@ capture_opts_log(const char *log_domain, enum ws_log_level log_level, capture_op
         ws_log(log_domain, log_level, "Promiscuous Mode[%02d]: %s", i, interface_opts->promisc_mode?"TRUE":"FALSE");
         ws_log(log_domain, log_level, "Extcap[%02d]          : %s", i, interface_opts->extcap ? interface_opts->extcap : "(unspecified)");
         ws_log(log_domain, log_level, "Extcap FIFO[%02d]     : %s", i, interface_opts->extcap_fifo ? interface_opts->extcap_fifo : "(unspecified)");
-        ws_log(log_domain, log_level, "Extcap PID[%02d]      : %d", i, interface_opts->extcap_pid);
+        ws_log(log_domain, log_level, "Extcap PID[%02d]      : %"PRIdMAX, i, (intmax_t)interface_opts->extcap_pid);
 #ifdef CAN_SET_CAPTURE_BUFFER_SIZE
         ws_log(log_domain, log_level, "Buffer size[%02d]     : %d (MB)", i, interface_opts->buffer_size);
 #endif
@@ -254,6 +271,7 @@ capture_opts_log(const char *log_domain, enum ws_log_level log_level, capture_op
     ws_log(log_domain, log_level, "SaveFile            : %s", (capture_opts->save_file) ? capture_opts->save_file : "");
     ws_log(log_domain, log_level, "GroupReadAccess     : %u", capture_opts->group_read_access);
     ws_log(log_domain, log_level, "Fileformat          : %s", (capture_opts->use_pcapng) ? "PCAPNG" : "PCAP");
+    ws_log(log_domain, log_level, "UpdateInterval      : %u (ms)", capture_opts->update_interval);
     ws_log(log_domain, log_level, "RealTimeMode        : %u", capture_opts->real_time_mode);
     ws_log(log_domain, log_level, "ShowInfo            : %u", capture_opts->show_info);
 
@@ -773,6 +791,9 @@ capture_opts_add_iface_opt(capture_options *capture_opts, const char *optarg_str
     interface_opts.extcap_args = NULL;
     interface_opts.extcap_pid = WS_INVALID_PID;
     interface_opts.extcap_pipedata = NULL;
+    interface_opts.extcap_stderr = NULL;
+    interface_opts.extcap_stdout_watch = 0;
+    interface_opts.extcap_stderr_watch = 0;
 #ifdef _WIN32
     interface_opts.extcap_pipe_h = INVALID_HANDLE_VALUE;
     interface_opts.extcap_control_in_h = INVALID_HANDLE_VALUE;
@@ -1037,6 +1058,9 @@ capture_opts_add_opt(capture_options *capture_opts, int opt, const char *optarg_
 #endif /* S_IRWXU */
         capture_opts->temp_dir = g_strdup(optarg_str_p);
         break;
+    case LONGOPT_UPDATE_INTERVAL:  /* capture update interval */
+        capture_opts->update_interval = get_positive_int(optarg_str_p, "update interval");
+        break;
     default:
         /* the caller is responsible to send us only the right opt's */
         ws_assert_not_reached();
@@ -1056,7 +1080,7 @@ capture_opts_print_if_capabilities(if_capabilities_t *caps,
         if (caps->data_link_types == NULL) {
             cmdarg_err("The capture device \"%s\" has no data link types.",
                        interface_opts->name);
-            return IFACE_HAS_NO_LINK_TYPES;
+            return WS_EXIT_IFACE_HAS_NO_LINK_TYPES;
         }
         if (caps->can_set_rfmon)
             printf("Data link types of interface %s when %sin monitor mode (use option -y to set):\n",
@@ -1081,7 +1105,7 @@ capture_opts_print_if_capabilities(if_capabilities_t *caps,
         if (caps->timestamp_types == NULL) {
             cmdarg_err("The capture device \"%s\" has no timestamp types.",
                        interface_opts->name);
-            return IFACE_HAS_NO_TIMESTAMP_TYPES;
+            return WS_EXIT_IFACE_HAS_NO_TIMESTAMP_TYPES;
         }
         printf("Timestamp types of the interface (use option --time-stamp-type to set):\n");
         for (ts_entry = caps->timestamp_types; ts_entry != NULL;
@@ -1272,8 +1296,10 @@ capture_opts_del_iface(capture_options *capture_opts, guint if_index)
     if (interface_opts->extcap_args)
         g_hash_table_unref(interface_opts->extcap_args);
     if (interface_opts->extcap_pid != WS_INVALID_PID)
-        ws_pipe_close((ws_pipe_t *) interface_opts->extcap_pipedata);
+        ws_warning("Extcap still running during interface delete");
     g_free(interface_opts->extcap_pipedata);
+    if (interface_opts->extcap_stderr)
+        g_string_free(interface_opts->extcap_stderr, TRUE);
     g_free(interface_opts->extcap_control_in);
     g_free(interface_opts->extcap_control_out);
 #ifdef HAVE_PCAP_REMOTE
@@ -1328,6 +1354,7 @@ collect_ifaces(capture_options *capture_opts)
             if (interface_opts.extcap_args)
                 g_hash_table_ref(interface_opts.extcap_args);
             interface_opts.extcap_pipedata = NULL;
+            interface_opts.extcap_stderr = NULL;
 #ifdef _WIN32
             interface_opts.extcap_pipe_h = INVALID_HANDLE_VALUE;
             interface_opts.extcap_control_in_h = INVALID_HANDLE_VALUE;

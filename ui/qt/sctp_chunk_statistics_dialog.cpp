@@ -202,7 +202,7 @@ void SCTPChunkStatisticsDialog::contextMenuEvent(QContextMenuEvent * event)
     selected_point = event->pos();
     QTableWidgetItem *item = ui->tableWidget->itemAt(selected_point.x(), selected_point.y()-60);
     if (item) {
-        ctx_menu_.exec(event->globalPos());
+        ctx_menu_.popup(event->globalPos());
     }
 }
 
@@ -308,7 +308,7 @@ void SCTPChunkStatisticsDialog::on_actionChunkTypePreferences_triggered()
     uatdialog->exec();
     // Emitting PacketDissectionChanged directly from a QDialog can cause
     // problems on macOS.
-    wsApp->flushAppSignals();
+    mainApp->flushAppSignals();
 
     ui->tableWidget->clear();
     ui->tableWidget->setRowCount(0);

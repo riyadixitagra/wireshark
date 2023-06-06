@@ -19,10 +19,10 @@ shopt -s extglob
 DARWIN_MAJOR_VERSION=`uname -r | sed 's/\([0-9]*\).*/\1/'`
 
 #
-# The minimum supported version of Qt is 5.6, so the minimum supported version
-# of macOS is OS X 10.8 (Mountain Lion), aka Darwin 12.0
-if [[ $DARWIN_MAJOR_VERSION -lt 12 ]]; then
-    echo "This script does not support any versions of macOS before Mountain Lion" 1>&2
+# The minimum supported version of Qt is 5.9, so the minimum supported version
+# of macOS is OS X 10.10 (Yosemite), aka Darwin 14.0
+if [[ $DARWIN_MAJOR_VERSION -lt 14 ]]; then
+    echo "This script does not support any versions of macOS before Yosemite" 1>&2
     exit 1
 fi
 
@@ -58,8 +58,8 @@ fi
 
 #
 # Some packages need xz to unpack their current source.
-# While tar, since macOS 10.9, can uncompress xz'ed tarballs,
-# it can't do so in older versions, and xz isn't provided with macOS.
+# XXX: tar, since macOS 10.9, can uncompress xz'ed tarballs,
+# so perhaps we could get rid of this now?
 #
 XZ_VERSION=5.2.5
 
@@ -78,19 +78,7 @@ PCRE_VERSION=8.45
 # CMake is required to do the build - and to build some of the
 # dependencies.
 #
-# 3.19.2 is the first version to support Apple Silicon, but the precompiled
-# binary on cmake.org is only a universal binary that requires macOS 10.0
-# (Yosemite) or newer.
-#
-# So on Mountain Lion and Mavericks we choose the last stable release that
-# works on them (3.18.6), and on Yosemite and later we choose the latest stable
-# version (currently 3.19.7).
-#
-if [[ $DARWIN_MAJOR_VERSION -gt 13 ]]; then
-    CMAKE_VERSION=${CMAKE_VERSION-3.21.4}
-else
-    CMAKE_VERSION=${CMAKE_VERSION-3.18.6}
-fi
+CMAKE_VERSION=${CMAKE_VERSION-3.21.4}
 
 #
 # Ninja isn't required, as make is provided with Xcode, but it is
@@ -135,7 +123,7 @@ PCRE2_VERSION=10.39
 # "QT_VERSION=5.10.1 ./macos-setup.sh"
 # will build and install with QT 5.10.1.
 #
-QT_VERSION=${QT_VERSION-5.12.10}
+QT_VERSION=${QT_VERSION-5.12.12}
 
 if [ "$QT_VERSION" ]; then
     QT_MAJOR_VERSION="`expr $QT_VERSION : '\([0-9][0-9]*\).*'`"
@@ -215,25 +203,13 @@ else
     #
     # No - install a Python package.
     #
-    # 3.7.6 is the final version of Python to have official packages for the
-    # 64-bit/32-bit variant that supports 10.6 (Snow Leopard) through 10.8
-    # (Mountain Lion), and 3.9.1 is the first version of Python to support
-    # macOS 11 Big Sur and Apple Silicon (Arm-based Macs).
-    #
-    # So on Mountain Lion, choose 3.7.6, otherwise get the latest stable
-    # version (3.9.5).
-    #
-    if [[ $DARWIN_MAJOR_VERSION -gt 12 ]]; then
-        PYTHON3_VERSION=3.9.5
-    else
-        PYTHON3_VERSION=3.7.6
-    fi
+    PYTHON3_VERSION=3.9.5
 fi
 BROTLI_VERSION=1.0.9
 # minizip
 ZLIB_VERSION=1.2.11
 # Uncomment to enable automatic updates using Sparkle
-#SPARKLE_VERSION=1.27.0
+#SPARKLE_VERSION=2.1.0
 
 #
 # Asciidoctor is required to build the documentation.
@@ -242,12 +218,11 @@ ASCIIDOCTOR_VERSION=${ASCIIDOCTOR_VERSION-2.0.16}
 ASCIIDOCTORPDF_VERSION=${ASCIIDOCTORPDF_VERSION-1.6.1}
 
 #
-# GNU autotools; they're provided with releases up to Snow Leopard, but
-# not in later releases, and the Snow Leopard version is too old for
-# current Wireshark, so we install them unconditionally.
+# GNU autotools.  They're not supplied with the macOS versions we
+# support, and we currently use them for minizip.
 #
-AUTOCONF_VERSION=2.69
-AUTOMAKE_VERSION=1.15
+AUTOCONF_VERSION=2.71
+AUTOMAKE_VERSION=1.16.5
 LIBTOOL_VERSION=2.4.6
 
 install_curl() {
@@ -768,6 +743,30 @@ uninstall_meson() {
     fi
 }
 
+install_pytest() {
+    #
+    # Install pytest with pip3 if we don't have it already.
+    #
+    if python3 -m pytest --version >/dev/null 2>&1
+    then
+        # We have it.
+        :
+    else
+        sudo pip3 install pytest pytest-xdist
+        touch pytest-done
+    fi
+}
+
+uninstall_pytest() {
+    #
+    # If we installed pytest, uninstal it with pip3.
+    #
+    if [ -f pytest-done ] ; then
+        sudo pip3 uninstall pytest pytest-xdist
+        rm -f pytest-done
+    fi
+}
+
 install_gettext() {
     if [ ! -f gettext-$GETTEXT_VERSION-done ] ; then
         echo "Downloading, building, and installing GNU gettext:"
@@ -1113,12 +1112,8 @@ install_qt() {
         5)
             case $QT_MINOR_VERSION in
 
-            0|1|2|3|4|5)
+            0|1|2|3|4|5|6|7|8)
                 echo "Qt $QT_VERSION" is too old 1>&2
-                ;;
-
-            6|7|8)
-                QT_VOLUME=qt-opensource-mac-x64-clang-$QT_VERSION
                 ;;
 
             9|10|11|12|13|14)
@@ -1176,11 +1171,11 @@ uninstall_qt() {
             5*)
                 case $installed_qt_minor_version in
 
-                0|1|2)
+                0|1|2|3|4|5)
                     echo "Qt $installed_qt_version" is too old 1>&2
                     ;;
 
-                3|4|5|6|7|8)
+                6|7|8)
                     installed_qt_volume=qt-opensource-mac-x64-clang-$installed_qt_version.dmg
                     ;;
 
@@ -1643,7 +1638,7 @@ uninstall_snappy() {
         # just remove what we know it installs.
         #
         # $DO_MAKE_UNINSTALL || exit 1
-        if [ -s build_dir/install_manifest.txt] ; then
+        if [ -s build_dir/install_manifest.txt ] ; then
             while read -r ; do $DO_RM -v "$REPLY" ; done < <(cat build_dir/install_manifest.txt; echo)
         else
             $DO_RM -f /usr/local/lib/libsnappy.1.1.8.dylib \
@@ -2045,9 +2040,9 @@ uninstall_nghttp2() {
 install_libtiff() {
     if [ "$LIBTIFF_VERSION" -a ! -f tiff-$LIBTIFF_VERSION-done ] ; then
         echo "Downloading, building, and installing libtiff:"
-        [ -f tiff-$LIBTIFF_VERSION.tar.gz ] || 
-            curl --fail -L -O https://download.osgeo.org/libtiff/tiff-$LIBTIFF_VERSION.tar.gz     || 
-            curl --fail -L -O https://download.osgeo.org/libtiff/old/tiff-$LIBTIFF_VERSION.tar.gz || 
+        [ -f tiff-$LIBTIFF_VERSION.tar.gz ] ||
+            curl --fail -L -O https://download.osgeo.org/libtiff/tiff-$LIBTIFF_VERSION.tar.gz     ||
+            curl --fail -L -O https://download.osgeo.org/libtiff/old/tiff-$LIBTIFF_VERSION.tar.gz ||
             exit 1
         $no_build && echo "Skipping installation" && return
         gzcat tiff-$LIBTIFF_VERSION.tar.gz | tar xf - || exit 1
@@ -2281,10 +2276,6 @@ install_python3() {
         else
             macver=11
         fi
-    elif [[ $DARWIN_MAJOR_VERSION -lt 13 ]]; then
-        # The 64-bit installer requires 10.9 (Mavericks), use the 64-bit/32-bit
-        # variant for 10.8 (Mountain Lion).
-        macver=x10.6
     fi
     if [ "$PYTHON3_VERSION" -a ! -f python3-$PYTHON3_VERSION-done ] ; then
         echo "Downloading and installing python3:"
@@ -2996,9 +2987,11 @@ install_all() {
     install_python3
 
     #
-    # Now install Meson.
+    # Now install Meson and pytest.
     #
     install_meson
+
+    install_pytest
 
     install_ninja
 
@@ -3185,6 +3178,8 @@ uninstall_all() {
         uninstall_asciidoctorpdf
 
         uninstall_asciidoctor
+
+        uninstall_pytest
 
         uninstall_meson
 
@@ -3523,10 +3518,10 @@ export CFLAGS
 export CXXFLAGS
 
 #
-# You need Xcode or the command-line tools installed to get the compilers.
+# You need Xcode or the command-line tools installed to get the compilers (xcrun checks both).
 #
-if [ ! -x /usr/bin/xcodebuild ]; then
-    echo "Please install Xcode first (should be available on DVD or from the Mac App Store)."
+ if [ ! -x /usr/bin/xcrun ]; then
+    echo "Please install Xcode (app or command line) first (should be available on DVD or from the Mac App Store)."
     exit 1
 fi
 
@@ -3543,9 +3538,12 @@ if [ "$QT_VERSION" ]; then
     #
     if /usr/bin/xcodebuild -version >/dev/null 2>&1; then
         :
+    elif qmake --version >/dev/null 2>&1; then
+        :
     else
         echo "Please install Xcode first (should be available on DVD or from the Mac App Store)."
         echo "The command-line build tools are not sufficient to build Qt."
+        echo "Alternatively build QT according to: https://gist.github.com/shoogle/750a330c851bd1a924dfe1346b0b4a08#:~:text=MacOS%2FQt%5C%20Creator-,Go%20to%20Qt%20Creator%20%3E%20Preferences%20%3E%20Build%20%26%20Run%20%3E%20Kits,for%20both%20compilers%2C%20not%20gcc%20."
         exit 1
     fi
 fi
@@ -3592,11 +3590,11 @@ echo
 echo "mkdir build; cd build"
 if [ ! -z "$NINJA_VERSION" ]; then
     echo "cmake -G Ninja .."
-    echo "ninja app_bundle"
+    echo "ninja wireshark_app_bundle logray_app_bundle # (Modify as needed)"
     echo "ninja install/strip"
 else
     echo "cmake .."
-    echo "make $MAKE_BUILD_OPTS app_bundle"
+    echo "make $MAKE_BUILD_OPTS wireshark_app_bundle logray_app_bundle # (Modify as needed)"
     echo "make install/strip"
 fi
 echo

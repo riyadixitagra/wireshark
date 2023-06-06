@@ -70,7 +70,7 @@ void drange_node_set_end_offset(drange_node* drnode, gint offset);
 void drange_node_set_to_the_end(drange_node* drnode);
 
 /* drange constructor */
-drange_t * drange_new(void);
+drange_t * drange_new(drange_node* drnode);
 drange_t * drange_new_from_list(GSList *list);
 drange_t * drange_dup(drange_t *org);
 
@@ -90,6 +90,8 @@ void drange_append_drange_node(drange_t* dr, drange_node* drnode);
 void drange_prepend_drange_node(drange_t* dr, drange_node* drnode);
 void drange_foreach_drange_node(drange_t* dr, GFunc func, gpointer funcdata);
 
-char *drange_tostr(drange_t *dr);
+char *drange_node_tostr(const drange_node *rn);
+
+char *drange_tostr(const drange_t *dr);
 
 #endif /* ! __DRANGE_H__ */

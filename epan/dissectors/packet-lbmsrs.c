@@ -17,11 +17,9 @@
 #include "config.h"
 #include <epan/packet.h>
 #include <epan/expert.h>
-#include <epan/column-info.h>
 #include <epan/to_str.h>
 #include <packet-lbm.h>
 #include <epan/proto.h>
-#include <epan/column-utils.h>
 #include <epan/prefs.h>
 #include <epan/uat.h>
 #include <wsutil/pint.h>
@@ -2742,7 +2740,7 @@ void proto_register_lbmsrs(void)
         { &hf_lbmsrs_resp_local_domain_id,
         { "Local Domain ID", "lbmsrs.registration_response.local_domain_id", FT_UINT32, BASE_DEC,NULL, 0x0, NULL, HFILL } },
         { &hf_lbmsrs_reg_resp_protocol_version,
-        { "Protocol Version", "lbmsrs.registration_response.protocol_version", FT_UINT8, BASE_DEC,NULL, 0x0, NULL, HFILL } },
+        { "Protocol Version", "lbmsrs.registration_response.protocol_version", FT_UINT32, BASE_DEC,NULL, 0x0, NULL, HFILL } },
         /*SRS Registration Response items end*/
 
         /*SRS Stream Request items start*/

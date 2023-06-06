@@ -424,13 +424,6 @@ void cf_redissect_packets(capture_file *cf);
  */
 cf_read_status_t cf_retap_packets(capture_file *cf);
 
-/**
- * Adjust timestamp precision if auto is selected.
- *
- * @param cf the capture file
- */
-void cf_timestamp_auto_precision(capture_file *cf);
-
 /* print_range, enum which frames should be printed */
 typedef enum {
     print_range_selected_only,    /* selected frame(s) only (currently only one) */
@@ -525,15 +518,14 @@ gboolean cf_find_packet_protocol_tree(capture_file *cf, const char *string,
                                       search_direction dir);
 
 /**
- * Find field with a label that contains text string cfile->sfilter.
+ * Find field with a label that contains the text string cfile->sfilter in
+ * a protocol tree.
  *
  * @param cf the capture file
  * @param tree the protocol tree
- * @param mdata the first field (mdata->finfo) that matched the string
- * @return TRUE if a packet was found, FALSE otherwise
+ * @return The first field in the tree that matched the string if found, NULL otherwise
  */
-extern gboolean cf_find_string_protocol_tree(capture_file *cf, proto_tree *tree,
-                                             match_data *mdata);
+extern field_info* cf_find_string_protocol_tree(capture_file *cf, proto_tree *tree);
 
 /**
  * Find packet whose summary line contains a specified text string.
@@ -622,9 +614,9 @@ gboolean cf_goto_framenum(capture_file *cf);
  * Select the packet in the given row.
  *
  * @param cf the capture file
- * @param row the row to select
+ * @param frame the frame to be selected
  */
-void cf_select_packet(capture_file *cf, int row);
+void cf_select_packet(capture_file *cf, frame_data *frame);
 
 /**
  * Unselect all packets, if any.
@@ -709,6 +701,10 @@ wtap_block_t cf_get_packet_block(capture_file *cf, const frame_data *fd);
  * @param cf the capture file
  * @param fd the frame_data structure for the frame
  * @param new_block the block replacing the old block
+ *
+ * @return TRUE if the block is modified for the first time. FALSE if
+ * the block was already modified before, in which case the caller is
+ * responsible for updating the comment count.
  */
 gboolean cf_set_modified_block(capture_file *cf, frame_data *fd, const wtap_block_t new_block);
 

@@ -307,7 +307,7 @@ static const value_string radius_message_code[] = {
 };
 
 static tap_packet_status
-radiusstat_packet(void *prs, packet_info *pinfo, epan_dissect_t *edt _U_, const void *pri)
+radiusstat_packet(void *prs, packet_info *pinfo, epan_dissect_t *edt _U_, const void *pri, tap_flags_t flags _U_)
 {
 	rtd_data_t *rtd_data = (rtd_data_t *)prs;
 	rtd_stat_table *rs = &rtd_data->stat_table;
@@ -680,7 +680,7 @@ dissect_ascend_data_filter(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo _
 		return wmem_strdup_printf(wmem_packet_scope(), "Wrong attribute length %d", len);
 	}
 
-	filterstr = wmem_strbuf_sized_new(wmem_packet_scope(), 128, 128);
+	filterstr = wmem_strbuf_new_sized(wmem_packet_scope(), 128);
 
 	ti = proto_tree_add_item(tree, hf_radius_ascend_data_filter, tvb, 0, -1, ENC_NA);
 	ascend_tree = proto_item_add_subtree(ti, ett_radius_ascend);
@@ -1285,7 +1285,8 @@ radius_tlv(radius_attr_info_t *a, proto_tree *tree, packet_info *pinfo _U_, tvbu
 
 		len -= tlv_length;
 
-		dictionary_entry = (radius_attr_info_t *)g_hash_table_lookup(a->tlvs_by_id, GUINT_TO_POINTER(tlv_type));
+		if (a->tlvs_by_id)
+			dictionary_entry = (radius_attr_info_t *)g_hash_table_lookup(a->tlvs_by_id, GUINT_TO_POINTER(tlv_type));
 
 		if (!dictionary_entry) {
 			dictionary_entry = &no_dictionary_entry;
@@ -2052,13 +2053,13 @@ dissect_radius(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *data _
 			 * if you do that.
 			 */
 			conversation = find_conversation(pinfo->num, &pinfo->src,
-				&null_address, conversation_pt_to_endpoint_type(pinfo->ptype), pinfo->srcport,
+				&null_address, conversation_pt_to_conversation_type(pinfo->ptype), pinfo->srcport,
 				pinfo->destport, 0);
 			if (conversation == NULL)
 			{
 				/* It's not part of any conversation - create a new one. */
 				conversation = conversation_new(pinfo->num, &pinfo->src,
-					&null_address, conversation_pt_to_endpoint_type(pinfo->ptype), pinfo->srcport,
+					&null_address, conversation_pt_to_conversation_type(pinfo->ptype), pinfo->srcport,
 					pinfo->destport, 0);
 			}
 
@@ -2190,7 +2191,7 @@ dissect_radius(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *data _
 			 * if you do that.
 			 */
 			conversation = find_conversation(pinfo->num, &null_address,
-				&pinfo->dst, conversation_pt_to_endpoint_type(pinfo->ptype), pinfo->srcport, pinfo->destport, 0);
+				&pinfo->dst, conversation_pt_to_conversation_type(pinfo->ptype), pinfo->srcport, pinfo->destport, 0);
 			if (conversation == NULL) {
 				/* Nothing more to do here */
 				break;

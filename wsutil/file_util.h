@@ -145,15 +145,13 @@ gboolean ws_init_dll_search_path(void);
 WS_DLL_PUBLIC
 void *ws_load_library(const gchar *library_name);
 
-/** Load a DLL using g_module_open.
+/** Load wpcap.dll using g_module_open.
  * Only the system and program directories are searched.
  *
- * @param module_name The name of the DLL.
- * @param flags Flags to be passed to g_module_open.
  * @return A handle to the DLL if found, NULL on failure.
  */
 WS_DLL_PUBLIC
-GModule *ws_module_open(gchar *module_name, GModuleFlags flags);
+GModule *load_wpcap_module(void);
 
 /** Create or open a "Wireshark is running" mutex.
  * Create or open a mutex which signals that Wireshark or its associated
@@ -164,6 +162,10 @@ WS_DLL_PUBLIC void create_app_running_mutex(void);
 /** Close our "Wireshark is running" mutex.
  */
 WS_DLL_PUBLIC void close_app_running_mutex(void);
+
+/** Close a file descriptor if it is not open
+ */
+WS_DLL_PUBLIC int ws_close_if_possible(int fd);
 
 #else	/* _WIN32 */
 
@@ -195,6 +197,9 @@ typedef ssize_t ws_file_ssize_t;
 #else
 #define ws_close   close
 #endif
+
+#define ws_close_if_possible ws_close
+
 #define ws_dup     dup
 #ifdef HAVE_FSEEKO
 #define ws_fseek64 fseeko	/* AC_SYS_LARGEFILE should make off_t 64-bit */

@@ -52,7 +52,7 @@
 #include "packet-e164.h"
 #include "packet-charging_ase.h"
 #include "packet-mtp3.h"
-#include "packet-http.h"
+#include "packet-media-type.h"
 
 void proto_register_isup(void);
 void proto_reg_handoff_isup(void);
@@ -2134,7 +2134,7 @@ static const value_string isup_generic_name_type_value[] = {
 
 static const true_false_string isup_INN_ind_value = {
   "routing to internal network number not allowed",
-  "routing to internal network number allowed "
+  "routing to internal network number allowed"
 };
 static const true_false_string isup_NI_ind_value = {
   "incomplete",
@@ -3420,7 +3420,7 @@ dissect_isup_transmission_medium_requirement_parameter(tvbuff_t *parameter_tvb, 
 
 static char *
 dissect_isup_digits_common(tvbuff_t *tvb, gint offset, packet_info *pinfo, proto_tree *tree, proto_item *item,
-                           const char *param_name, gint hf_number, gint hf_odd_digit, gint hf_even_digit,
+                           gint hf_number, gint hf_odd_digit, gint hf_even_digit,
                            gboolean even_indicator, e164_number_type_t number_type, guint nature_of_address)
 {
   gint           i = 0;
@@ -3436,11 +3436,11 @@ dissect_isup_digits_common(tvbuff_t *tvb, gint offset, packet_info *pinfo, proto
   reported_length = tvb_reported_length_remaining(tvb, offset);
   if (reported_length == 0) {
     expert_add_info(pinfo, item, &ei_isup_empty_number);
-    proto_item_append_text(item, "%s: (empty)", param_name);
+    proto_item_append_text(item, ": (empty)");
     return NULL;
   }
 
-  strbuf_number = wmem_strbuf_sized_new(pinfo->pool, MAXDIGITS+1, 0);
+  strbuf_number = wmem_strbuf_new_sized(pinfo->pool, MAXDIGITS+1);
 
   /* Make the digit string, looping on captured length (in case a snaplen was set) */
   captured_length = tvb_captured_length_remaining(tvb, offset);
@@ -3511,7 +3511,7 @@ dissect_isup_digits_common(tvbuff_t *tvb, gint offset, packet_info *pinfo, proto
     dissect_e164_number(tvb, digits_tree, 2, (offset - 2), e164_info);
   }
 
-  proto_item_append_text(item, "%s: %s", param_name, number);
+  proto_item_append_text(item, ": %s", number);
 
   return number;
 }
@@ -3545,7 +3545,7 @@ dissect_isup_called_party_number_parameter(tvbuff_t *parameter_tvb, packet_info 
   offset = 2;
 
   tap_called_number = dissect_isup_digits_common(parameter_tvb, offset, pinfo, parameter_tree, parameter_item,
-                             "Called Party Number", hf_isup_called, hf_isup_called_party_odd_address_signal_digit,
+                             hf_isup_called, hf_isup_called_party_odd_address_signal_digit,
                              hf_isup_called_party_even_address_signal_digit, ((indicators1 & 0x80) == 0),
                              number_plan == 1 ? CALLED_PARTY_NUMBER : NONE,
                              (indicators1 & 0x7f));
@@ -3565,7 +3565,7 @@ dissect_isup_subsequent_number_parameter(tvbuff_t *parameter_tvb, packet_info *p
   offset = 1;
 
   dissect_isup_digits_common(parameter_tvb, offset, pinfo, parameter_tree, parameter_item,
-                             "Subsequent Number", hf_isup_subsequent_number, hf_isup_called_party_odd_address_signal_digit,
+                             hf_isup_subsequent_number, hf_isup_called_party_odd_address_signal_digit,
                              hf_isup_called_party_even_address_signal_digit, ((indicators1 & 0x80) == 0),
                              NONE, 0);
 }
@@ -3839,7 +3839,7 @@ static const value_string q850_cause_code_vals[] = {
   { 0x7C,  "Unassigned" },
   { 0x7D,  "Unassigned" },
   { 0x7E,  "Unassigned" },
-  { 0x7F,  "Internetworking, unspecified" },
+  { 0x7F,  "Interworking, unspecified" },
   { 0,  NULL }
 };
 value_string_ext q850_cause_code_vals_ext = VALUE_STRING_EXT_INIT(q850_cause_code_vals);
@@ -5408,7 +5408,7 @@ dissect_isup_calling_party_number_parameter(tvbuff_t *parameter_tvb, packet_info
   offset = 2;
 
   tap_calling_number = dissect_isup_digits_common(parameter_tvb, offset, pinfo, parameter_tree, parameter_item,
-                             "Calling Party Number", hf_isup_calling, hf_isup_calling_party_odd_address_signal_digit,
+                             hf_isup_calling, hf_isup_calling_party_odd_address_signal_digit,
                              hf_isup_calling_party_even_address_signal_digit, ((indicators1 & 0x80) == 0),
                              number_plan == 1 ? CALLING_PARTY_NUMBER : NONE,
                              (indicators1 & 0x7f));
@@ -5439,7 +5439,7 @@ dissect_isup_original_called_number_parameter(tvbuff_t *parameter_tvb, packet_in
   offset = 2;
 
   dissect_isup_digits_common(parameter_tvb, offset, pinfo, parameter_tree, parameter_item,
-                             "Original Called Number", hf_isup_original_called_number,
+                             hf_isup_original_called_number,
                              hf_isup_calling_party_odd_address_signal_digit,
                              hf_isup_calling_party_even_address_signal_digit,
                              ((indicators1 & 0x80) == 0), NONE, 0);
@@ -5469,7 +5469,7 @@ dissect_isup_redirecting_number_parameter(tvbuff_t *parameter_tvb, packet_info *
   offset = 2;
 
   dissect_isup_digits_common(parameter_tvb, offset, pinfo, parameter_tree, parameter_item,
-                             "Redirecting Number", hf_isup_redirecting, hf_isup_calling_party_odd_address_signal_digit,
+                             hf_isup_redirecting, hf_isup_calling_party_odd_address_signal_digit,
                              hf_isup_calling_party_even_address_signal_digit, ((indicators1 & 0x80) == 0),
                              NONE, 0);
 }
@@ -5499,7 +5499,7 @@ dissect_isup_redirection_number_parameter(tvbuff_t *parameter_tvb, packet_info *
   offset = 2;
 
   dissect_isup_digits_common(parameter_tvb, offset, pinfo, parameter_tree, parameter_item,
-                             "Redirection Number", hf_isup_redirection_number, hf_isup_called_party_odd_address_signal_digit,
+                             hf_isup_redirection_number, hf_isup_called_party_odd_address_signal_digit,
                              hf_isup_called_party_even_address_signal_digit, ((indicators1 & 0x80) == 0),
                              NONE, 0);
 }
@@ -5624,7 +5624,7 @@ dissect_isup_connected_number_parameter(tvbuff_t *parameter_tvb, packet_info *pi
   offset = 2;
 
   dissect_isup_digits_common(parameter_tvb, offset, pinfo, parameter_tree, parameter_item,
-                             "Connected Number", hf_isup_connected_number, hf_isup_calling_party_odd_address_signal_digit,
+                             hf_isup_connected_number, hf_isup_calling_party_odd_address_signal_digit,
                              hf_isup_calling_party_even_address_signal_digit, ((indicators1 & 0x80) == 0),
                              NONE, 0);
 }
@@ -5649,7 +5649,7 @@ dissect_isup_transit_network_selection_parameter(tvbuff_t *parameter_tvb, packet
   offset = 1;
 
   dissect_isup_digits_common(parameter_tvb, offset, pinfo, parameter_tree, parameter_item,
-                             "Transit network selection", hf_isup_transit_network_selection, hf_isup_calling_party_odd_address_signal_digit,
+                             hf_isup_transit_network_selection, hf_isup_calling_party_odd_address_signal_digit,
                              hf_isup_calling_party_even_address_signal_digit, ((indicators1 & 0x80) == 0),
                              NONE, 0);
 }
@@ -5698,10 +5698,6 @@ dissect_isup_optional_backward_call_indicators_parameter(tvbuff_t *parameter_tvb
 /* ------------------------------------------------------------------
   Dissector Parameter User-to-user indicators
  */
-static const true_false_string isup_UUI_type_value = {
-  "Response",
-  "Request"
-};
 static const value_string isup_UUI_request_service_values[] = {
   { 0,  "No information"},
   { 1,  "Spare"},
@@ -6313,7 +6309,7 @@ dissect_isup_location_number_parameter(tvbuff_t *parameter_tvb, packet_info *pin
   offset = 2;
 
   dissect_isup_digits_common(parameter_tvb, offset, pinfo, parameter_tree, parameter_item,
-                             "Location number", hf_isup_location_number, hf_isup_calling_party_odd_address_signal_digit,
+                             hf_isup_location_number, hf_isup_calling_party_odd_address_signal_digit,
                              hf_isup_calling_party_even_address_signal_digit, ((indicators1 & 0x80) == 0),
                              NONE, 0);
 }
@@ -6392,7 +6388,7 @@ dissect_isup_call_transfer_number_parameter(tvbuff_t *parameter_tvb, packet_info
   offset = 2;
 
   dissect_isup_digits_common(parameter_tvb, offset, pinfo, parameter_tree, parameter_item,
-                             "Call Transfer Number", hf_isup_call_transfer_number, hf_isup_calling_party_odd_address_signal_digit,
+                             hf_isup_call_transfer_number, hf_isup_calling_party_odd_address_signal_digit,
                              hf_isup_calling_party_even_address_signal_digit, ((indicators1 & 0x80) == 0),
                              NONE, 0);
 }
@@ -6536,7 +6532,7 @@ dissect_isup_called_in_number_parameter(tvbuff_t *parameter_tvb, packet_info *pi
   offset = 2;
 
   dissect_isup_digits_common(parameter_tvb, offset, pinfo, parameter_tree, parameter_item,
-                             "Called IN Number", hf_isup_called_in_number, hf_isup_calling_party_odd_address_signal_digit,
+                             hf_isup_called_in_number, hf_isup_calling_party_odd_address_signal_digit,
                              hf_isup_calling_party_even_address_signal_digit, ((indicators1 & 0x80) == 0),
                              NONE, 0);
 }
@@ -6735,7 +6731,7 @@ dissect_isup_generic_number_parameter(tvbuff_t *parameter_tvb, packet_info *pinf
   offset = 3;
 
   dissect_isup_digits_common(parameter_tvb, offset, pinfo, parameter_tree, parameter_item,
-                             "Generic Number", hf_isup_generic_number, hf_isup_calling_party_odd_address_signal_digit,
+                             hf_isup_generic_number, hf_isup_calling_party_odd_address_signal_digit,
                              hf_isup_calling_party_even_address_signal_digit, ((indicators1 & 0x80) == 0),
                              NONE, 0);
 
@@ -6760,7 +6756,7 @@ dissect_isup_jurisdiction_parameter(tvbuff_t *parameter_tvb, packet_info *pinfo,
   offset = 0;
 
   dissect_isup_digits_common(parameter_tvb, offset, pinfo, parameter_tree, parameter_item,
-                             "Jurisdiction", hf_isup_jurisdiction, hf_isup_called_party_odd_address_signal_digit,
+                             hf_isup_jurisdiction, hf_isup_called_party_odd_address_signal_digit,
                              hf_isup_called_party_even_address_signal_digit, (tvb_reported_length(parameter_tvb) > 0),
                              NONE, 0);
 }
@@ -6822,7 +6818,7 @@ dissect_isup_charge_number_parameter(tvbuff_t *parameter_tvb, packet_info *pinfo
   offset = 2;
 
   dissect_isup_digits_common(parameter_tvb, offset, pinfo, parameter_tree, parameter_item,
-                             "Charge Number", hf_isup_charge_number, hf_isup_calling_party_odd_address_signal_digit,
+                             hf_isup_charge_number, hf_isup_calling_party_odd_address_signal_digit,
                              hf_isup_calling_party_even_address_signal_digit, ((indicators1 & 0x80) == 0),
                              NONE, 0);
 }
@@ -7151,7 +7147,7 @@ dissect_japan_isup_network_poi_cad(tvbuff_t *parameter_tvb, packet_info *pinfo, 
   guint8         carrier_info_length;
   gint           num_octets_with_digits = 0;
   gint           digit_index = 0;
-  wmem_strbuf_t *ca_number = wmem_strbuf_sized_new(pinfo->pool, MAXDIGITS+1, 0);
+  wmem_strbuf_t *ca_number = wmem_strbuf_new_sized(pinfo->pool, MAXDIGITS+1);
 
   /* POI Hierarchy information
 
@@ -7518,7 +7514,7 @@ dissect_japan_isup_carrier_information(tvbuff_t *parameter_tvb, packet_info *pin
         /* Lets now load up the digits.*/
         /* If the odd indicator is set... drop the Filler from the last octet.*/
         /* This loop also loads up ca_number with the digits for display*/
-        ca_number = wmem_strbuf_sized_new(pinfo->pool, MAXDIGITS+1, 0);
+        ca_number = wmem_strbuf_new_sized(pinfo->pool, MAXDIGITS+1);
         digit_index = 0;
         while (num_octets_with_digits > 0) {
           offset += 1;
@@ -7588,7 +7584,7 @@ dissect_japan_isup_carrier_information(tvbuff_t *parameter_tvb, packet_info *pin
         /* Lets now load up the digits.*/
         /* If the odd indicator is set... drop the Filler from the last octet.*/
         /* This loop also loads up cid_number with the digits for display*/
-        cid_number = wmem_strbuf_sized_new(pinfo->pool, MAXDIGITS+1, 0);
+        cid_number = wmem_strbuf_new_sized(pinfo->pool, MAXDIGITS+1);
         digit_index = 0;
         while (num_octets_with_digits > 0) {
           offset += 1;
@@ -7718,7 +7714,7 @@ dissect_japan_isup_charge_area_info(tvbuff_t *parameter_tvb, packet_info *pinfo,
   gint odd_even;
   gint digit_index = 0;
 
-  wmem_strbuf_t *ca_number = wmem_strbuf_sized_new(pinfo->pool, MAXDIGITS+1, 0);
+  wmem_strbuf_t *ca_number = wmem_strbuf_new_sized(pinfo->pool, MAXDIGITS+1);
 
   /*Octet 1 : Indicator*/
   octet = tvb_get_guint8(parameter_tvb, 0);
@@ -8053,7 +8049,6 @@ dissect_isup_optional_parameter(tvbuff_t *optional_parameters_tvb, packet_info *
                                            ett_isup_parameter, &parameter_item,
                                            "Parameter: (t=%u, l=%u)",
                                            parameter_type, parameter_length);
-      proto_item_append_text(parameter_tree, " %s", val_to_str_ext(parameter_type, &ansi_isup_parameter_type_value_ext, "Unknown"));
       /* Handle national extensions here */
       switch (itu_isup_variant) {
         case ISUP_JAPAN_VARIANT:
@@ -8064,11 +8059,11 @@ dissect_isup_optional_parameter(tvbuff_t *optional_parameters_tvb, packet_info *
                                      "%u (%s)",
                                      parameter_type,
                                      val_to_str_ext_const(parameter_type, &japan_isup_parameter_type_value_ext, "unknown"));
-          proto_item_append_text(parameter_tree, ": %s", val_to_str_ext(parameter_type, &japan_isup_parameter_type_value_ext, "Unknown"));
+          proto_item_append_text(parameter_tree, ": %s", val_to_str_ext_const(parameter_type, &japan_isup_parameter_type_value_ext, "Unknown"));
           break;
         default:
           proto_tree_add_uint(parameter_tree, hf_isup_opt_parameter_type, optional_parameters_tvb, offset, PARAMETER_TYPE_LENGTH, parameter_type);
-          proto_item_append_text(parameter_tree, ": %s", val_to_str_ext(parameter_type, &ansi_isup_parameter_type_value_ext, "Unknown"));
+          proto_item_append_text(parameter_tree, ": %s", val_to_str_ext_const(parameter_type, &ansi_isup_parameter_type_value_ext, "Unknown"));
           break;
 
       }
@@ -8426,7 +8421,8 @@ dissect_ansi_isup_optional_parameter(tvbuff_t *optional_parameters_tvb, packet_i
 
       parameter_tree = proto_tree_add_subtree_format(isup_tree, optional_parameters_tvb,
                                            offset, parameter_length  + PARAMETER_TYPE_LENGTH + PARAMETER_LENGTH_IND_LENGTH,
-                                           ett_isup_parameter, &parameter_item, "Parameter: (t=%u, l=%u): %s", parameter_type, parameter_length, val_to_str_ext(parameter_type, &ansi_isup_parameter_type_value_ext, "Unknown"));
+                                           ett_isup_parameter, &parameter_item, "Parameter: (t=%u, l=%u): %s",
+                                           parameter_type, parameter_length, val_to_str_ext_const(parameter_type, &ansi_isup_parameter_type_value_ext, "Unknown"));
       proto_tree_add_uint(parameter_tree, hf_isup_opt_parameter_type, optional_parameters_tvb, offset,
                                  PARAMETER_TYPE_LENGTH, parameter_type);
       offset += PARAMETER_TYPE_LENGTH;
@@ -9753,6 +9749,7 @@ dissect_ansi_isup_message(tvbuff_t *message_tvb, packet_info *pinfo, proto_tree 
 
   tap_rec = wmem_new(pinfo->pool, isup_tap_rec_t);
   tap_rec->message_type   = message_type;
+  tap_rec->itu_isup_variant = itu_isup_variant;
   tap_rec->calling_number = NULL;
   tap_rec->called_number  = NULL;
   tap_rec->circuit_id     = circuit_id;
@@ -10054,6 +10051,7 @@ dissect_isup_message(tvbuff_t *message_tvb, packet_info *pinfo, proto_tree *isup
 
   tap_rec = wmem_new(pinfo->pool, isup_tap_rec_t);
   tap_rec->message_type   = message_type;
+  tap_rec->itu_isup_variant = itu_isup_variant;
   tap_rec->calling_number = NULL;
   tap_rec->called_number  = NULL;
   tap_rec->circuit_id     = circuit_id;
@@ -10404,7 +10402,7 @@ dissect_isup(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void* data _U_
         isup_tree = proto_item_add_subtree(ti, ett_isup);
         proto_tree_add_uint(isup_tree, hf_isup_cic, tvb, CIC_OFFSET, CIC_LENGTH, cic);
       }
-      conversation_create_endpoint_by_id(pinfo, ENDPOINT_ISUP, cic, 0);
+      conversation_set_elements_by_id(pinfo, CONVERSATION_ISUP, cic);
       message_tvb = tvb_new_subset_remaining(tvb, CIC_LENGTH);
       dissect_ansi_isup_message(message_tvb, pinfo, isup_tree, ISUP_ITU_STANDARD_VARIANT, cic);
       break;
@@ -10453,7 +10451,7 @@ dissect_isup(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void* data _U_
         isup_tree = proto_item_add_subtree(ti, ett_isup);
         proto_tree_add_uint(isup_tree, hf_isup_cic, tvb, CIC_OFFSET, CIC_LENGTH, cic);
       }
-      conversation_create_endpoint_by_id(pinfo, ENDPOINT_ISUP, cic, 0);
+      conversation_set_elements_by_id(pinfo, CONVERSATION_ISUP, cic);
       message_tvb = tvb_new_subset_remaining(tvb, CIC_LENGTH);
       dissect_isup_message(message_tvb, pinfo, isup_tree, itu_isup_variant, cic);
   }
@@ -10507,7 +10505,7 @@ dissect_bicc(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void* data _U_
 
   bicc_cic = tvb_get_letohl(tvb, BICC_CIC_OFFSET);
 
-  conversation_create_endpoint_by_id(pinfo, ENDPOINT_BICC, bicc_cic, 0);
+  conversation_set_elements_by_id(pinfo, CONVERSATION_BICC, bicc_cic);
 
   col_clear(pinfo->cinfo, COL_INFO);
   if (isup_show_cic_in_info) {
@@ -10549,10 +10547,10 @@ dissect_application_isup(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, vo
   guint8      itu_isup_variant = ISUP_ITU_STANDARD_VARIANT; /* Default */
 
   if (data) {
-    http_message_info_t *message_info = (http_message_info_t *)data;
-    if (message_info->media_str) {
-      version = ws_find_media_type_parameter(pinfo->pool, message_info->media_str, "version");
-      base = ws_find_media_type_parameter(pinfo->pool, message_info->media_str, "base");
+    media_content_info_t *content_info = (media_content_info_t *)data;
+    if (content_info->media_str) {
+      version = ws_find_media_type_parameter(pinfo->pool, content_info->media_str, "version");
+      base = ws_find_media_type_parameter(pinfo->pool, content_info->media_str, "base");
       if ((version && g_ascii_strncasecmp(version, "ansi", 4) == 0) ||
           (base && g_ascii_strncasecmp(base, "ansi", 4) == 0) ||
           (version && g_ascii_strncasecmp(version, "gr", 2) == 0) ||
@@ -10660,12 +10658,34 @@ msg_stats_tree_init(stats_tree *st)
 }
 
 static tap_packet_status
-msg_stats_tree_packet(stats_tree *st, packet_info *pinfo, epan_dissect_t *edt _U_, const void *p)
+msg_stats_tree_packet(stats_tree *st, packet_info *pinfo, epan_dissect_t *edt _U_, const void *p, tap_flags_t flags _U_)
 {
-  const gchar *msg = try_val_to_str_ext(((const isup_tap_rec_t*)p)->message_type, &isup_message_type_value_acro_ext);
+  const isup_tap_rec_t *tap_rec = (const isup_tap_rec_t *)p;
+  const gchar *msg;
   gchar       *src, *dst, *dir;
   int          msg_node;
   int          dir_node;
+  value_string_ext *used_value_string_ext;
+
+  switch (tap_rec->itu_isup_variant) {
+    case ISUP_FRENCH_VARIANT:
+      used_value_string_ext = &french_isup_message_type_value_acro_ext;
+      break;
+    case ISUP_ISRAELI_VARIANT:
+      used_value_string_ext = &israeli_isup_message_type_value_acro_ext;
+      break;
+    case ISUP_RUSSIAN_VARIANT:
+      used_value_string_ext = &russian_isup_message_type_value_acro_ext;
+      break;
+    case ISUP_JAPAN_VARIANT:
+    case ISUP_JAPAN_TTC_VARIANT:
+      used_value_string_ext = &japan_isup_message_type_value_acro_ext;
+      break;
+    default:
+      used_value_string_ext = &isup_message_type_value_acro_ext;
+      break;
+  }
+  msg = val_to_str_ext_const(tap_rec->message_type, used_value_string_ext, "reserved");
 
   src = address_to_str(NULL, &pinfo->src);
   dst = address_to_str(NULL, &pinfo->dst);
@@ -11178,7 +11198,7 @@ proto_register_isup(void)
 
     { &hf_isup_UUI_type,
       { "User-to-User indicator type",  "isup.UUI_type",
-        FT_BOOLEAN, 8, TFS(&isup_UUI_type_value), A_8BIT_MASK,
+        FT_BOOLEAN, 8, TFS(&tfs_response_request), A_8BIT_MASK,
         NULL, HFILL }},
 
     { &hf_isup_UUI_req_service1,

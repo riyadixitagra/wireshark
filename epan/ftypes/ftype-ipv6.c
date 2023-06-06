@@ -15,13 +15,6 @@
 #include <epan/addr_resolv.h>
 #include <epan/to_str.h>
 
-static void
-ipv6_fvalue_set(fvalue_t *fv, const guint8 *value)
-{
-	memcpy(fv->value.ipv6.addr.bytes, value, FT_IPv6_LEN);
-	fv->value.ipv6.prefix = 128;
-}
-
 static gboolean
 ipv6_from_literal(fvalue_t *fv, const char *s, gboolean allow_partial_value _U_, gchar **err_msg)
 {
@@ -82,20 +75,38 @@ ipv6_from_literal(fvalue_t *fv, const char *s, gboolean allow_partial_value _U_,
 static char *
 ipv6_to_repr(wmem_allocator_t *scope, const fvalue_t *fv, ftrepr_t rtype _U_, int field_display _U_)
 {
-	return ip6_to_str(scope, &(fv->value.ipv6.addr));
+	char buf[WS_INET6_ADDRSTRLEN];
+	char *repr;
+
+	ip6_to_str_buf(&fv->value.ipv6.addr, buf, sizeof(buf));
+
+	if (fv->value.ipv6.prefix != 0 && fv->value.ipv6.prefix != 128)
+		repr = wmem_strdup_printf(scope, "%s/%"PRIu32, buf, fv->value.ipv6.prefix);
+	else
+		repr = wmem_strdup(scope, buf);
+
+	return repr;
 }
 
-static gpointer
-value_get(fvalue_t *fv)
+static void
+ipv6_set(fvalue_t *fv, const ws_in6_addr *value)
 {
-	return fv->value.ipv6.addr.bytes;
+	memcpy(&fv->value.ipv6.addr, value, FT_IPv6_LEN);
+	fv->value.ipv6.prefix = 128;
+}
+
+
+static const ws_in6_addr *
+ipv6_get(fvalue_t *fv)
+{
+	return &fv->value.ipv6.addr;
 }
 
 static const guint8 bitmasks[9] =
 	{ 0x00, 0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff };
 
-static int
-cmp_order(const fvalue_t *fv_a, const fvalue_t *fv_b)
+static enum ft_result
+cmp_order(const fvalue_t *fv_a, const fvalue_t *fv_b, int *cmp)
 {
 	const ipv6_addr_and_prefix *a = &(fv_a->value.ipv6);
 	const ipv6_addr_and_prefix *b = &(fv_b->value.ipv6);
@@ -109,8 +120,10 @@ cmp_order(const fvalue_t *fv_a, const fvalue_t *fv_b)
 		gint byte_a = (gint) (a->addr.bytes[pos]);
 		gint byte_b = (gint) (b->addr.bytes[pos]);
 
-		if (byte_a != byte_b)
-			return byte_a - byte_b;
+		if (byte_a != byte_b) {
+			*cmp = byte_a - byte_b;
+			return FT_OK;
+		}
 
 		prefix -= 8;
 		pos++;
@@ -120,10 +133,13 @@ cmp_order(const fvalue_t *fv_a, const fvalue_t *fv_b)
 		gint byte_a = (gint) (a->addr.bytes[pos] & (bitmasks[prefix]));
 		gint byte_b = (gint) (b->addr.bytes[pos] & (bitmasks[prefix]));
 
-		if (byte_a != byte_b)
-			return byte_a - byte_b;
+		if (byte_a != byte_b) {
+			*cmp = byte_a - byte_b;
+			return FT_OK;
+		}
 	}
-	return 0;
+	*cmp = 0;
+	return FT_OK;
 }
 
 static enum ft_result
@@ -137,16 +153,17 @@ bitwise_and(fvalue_t *dst, const fvalue_t *fv_a, const fvalue_t *fv_b, char **er
 	prefix = MIN(a->prefix, b->prefix);	/* MIN() like in IPv4 */
 	prefix = MIN(prefix, 128);		/* sanitize, max prefix is 128 */
 
-	dst->value.ipv6 = fv_a->value.ipv6;
 	while (prefix >= 8) {
-		dst->value.ipv6.addr.bytes[pos] &= b->addr.bytes[pos] & bitmasks[prefix];
+		dst->value.ipv6.addr.bytes[pos] =
+			a->addr.bytes[pos] & b->addr.bytes[pos];
 
 		prefix -= 8;
 		pos++;
 	}
 
 	if (prefix != 0) {
-		dst->value.ipv6.addr.bytes[pos] &= b->addr.bytes[pos] & bitmasks[prefix];
+		dst->value.ipv6.addr.bytes[pos] =
+			a->addr.bytes[pos] & b->addr.bytes[pos] & bitmasks[prefix];
 	}
 	return FT_OK;
 }
@@ -159,6 +176,17 @@ slice(fvalue_t *fv, GByteArray *bytes, guint offset, guint length)
 	data = fv->value.ipv6.addr.bytes + offset;
 
 	g_byte_array_append(bytes, data, length);
+}
+
+static guint
+ipv6_hash(const fvalue_t *fv)
+{
+	struct _ipv6 {
+		gint64 val[2];
+	} *addr = (struct _ipv6 *)&fv->value.ipv6.addr;
+	gint64 mask = fv->value.ipv6.prefix;
+
+	return g_int64_hash(&addr[0]) ^ g_int64_hash(&addr[1]) ^ g_int64_hash(&mask);
 }
 
 static gboolean
@@ -177,26 +205,54 @@ ftype_register_ipv6(void)
 		"IPv6 address",			/* pretty_name */
 		FT_IPv6_LEN,			/* wire_size */
 		NULL,				/* new_value */
+		NULL,				/* copy_value */
 		NULL,				/* free_value */
 		ipv6_from_literal,		/* val_from_literal */
 		NULL,				/* val_from_string */
 		NULL,				/* val_from_charconst */
 		ipv6_to_repr,			/* val_to_string_repr */
 
-		{ .set_value_bytes = ipv6_fvalue_set },	/* union set_value */
-		{ .get_value_ptr = value_get },		/* union get_value */
+		NULL,				/* val_to_uinteger64 */
+		NULL,				/* val_to_sinteger64 */
+
+		{ .set_value_ipv6 = ipv6_set },	/* union set_value */
+		{ .get_value_ipv6 = ipv6_get },	/* union get_value */
 
 		cmp_order,
 		NULL, 				/* XXX, cmp_contains, needed? ipv4 doesn't support it */
 		NULL,				/* cmp_matches */
 
+		ipv6_hash,
 		is_zero,
+		NULL,
 		NULL,
 		slice,
 		bitwise_and,
+		NULL,				/* unary_minus */
+		NULL,				/* add */
+		NULL,				/* subtract */
+		NULL,				/* multiply */
+		NULL,				/* divide */
+		NULL,				/* modulo */
 	};
 
 	ftype_register(FT_IPv6, &ipv6_type);
+}
+
+void
+ftype_register_pseudofields_ipv6(int proto)
+{
+	static int hf_ft_ipv6;
+
+	static hf_register_info hf_ftypes[] = {
+		{ &hf_ft_ipv6,
+		    { "FT_IPv6", "_ws.ftypes.ipv6",
+			FT_IPv6, BASE_NONE, NULL, 0x00,
+			NULL, HFILL }
+		},
+	};
+
+	proto_register_field_array(proto, hf_ftypes, array_length(hf_ftypes));
 }
 
 /*

@@ -23,8 +23,10 @@ set(WIRESHARK_WIDGET_HEADERS
 	widgets/capture_filter_edit.h
 	widgets/clickable_label.h
 	widgets/copy_from_profile_button.h
+	widgets/detachable_tabwidget.h
 	widgets/display_filter_combo.h
 	widgets/display_filter_edit.h
+	widgets/dissector_syntax_line_edit.h
 	widgets/dissector_tables_view.h
 	widgets/drag_drop_toolbar.h
 	widgets/drag_label.h
@@ -40,6 +42,7 @@ set(WIRESHARK_WIDGET_HEADERS
 	widgets/label_stack.h
 	widgets/overlay_scroll_bar.h
 	widgets/packet_list_header.h
+	widgets/path_selection_edit.h
 	widgets/pref_module_view.h
 	widgets/profile_tree_view.h
 	widgets/range_syntax_lineedit.h
@@ -48,6 +51,9 @@ set(WIRESHARK_WIDGET_HEADERS
 	widgets/stock_icon_tool_button.h
 	widgets/syntax_line_edit.h
 	widgets/tabnav_tree_view.h
+	widgets/traffic_tab.h
+	widgets/traffic_tree.h
+	widgets/traffic_types_list.h
 	widgets/wireless_timeline.h
 	widgets/wireshark_file_dialog.h
 )
@@ -82,6 +88,7 @@ set(WIRESHARK_UTILS_HEADERS
 
 set(WIRESHARK_MODEL_HEADERS
 	models/astringlist_list_model.h
+	models/atap_data_model.h
 	models/cache_proxy_model.h
 	models/coloring_rules_delegate.h
 	models/coloring_rules_model.h
@@ -103,7 +110,7 @@ set(WIRESHARK_MODEL_HEADERS
 	models/numeric_value_chooser_delegate.h
 	models/packet_list_model.h
 	models/packet_list_record.h
-	models/path_chooser_delegate.h
+	models/path_selection_delegate.h
 	models/percent_bar_delegate.h
 	models/pref_delegate.h
 	models/pref_models.h
@@ -166,12 +173,14 @@ set(WIRESHARK_QT_HEADERS
 	filter_dialog.h
 	filter_expression_frame.h
 	firewall_rules_dialog.h
+	follow_stream_action.h
 	follow_stream_dialog.h
 	font_color_preferences_frame.h
 	funnel_statistics.h
 	funnel_string_dialog.h
 	funnel_text_dialog.h
 	geometry_state_dialog.h
+	glib_mainloop_on_qeventloop.h
 	gsm_map_summary_dialog.h
 	iax2_analysis_dialog.h
 	import_text_dialog.h
@@ -186,6 +195,7 @@ set(WIRESHARK_QT_HEADERS
 	lte_mac_statistics_dialog.h
 	lte_rlc_graph_dialog.h
 	lte_rlc_statistics_dialog.h
+	main_application.h
 	main_status_bar.h
 	main_window_preferences_frame.h
 	main_window.h
@@ -244,6 +254,7 @@ set(WIRESHARK_QT_HEADERS
 	wireless_frame.h
 	wireshark_application.h
 	wireshark_dialog.h
+	wireshark_main_window.h
 	wlan_statistics_dialog.h
 	${WIRESHARK_CUSTOM_QT_HEADERS}
 )
@@ -268,8 +279,10 @@ set(WIRESHARK_WIDGET_SRCS
 	widgets/capture_filter_edit.cpp
 	widgets/clickable_label.cpp
 	widgets/copy_from_profile_button.cpp
+	widgets/detachable_tabwidget.cpp
 	widgets/display_filter_combo.cpp
 	widgets/display_filter_edit.cpp
+	widgets/dissector_syntax_line_edit.cpp
 	widgets/dissector_tables_view.cpp
 	widgets/drag_drop_toolbar.cpp
 	widgets/drag_label.cpp
@@ -285,6 +298,7 @@ set(WIRESHARK_WIDGET_SRCS
 	widgets/label_stack.cpp
 	widgets/overlay_scroll_bar.cpp
 	widgets/packet_list_header.cpp
+	widgets/path_selection_edit.cpp
 	widgets/pref_module_view.cpp
 	widgets/profile_tree_view.cpp
 	widgets/range_syntax_lineedit.cpp
@@ -293,6 +307,9 @@ set(WIRESHARK_WIDGET_SRCS
 	widgets/stock_icon_tool_button.cpp
 	widgets/syntax_line_edit.cpp
 	widgets/tabnav_tree_view.cpp
+	widgets/traffic_tab.cpp
+	widgets/traffic_tree.cpp
+	widgets/traffic_types_list.cpp
 	widgets/wireless_timeline.cpp
 	widgets/wireshark_file_dialog.cpp
 )
@@ -324,6 +341,7 @@ set(WIRESHARK_UTILS_SRCS
 
 set(WIRESHARK_MODEL_SRCS
 	models/astringlist_list_model.cpp
+	models/atap_data_model.cpp
 	models/cache_proxy_model.cpp
 	models/coloring_rules_delegate.cpp
 	models/coloring_rules_model.cpp
@@ -345,7 +363,7 @@ set(WIRESHARK_MODEL_SRCS
 	models/numeric_value_chooser_delegate.cpp
 	models/packet_list_model.cpp
 	models/packet_list_record.cpp
-	models/path_chooser_delegate.cpp
+	models/path_selection_delegate.cpp
 	models/percent_bar_delegate.cpp
 	models/pref_delegate.cpp
 	models/pref_models.cpp
@@ -403,11 +421,13 @@ set(WIRESHARK_QT_SRC
 	filter_dialog.cpp
 	filter_expression_frame.cpp
 	firewall_rules_dialog.cpp
+	follow_stream_action.cpp
 	follow_stream_dialog.cpp
 	font_color_preferences_frame.cpp
 	funnel_string_dialog.cpp
 	funnel_text_dialog.cpp
 	geometry_state_dialog.cpp
+	glib_mainloop_on_qeventloop.cpp
 	iax2_analysis_dialog.cpp
 	import_text_dialog.cpp
 	interface_frame.cpp
@@ -420,10 +440,10 @@ set(WIRESHARK_QT_SRC
 	lte_mac_statistics_dialog.cpp
 	lte_rlc_graph_dialog.cpp
 	lte_rlc_statistics_dialog.cpp
+	main_application.cpp
 	main_status_bar.cpp
 	main_window_layout.cpp
 	main_window_preferences_frame.cpp
-	main_window_slots.cpp
 	main_window.cpp
 	main.cpp
 	manage_interfaces_dialog.cpp
@@ -479,6 +499,8 @@ set(WIRESHARK_QT_SRC
 	wireless_frame.cpp
 	wireshark_application.cpp
 	wireshark_dialog.cpp
+	wireshark_main_window.cpp
+	wireshark_main_window_slots.cpp
 	${WIRESHARK_CUSTOM_QT_SRCS}
 )
 
@@ -511,9 +533,14 @@ set(WIRESHARK_QT_TAP_SRC
 	${WIRESHARK_CUSTOM_TAP_SRC}
 )
 
-set(WIRESHARK_QT_FILES
+set(WIRESHARK_QT_NONGENERATED_SRC
 	${WIRESHARK_QT_SRC}
 	${WIRESHARK_QT_TAP_SRC}
+	${WIRESHARK_MODEL_SRCS}
+	${WIRESHARK_UTILS_SRCS}
+	${WIRESHARK_MANAGER_SRCS}
+	${WIRESHARK_3RD_PARTY_WIDGET_SRCS}
+	${WIRESHARK_WIDGET_SRCS}
 )
 
 set(WIRESHARK_QT_UI
@@ -561,7 +588,6 @@ set(WIRESHARK_QT_UI
 	lbm_stream_dialog.ui
 	lte_rlc_graph_dialog.ui
 	main_window_preferences_frame.ui
-	main_window.ui
 	manage_interfaces_dialog.ui
 	module_preferences_scroll_area.ui
 	mtp3_summary_dialog.ui
@@ -601,6 +627,7 @@ set(WIRESHARK_QT_UI
 	welcome_page.ui
 	widgets/splash_overlay.ui
 	wireless_frame.ui
+	wireshark_main_window.ui
 )
 
 if(HAVE_PCAP_REMOTE)
@@ -632,6 +659,24 @@ foreach(_file ${WIRESHARK_QT_TS})
 endforeach()
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/i18n.qrc.in ${CMAKE_CURRENT_BINARY_DIR}/i18n.qrc)
 
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/authors.qrc"
+"<RCC>\n"
+"    <qresource prefix=\"/about\">\n"
+"        <file compress-algo=\"zstd\">authors.csv</file>\n"
+"    </qresource>\n"
+"</RCC>\n"
+)
+
+add_custom_command(
+	OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/authors.csv
+	COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/make-authors-csv.py
+			< ${CMAKE_SOURCE_DIR}/AUTHORS
+			> ${CMAKE_CURRENT_BINARY_DIR}/authors.csv
+	DEPENDS
+		${CMAKE_SOURCE_DIR}/tools/make-authors-csv.py
+		${CMAKE_SOURCE_DIR}/AUTHORS
+)
+
 set(WIRESHARK_QT_QRC
 	../../resources/about.qrc
 	../../resources/languages/languages.qrc
@@ -639,6 +684,8 @@ set(WIRESHARK_QT_QRC
 	../../resources/stock_icons.qrc
 	../../resources/wsicon.qrc
 	${CMAKE_CURRENT_BINARY_DIR}/i18n.qrc
+	${CMAKE_CURRENT_BINARY_DIR}/authors.qrc
+	${CMAKE_CURRENT_BINARY_DIR}/authors.csv
 )
 
 if(NOT Qt${qtver}Widgets_VERSION VERSION_LESS "5.9")
@@ -646,8 +693,15 @@ if(NOT Qt${qtver}Widgets_VERSION VERSION_LESS "5.9")
 	# to help with reproducible builds. We do not use QFileInfo.lastModified
 	# so this has no unwanted side effects. This mtime started appearing in
 	# Qt 5.8. The option to force the old file format without mtime was
-	# added in Qt 5.9. See https://bugreports.qt.io/browse/QTBUG-58769
+	# added in Qt 5.9. See https://bugreports.qt.io/browse/QTBUG-58769.
+	# Force the compression algorithm to zlib, since zstd requires format
+	# version 3. See https://gitlab.com/wireshark/wireshark/-/issues/18100.
+	# Use the number of dashes for each argument as documented at
+	# https://doc.qt.io/qt-6/rcc.html.
 	set(CMAKE_AUTORCC_OPTIONS --format-version 1)
+	if(Qt${qtver}Widgets_VERSION VERSION_GREATER_EQUAL "5.13")
+		list(APPEND CMAKE_AUTORCC_OPTIONS -compress-algo zlib)
+	endif()
 endif()
 
 if (USE_qt6)
@@ -658,6 +712,15 @@ else()
 	QT5_ADD_TRANSLATION(WIRESHARK_QT_QM ${WIRESHARK_QT_TS})
 endif()
 
+if (WIN32)
+	add_custom_target(copy_qt_translations ALL)
+	add_custom_command(TARGET copy_qt_translations
+		POST_BUILD
+		COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:wireshark>/translations
+		COMMAND ${CMAKE_COMMAND} -E copy_if_different ${WIRESHARK_QT_QM} $<TARGET_FILE_DIR:wireshark>/translations
+	)
+endif()
+
 add_custom_target(
 	translations
 	DEPENDS
@@ -666,7 +729,7 @@ add_custom_target(
 set_target_properties(translations PROPERTIES FOLDER "UI")
 
 set_source_files_properties(
-	${WIRESHARK_QT_FILES}
+	${WIRESHARK_QT_NONGENERATED_SRC}
 	PROPERTIES
 	COMPILE_FLAGS "${WERROR_COMMON_FLAGS}"
 )
@@ -704,12 +767,7 @@ add_library(qtui OBJECT
 	${WIRESHARK_UTILS_HEADERS}
 	${WIRESHARK_MODEL_HEADERS}
 
-	${WIRESHARK_QT_SRC}
-	${WIRESHARK_WIDGET_SRCS}
-	${WIRESHARK_3RD_PARTY_WIDGET_SRCS}
-	${WIRESHARK_MANAGER_SRCS}
-	${WIRESHARK_UTILS_SRCS}
-	${WIRESHARK_MODEL_SRCS}
+	${WIRESHARK_QT_NONGENERATED_SRC}
 
 	# For AUTOUIC and AUTORCC.
 	${WIRESHARK_QT_UI}

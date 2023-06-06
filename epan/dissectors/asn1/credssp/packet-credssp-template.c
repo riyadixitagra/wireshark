@@ -17,7 +17,6 @@
 #include <epan/exported_pdu.h>
 
 #include "packet-ber.h"
-#include "packet-dcerpc.h"
 #include "packet-gssapi.h"
 #include "packet-kerberos.h"
 #include "packet-ntlmssp.h"
@@ -118,7 +117,7 @@ dissect_credssp_heur(tvbuff_t *tvb, packet_info *pinfo, proto_tree *parent_tree,
           ver = tvb_get_guint8(tvb, offset);
           if((length == 1) && (ver > 1) && (ver < 99)) {
             if (have_tap_listener(exported_pdu_tap)) {
-              exp_pdu_data_t *exp_pdu_data = export_pdu_create_common_tags(pinfo, "credssp", EXP_PDU_TAG_PROTO_NAME);
+              exp_pdu_data_t *exp_pdu_data = export_pdu_create_common_tags(pinfo, "credssp", EXP_PDU_TAG_DISSECTOR_NAME);
 
               exp_pdu_data->tvb_captured_length = tvb_captured_length(tvb);
               exp_pdu_data->tvb_reported_length = tvb_reported_length(tvb);

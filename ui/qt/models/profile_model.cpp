@@ -142,7 +142,7 @@ ProfileModel::ProfileModel(QObject * parent) :
 
 void ProfileModel::loadProfiles()
 {
-    emit beginResetModel();
+    beginResetModel();
 
     bool refresh = profiles_.count() > 0;
 
@@ -158,7 +158,7 @@ void ProfileModel::loadProfiles()
         fl_entry = gxx_list_next(fl_entry);
     }
 
-    emit endResetModel();
+    endResetModel();
 }
 
 GList * ProfileModel::entry(profile_def *ref) const
@@ -229,7 +229,7 @@ bool ProfileModel::userProfilesExist() const
 
 int ProfileModel::rowCount(const QModelIndex &) const
 {
-    return profiles_.count();
+    return static_cast<int>(profiles_.count());
 }
 
 int ProfileModel::columnCount(const QModelIndex &) const
@@ -1139,7 +1139,6 @@ int ProfileModel::importProfilesFromDir(QString dirname, int * skippedCnt, bool 
     {
         QFileInfoList entries = uniquePaths(filterProfilePath(dirname, QFileInfoList(), fromZip));
 
-        int entryCount = 0;
         foreach (QFileInfo fentry, entries)
         {
             if (fentry.fileName().length() <= 0)
@@ -1147,8 +1146,6 @@ int ProfileModel::importProfilesFromDir(QString dirname, int * skippedCnt, bool 
 
             bool wasEmpty = true;
             bool success = false;
-
-            entryCount++;
 
             QString profilePath = profileDir.absolutePath() + "/" + fentry.fileName();
             QString tempPath = fentry.absoluteFilePath();

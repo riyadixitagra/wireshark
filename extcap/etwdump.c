@@ -22,7 +22,7 @@
 #include <wsutil/wslog.h>
 
 #include <cli_main.h>
-#include <ui/cmdarg_err.h>
+#include <wsutil/cmdarg_err.h>
 #include "etl.h"
 
 #include <signal.h>
@@ -95,7 +95,7 @@ static int list_config(char* interface)
     printf("arg {number=%u}{call=--etlfile}{display=etl file}"
         "{type=fileselect}{tooltip=Select etl file to display in Wireshark}{required=false}{group=Capture}\n",
         inc++);
-    printf("arg {number=%u}{call=--params}{display=filter parmeters}"
+    printf("arg {number=%u}{call=--params}{display=filter parameters}"
         "{type=string}{tooltip=Input providers, keyword and level filters for the etl file and live session}{group=Capture}\n",
         inc++);
     /*
@@ -135,7 +135,7 @@ int main(int argc, char* argv[])
      * Attempt to get the pathname of the directory containing the
      * executable file.
      */
-    err_msg = init_progfile_dir(argv[0]);
+    err_msg = configuration_init(argv[0], NULL);
     if (err_msg != NULL) {
         ws_warning("Can't get pathname of directory containing the extcap program: %s.",
             err_msg);

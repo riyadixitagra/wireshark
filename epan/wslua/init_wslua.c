@@ -21,6 +21,8 @@
 #include <stdio.h>
 #include <epan/expert.h>
 #include <epan/ex-opt.h>
+#include <epan/introspection.h>
+#include <wiretap/introspection.h>
 #include <wsutil/privileges.h>
 #include <wsutil/file_util.h>
 #include <wsutil/wslog.h>
@@ -137,6 +139,8 @@ static expert_field ei_lua_proto_deprecated_note    = EI_INIT;
 static expert_field ei_lua_proto_deprecated_warn    = EI_INIT;
 static expert_field ei_lua_proto_deprecated_error   = EI_INIT;
 
+static gint ett_wslua_traceback = -1;
+
 static gboolean
 lua_pinfo_end(wmem_allocator_t *allocator _U_, wmem_cb_event_t event _U_,
         void *user_data _U_)
@@ -165,6 +169,103 @@ int get_hf_wslua_text(void) {
     return hf_wslua_text;
 }
 
+#if LUA_VERSION_NUM >= 502
+// Attach the lua traceback to the proto_tree
+static int dissector_error_handler(lua_State *LS) {
+    // Entering, stack: [ error_handler, dissector, errmsg ]
+
+    proto_item *tb_item;
+    proto_tree *tb_tree;
+
+    // Add the expert info Lua error message
+    proto_tree_add_expert_format(lua_tree->tree, lua_pinfo, &ei_lua_error, lua_tvb, 0, 0,
+            "Lua Error: %s", lua_tostring(LS,-1));
+
+    // Create a new proto sub_tree for the traceback
+    tb_item = proto_tree_add_text_internal(lua_tree->tree, lua_tvb, 0, 0, "Lua Traceback");
+    tb_tree = proto_item_add_subtree(tb_item, ett_wslua_traceback);
+
+    // Push the traceback onto the stack
+    // After call, stack: [ error_handler, dissector, errmsg, tb_string ]
+    luaL_traceback(LS, LS, NULL, 1);
+
+    // Get the string length of the traceback. Note that the string
+    // has a terminating NUL, but string_length doesn't include it.
+    // The lua docs say the string can have NULs in it too, but we
+    // ignore that because the traceback string shouldn't have them.
+    // This function does not own the string; it's still owned by lua.
+    size_t string_length;
+    const char *orig_tb_string = lua_tolstring(LS, -1, &string_length);
+
+    // We make the copy so we can modify the string. Don't forget the
+    // extra byte for the terminating NUL!
+    char *tb_string = (char*) g_memdup2(orig_tb_string, string_length+1);
+
+    // The string has tabs and new lines in it
+    // We will add proto_items for each new-line-delimited sub-string.
+    // We also convert tabs to spaces, because the Wireshark GUI
+    // shows tabs literally as "\t".
+
+    // 'beginning' is the beginning of the sub-string
+    char *beginning = tb_string;
+
+    // 'p' is the pointer to the byte as we iterate over the string
+    char *p = tb_string;
+
+    size_t i;
+    bool skip_initial_tabs = true;
+    size_t last_eol_i = 0;
+    for (i = 0 ; i < string_length ; i++) {
+        // At the beginning of a sub-string, we will convert tabs to spaces
+        if (skip_initial_tabs) {
+            if (*p == '\t') {
+                *p = ' ';
+            } else {
+                // Once we hit the first non-tab character in a substring,
+                // we won't convert tabs (until the next substring)
+                skip_initial_tabs = false;
+            }
+        }
+        // If we see a newline, we add the substring to the proto tree
+        if (*p == '\n') {
+            // Terminate the string.
+            *p = '\0';
+            proto_tree_add_text_internal(tb_tree, lua_tvb, 0, 0, "%s", beginning);
+            beginning = ++p;
+            skip_initial_tabs = true;
+            last_eol_i = i;
+        } else {
+            ++p;
+        }
+    }
+
+    // The last portion of the string doesn't have a newline, so add it here
+    // after the loop. But to be sure, check that we didn't just add it, in
+    // case lua decides to change it in the future.
+    if ( last_eol_i < i-1 ) {
+        proto_tree_add_text_internal(tb_tree, lua_tvb, 0, 0, "%s", beginning);
+    }
+
+    // Cleanup
+    g_free(tb_string);
+
+    // Return the same original error message
+    return -2;
+}
+
+#else
+
+static int dissector_error_handler(lua_State *LS) {
+    // Entering, stack: [ error_handler, dissector, errmsg ]
+    proto_tree_add_expert_format(lua_tree->tree, lua_pinfo, &ei_lua_error, lua_tvb, 0, 0,
+            "Lua Error: %s", lua_tostring(LS,-1));
+
+    // Return the same error message
+    return -1;
+}
+
+#endif
+
 int dissect_lua(tvbuff_t* tvb, packet_info* pinfo, proto_tree* tree, void* data _U_) {
     int consumed_bytes = tvb_captured_length(tvb);
     tvbuff_t *saved_lua_tvb = lua_tvb;
@@ -178,25 +279,42 @@ int dissect_lua(tvbuff_t* tvb, packet_info* pinfo, proto_tree* tree, void* data 
      * dissectors[current_proto](tvb,pinfo,tree)
      */
 
+    // set the stack top be index 0
     lua_settop(L,0);
 
+    // After call, stack: [ error_handler_func ]
+    lua_pushcfunction(L, dissector_error_handler);
+
+    // Push the dissectors table onto the the stack
+    // After call, stack: [ error_handler_func, dissectors_table ]
     lua_rawgeti(L, LUA_REGISTRYINDEX, lua_dissectors_table_ref);
 
+    // Push a copy of the current_proto string onto the stack
+    // After call, stack: [ error_handler_func, dissectors_table, current_proto ]
     lua_pushstring(L, pinfo->current_proto);
+
+    // dissectors_table[current_proto], a dissector, goes into the stack
+    // The key (current_proto) is popped off the stack.
+    // After call, stack: [ error_handler_func, dissectors_table, dissector ]
     lua_gettable(L, -2);
 
-    lua_remove(L,1);
+    // We don't need the dissectors_table in the stack
+    // After call, stack: [ error_handler_func, dissector ]
+    lua_remove(L,2);
 
+    // Is the dissector a function?
+    if (lua_isfunction(L,2)) {
 
-    if (lua_isfunction(L,1)) {
-
+        // After call, stack: [ error_handler_func, dissector, tvb ]
         push_Tvb(L,tvb);
+        // After call, stack: [ error_handler_func, dissector, tvb, pinfo ]
         push_Pinfo(L,pinfo);
+        // After call, stack: [ error_handler_func, dissector, tvb, pinfo, TreeItem ]
         lua_tree = push_TreeItem(L, tree, proto_tree_add_item(tree, hf_wslua_fake, tvb, 0, 0, ENC_NA));
         proto_item_set_hidden(lua_tree->item);
 
-        if  ( lua_pcall(L,3,1,0) ) {
-            proto_tree_add_expert_format(tree, pinfo, &ei_lua_error, tvb, 0, 0, "Lua Error: %s", lua_tostring(L,-1));
+        if  ( lua_pcall(L, /*num_args=*/3, /*num_results=*/1, /*error_handler_func_stack_position=*/1) ) {
+            // do nothing; the traceback error message handler function does everything
         } else {
 
             /* if the Lua dissector reported the consumed bytes, pass it to our caller */
@@ -828,6 +946,180 @@ wslua_allocf(void *ud _U_, void *ptr, size_t osize _U_, size_t nsize)
     return g_realloc(ptr, nsize);
 }
 
+#define WSLUA_EPAN_ENUMS_TABLE  "_EPAN"
+#define WSLUA_WTAP_ENUMS_TABLE  "_WTAP"
+
+#define WSLUA_BASE_TABLE        "base"
+#define WSLUA_FTYPE_TABLE       "ftypes"
+#define WSLUA_FRAMETYPE_TABLE   "frametype"
+#define WSLUA_EXPERT_TABLE      "expert"
+#define WSLUA_EXPERT_GROUP_TABLE    "group"
+#define WSLUA_EXPERT_SEVERITY_TABLE "severity"
+#define WSLUA_WTAP_ENCAPS_TABLE     "wtap_encaps"
+#define WSLUA_WTAP_TSPREC_TABLE     "wtap_tsprecs"
+#define WSLUA_WTAP_COMMENTS_TABLE   "wtap_comments"
+#define WSLUA_WTAP_RECTYPES_TABLE   "wtap_rec_types"
+#define WSLUA_WTAP_PRESENCE_FLAGS_TABLE "wtap_presence_flags"
+
+static void
+add_table_symbol(const char *table, const char *name, int value)
+{
+    /* Get table from the global environment. */
+    lua_getglobal(L, table);
+    /* Set symbol in table. */
+    lua_pushstring(L, name);
+    lua_pushnumber(L, value);
+    lua_settable(L, -3);
+    /* Pop table from stack. */
+    lua_pop(L, 1);
+}
+
+static void
+add_global_symbol(const char *name, int value)
+{
+    /* Set symbol in global environment. */
+    lua_pushnumber(L, value);
+    lua_setglobal(L, name);
+}
+
+static void
+add_pi_severity_symbol(const char *name, int value)
+{
+    lua_getglobal(L, WSLUA_EXPERT_TABLE);
+    lua_getfield(L, -1, WSLUA_EXPERT_SEVERITY_TABLE);
+    lua_pushnumber(L, value);
+    lua_setfield(L, -2, name);
+    lua_pop(L, 2);
+}
+
+static void
+add_pi_group_symbol(const char *name, int value)
+{
+    lua_getglobal(L, WSLUA_EXPERT_TABLE);
+    lua_getfield(L, -1, WSLUA_EXPERT_GROUP_TABLE);
+    lua_pushnumber(L, value);
+    lua_setfield(L, -2, name);
+    lua_pop(L, 2);
+}
+
+static void
+add_menu_group_symbol(const char *name, int value)
+{
+    /* Set symbol in global environment. */
+    lua_pushnumber(L, value);
+    char *str = g_strdup(name);
+    char *s = strstr(str, "_GROUP_");
+    if (s == NULL)
+        return;
+    *s = '\0';
+    s += strlen("_GROUP_");
+    char *str2 = ws_strdup_printf("MENU_%s_%s", str, s);
+    lua_setglobal(L, str2);
+    g_free(str);
+    g_free(str2);
+}
+
+/*
+ * Read introspection constants and add them according to the historical
+ * (sometimes arbitrary) rules of make-init-lua.py. For efficiency reasons
+ * we only loop the enums array once.
+ */
+static void
+wslua_add_introspection(void)
+{
+    const ws_enum_t *ep;
+
+    /* Add empty tables to be populated. */
+    lua_newtable(L);
+    lua_setglobal(L, WSLUA_BASE_TABLE);
+    lua_newtable(L);
+    lua_setglobal(L, WSLUA_FTYPE_TABLE);
+    lua_newtable(L);
+    lua_setglobal(L, WSLUA_FRAMETYPE_TABLE);
+    lua_newtable(L);
+    lua_pushstring(L, WSLUA_EXPERT_GROUP_TABLE);
+    lua_newtable(L);
+    lua_settable(L, -3);
+    lua_pushstring(L, WSLUA_EXPERT_SEVERITY_TABLE);
+    lua_newtable(L);
+    lua_settable(L, -3);
+    lua_setglobal(L, WSLUA_EXPERT_TABLE);
+    /* Add catch-all _EPAN table. */
+    lua_newtable(L);
+    lua_setglobal(L, WSLUA_EPAN_ENUMS_TABLE);
+
+    for (ep = epan_inspect_enums(); ep->symbol != NULL; ep++) {
+
+        if (g_str_has_prefix(ep->symbol, "BASE_")) {
+            add_table_symbol(WSLUA_BASE_TABLE, ep->symbol + strlen("BASE_"), ep->value);
+        }
+        else if (g_str_has_prefix(ep->symbol, "SEP_")) {
+            add_table_symbol(WSLUA_BASE_TABLE, ep->symbol + strlen("SEP_"), ep->value);
+        }
+        else if (g_str_has_prefix(ep->symbol, "ABSOLUTE_TIME_")) {
+            add_table_symbol(WSLUA_BASE_TABLE, ep->symbol + strlen("ABSOLUTE_TIME_"), ep->value);
+        }
+        else if (g_str_has_prefix(ep->symbol, "ENC_")) {
+            add_global_symbol(ep->symbol, ep->value);
+        }
+        else if (g_str_has_prefix(ep->symbol, "FT_FRAMENUM_")) {
+            add_table_symbol(WSLUA_FRAMETYPE_TABLE, ep->symbol + strlen("FT_FRAMENUM_"), ep->value);
+        }
+        else if (g_str_has_prefix(ep->symbol, "FT_")) {
+            add_table_symbol(WSLUA_FTYPE_TABLE, ep->symbol + strlen("FT_"), ep->value);
+        }
+        else if (g_str_has_prefix(ep->symbol, "PI_")) {
+            if (ep->value & PI_SEVERITY_MASK) {
+                add_pi_severity_symbol(ep->symbol + strlen("PI_"), ep->value);
+            }
+            else {
+                 add_pi_group_symbol(ep->symbol + strlen("PI_"), ep->value);
+            }
+            /* For backward compatibility. */
+            add_global_symbol(ep->symbol, ep->value);
+        }
+        else if (g_str_has_prefix(ep->symbol, "REGISTER_")) {
+            add_menu_group_symbol(ep->symbol + strlen("REGISTER_"), ep->value);
+        }
+        add_table_symbol(WSLUA_EPAN_ENUMS_TABLE, ep->symbol, ep->value);
+    }
+
+    /* Add empty tables to be populated. */
+    lua_newtable(L);
+    lua_setglobal(L, WSLUA_WTAP_ENCAPS_TABLE);
+    lua_newtable(L);
+    lua_setglobal(L, WSLUA_WTAP_TSPREC_TABLE);
+    lua_newtable(L);
+    lua_setglobal(L, WSLUA_WTAP_COMMENTS_TABLE);
+    lua_newtable(L);
+    lua_setglobal(L, WSLUA_WTAP_RECTYPES_TABLE);
+    lua_newtable(L);
+    lua_setglobal(L, WSLUA_WTAP_PRESENCE_FLAGS_TABLE);
+    /* Add catch-all _WTAP table. */
+    lua_newtable(L);
+    lua_setglobal(L, WSLUA_WTAP_ENUMS_TABLE);
+
+    for (ep = wtap_inspect_enums(); ep->symbol != NULL; ep++) {
+
+        if (g_str_has_prefix(ep->symbol, "WTAP_ENCAP_")) {
+            add_table_symbol(WSLUA_WTAP_ENCAPS_TABLE, ep->symbol + strlen("WTAP_ENCAP_"), ep->value);
+        }
+        else if (g_str_has_prefix(ep->symbol, "WTAP_TSPREC_")) {
+            add_table_symbol(WSLUA_WTAP_TSPREC_TABLE, ep->symbol + strlen("WTAP_TSPREC_"), ep->value);
+        }
+        else if (g_str_has_prefix(ep->symbol, "WTAP_COMMENT_")) {
+            add_table_symbol(WSLUA_WTAP_COMMENTS_TABLE, ep->symbol + strlen("WTAP_COMMENT_"), ep->value);
+        }
+        else if (g_str_has_prefix(ep->symbol, "REC_TYPE_")) {
+            add_table_symbol(WSLUA_WTAP_RECTYPES_TABLE, ep->symbol + strlen("REC_TYPE_"), ep->value);
+        }
+        else if (g_str_has_prefix(ep->symbol, "WTAP_HAS_")) {
+            add_table_symbol(WSLUA_WTAP_PRESENCE_FLAGS_TABLE, ep->symbol + strlen("WTAP_HAS_"), ep->value);
+        }
+        add_table_symbol(WSLUA_WTAP_ENUMS_TABLE, ep->symbol, ep->value);
+    }
+}
+
 void wslua_init(register_cb cb, gpointer client_data) {
     gchar* filename;
     const funnel_ops_t* ops = funnel_get_funnel_ops();
@@ -846,6 +1138,9 @@ void wslua_init(register_cb cb, gpointer client_data) {
         { &hf_wslua_text,
           { "Wireshark Lua text",     "_ws.lua.text",
             FT_NONE, BASE_NONE, NULL, 0x0, NULL, HFILL }},
+    };
+    static gint *ett[] = {
+            &ett_wslua_traceback,
     };
 
     static ei_register_info ei[] = {
@@ -971,6 +1266,7 @@ void wslua_init(register_cb cb, gpointer client_data) {
     if (first_time) {
         proto_lua = proto_register_protocol("Lua Dissection", "Lua Dissection", "_ws.lua");
         proto_register_field_array(proto_lua, hf, array_length(hf));
+        proto_register_subtree_array(ett, array_length(ett));
         expert_lua = expert_register_protocol(proto_lua);
         expert_register_field_array(expert_lua, ei, array_length(ei));
     }
@@ -1020,6 +1316,8 @@ void wslua_init(register_cb cb, gpointer client_data) {
     /* special constant used by PDU reassembly handling */
     /* see dissect_lua() for notes */
     WSLUA_REG_GLOBAL_NUMBER(L,"DESEGMENT_ONE_MORE_SEGMENT",DESEGMENT_ONE_MORE_SEGMENT);
+
+    wslua_add_introspection();
 
     /* load system's init.lua */
     filename = get_datafile_path("init.lua");

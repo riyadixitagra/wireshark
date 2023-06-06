@@ -33,6 +33,8 @@ void proto_reg_handoff_pn_rt(void);
 static int proto_pn_rt     = -1;
 static gboolean pnio_desegment = TRUE;
 
+static dissector_handle_t pn_rt_handle;
+
 /* Define many header fields for pn-rt */
 static int hf_pn_rt_frame_id = -1;
 static int hf_pn_rt_cycle_counter = -1;
@@ -169,7 +171,7 @@ dissect_DataStatus(tvbuff_t *tvb, int offset, proto_tree *tree, packet_info *pin
     u8DataValid = (u8DataStatus >> 2) & 0x01;
 
     /* if PN Connect Request has been read, IOC mac is dl_src and IOD mac is dl_dst */
-    conversation = find_conversation(pinfo->num, &pinfo->dl_src, &pinfo->dl_dst, ENDPOINT_UDP, 0, 0, 0);
+    conversation = find_conversation(pinfo->num, &pinfo->dl_src, &pinfo->dl_dst, CONVERSATION_UDP, 0, 0, 0);
 
     if (conversation != NULL) {
         apdu_status_switch = (apduStatusSwitch*)conversation_get_proto_data(conversation, proto_pn_io_apdu_status);
@@ -365,7 +367,7 @@ dissect_CSF_SDU_heur(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *
 
 
     /* possible FrameID ranges for DFP */
-    if ((u16FrameID < 0x100) || (u16FrameID > 0x0FFF))
+    if ((u16FrameID < 0x0100) || (u16FrameID > 0x3FFF))
         return (FALSE);
     if (IsDFP_Frame(tvb, pinfo, u16FrameID)) {
         /* can't check this CRC, as the checked data bytes are not available */
@@ -510,7 +512,7 @@ dissect_FRAG_PDU_heur(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void 
         bMoreFollows = (u8FragStatus & 0x80) != 0;
         proto_item_append_text(status_item, ": Number: %u, %s",
             uFragNumber,
-            val_to_str( (u8FragStatus & 0x80) >> 7, pn_rt_frag_status_more_follows, "Unknown"));
+            val_to_str_const( (u8FragStatus & 0x80) >> 7, pn_rt_frag_status_more_follows, "Unknown"));
 
         /* Is this a string or a bunch of bytes? Should it be FT_BYTES? */
         proto_tree_add_string_format(sub_tree, hf_pn_rt_frag_data, tvb, offset, tvb_captured_length_remaining(tvb, offset), "data",
@@ -597,7 +599,8 @@ dissect_pn_rt(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void* data _U
     tvbuff_t    *next_tvb;
     gboolean     bCyclic;
     heur_dtbl_entry_t *hdtbl_entry;
-
+    conversation_t* conversation;
+    guint8 isTimeAware = FALSE;
 
     /* If the link-layer dissector for the protocol above us knows whether
      * the packet, as handed to it, includes a link-layer FCS, what it
@@ -638,6 +641,13 @@ dissect_pn_rt(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void* data _U
         return 0;
     }
 
+    /* TimeAwareness Information needed for differentiating RTC3 - RTSteam frames  */
+    conversation = find_conversation(pinfo->num, &pinfo->dl_src, &pinfo->dl_dst, CONVERSATION_NONE, 0, 0, 0);
+
+    if (conversation != NULL) {
+        isTimeAware = GPOINTER_TO_UINT(conversation_get_proto_data(conversation, proto_pn_io_time_aware_status));
+    }
+
     /* build some "raw" data */
     u16FrameID = tvb_get_ntohs(tvb, 0);
     if (u16FrameID <= 0x001F) {
@@ -670,24 +680,48 @@ dissect_pn_rt(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void* data _U
         pszProtSummary  = "Real-Time";
         pszProtComment  = "0x0082-0x00FF: Reserved ID";
         bCyclic         = FALSE;
-    } else if (u16FrameID <= 0x6FF) {
+    } else if (u16FrameID <= 0x6FF && !isTimeAware) {
         pszProtShort    = "PN-RTC3";
         pszProtAddInfo  = "RTC3, ";
         pszProtSummary  = "Isochronous-Real-Time";
         pszProtComment  = "0x0100-0x06FF: RED: Real-Time(class=3): non redundant, normal or DFP";
         bCyclic         = TRUE;
-    } else if (u16FrameID <= 0x0FFF) {
+    } else if (u16FrameID <= 0x0FFF && !isTimeAware) {
         pszProtShort    = "PN-RTC3";
         pszProtAddInfo  = "RTC3, ";
         pszProtSummary  = "Isochronous-Real-Time";
         pszProtComment  = "0x0700-0x0FFF: RED: Real-Time(class=3): redundant, normal or DFP";
         bCyclic         = TRUE;
-    } else if (u16FrameID <= 0x7FFF) {
+    } else if (u16FrameID <= 0x7FFF && !isTimeAware) {
         pszProtShort    = "PN-RT";
         pszProtAddInfo  = "reserved, ";
         pszProtSummary  = "Real-Time";
         pszProtComment  = "0x1000-0x7FFF: Reserved ID";
         bCyclic         = FALSE;
+    } else if (u16FrameID <= 0x0FFF && isTimeAware) {
+        pszProtShort = "PN-RT";
+        pszProtAddInfo = "reserved, ";
+        pszProtSummary = "Real-Time";
+        pszProtComment = "0x0100-0x0FFF: Reserved ID";
+        bCyclic = FALSE;
+    } else if (u16FrameID <= 0x2FFF && isTimeAware) {
+        pszProtShort = "PN-RTCS";
+        pszProtAddInfo = "RT_STREAM, ";
+        pszProtSummary = "Real-Time";
+        pszProtComment = "0x1000-0x2FFF: RT_CLASS_STREAM";
+        bCyclic = TRUE;
+    } else if (u16FrameID <= 0x37FF && isTimeAware) {
+        pszProtShort = "PN-RT";
+        pszProtAddInfo = "reserved, ";
+        pszProtSummary = "Real-Time";
+        pszProtComment = "0x3000-0x37FF: Reserved ID";
+        bCyclic = FALSE;
+    } else if (u16FrameID <= 0x3FFF && isTimeAware) {
+        pszProtShort = "PN-RTCS";
+        pszProtAddInfo = "RT_STREAM, ";
+        pszProtSummary = "Real-Time";
+        pszProtComment = "0x3800-0x3FFF: RT_CLASS_STREAM";
+        bCyclic = TRUE;
     } else if (u16FrameID <= 0xBBFF) {
         pszProtShort    = "PN-RTC1";
         pszProtAddInfo  = "RTC1, ";
@@ -980,7 +1014,7 @@ proto_register_pn_rt(void)
             NULL, HFILL }},
 
         { &hf_pn_rt_data_status_res3,
-          { "Reserved_1 (should be zero)", "pn_rt.ds_res3",
+          { "Reserved_3 (should be zero)", "pn_rt.ds_res3",
             FT_UINT8, BASE_HEX, 0, 0x08,
             NULL, HFILL }},
 
@@ -1110,6 +1144,7 @@ proto_register_pn_rt(void)
 
     proto_pn_rt = proto_register_protocol("PROFINET Real-Time Protocol",
                                           "PN-RT", "pn_rt");
+    pn_rt_handle = register_dissector("pn_rt", dissect_pn_rt, proto_pn_rt);
 
     proto_register_field_array(proto_pn_rt, hf, array_length(hf));
     proto_register_subtree_array(ett, array_length(ett));
@@ -1145,10 +1180,6 @@ proto_register_pn_rt(void)
 void
 proto_reg_handoff_pn_rt(void)
 {
-    dissector_handle_t pn_rt_handle;
-
-    pn_rt_handle = create_dissector_handle(dissect_pn_rt, proto_pn_rt);
-
     dissector_add_uint("ethertype", ETHERTYPE_PROFINET, pn_rt_handle);
     dissector_add_uint_with_preference("udp.port", PROFINET_UDP_PORT, pn_rt_handle);
 

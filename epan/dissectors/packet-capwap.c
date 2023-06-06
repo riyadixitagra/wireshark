@@ -23,10 +23,13 @@
 void proto_register_capwap_control(void);
 void proto_reg_handoff_capwap(void);
 
+static dissector_handle_t capwap_control_handle;
+static dissector_handle_t capwap_data_handle;
+
 #define UDP_PORT_CAPWAP_CONTROL 5246
 #define UDP_PORT_CAPWAP_DATA 5247
 
-static guint global_capwap_data_udp_port = UDP_PORT_CAPWAP_DATA;
+static range_t *global_capwap_data_udp_ports = NULL;
 static gboolean global_capwap_draft_8_cisco = FALSE;
 static gboolean global_capwap_reassemble = TRUE;
 static gboolean global_capwap_swap_frame_control = TRUE;
@@ -1248,7 +1251,7 @@ dissect_capwap_data_message_bindings_ieee80211(tvbuff_t *tvb, proto_tree *data_m
     proto_item *data_message_binding_item, *ti;
     proto_tree *sub_data_message_binding_tree;
 
-    if (global_capwap_data_udp_port == pinfo->destport)
+    if (value_is_in_range(global_capwap_data_udp_ports, pinfo->destport))
     {
         guint16 data_rate;
         /* (WTP -> AC) IEEE 802.11 Frame Info */
@@ -3373,7 +3376,7 @@ dissect_capwap_data(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void* d
 static void
 apply_capwap_prefs(void)
 {
-  global_capwap_data_udp_port = prefs_get_uint_value("capwap.data", "udp.port");
+  global_capwap_data_udp_ports = prefs_get_range_value("capwap.data", "udp.port");
 }
 
 void
@@ -5761,15 +5764,13 @@ proto_register_capwap_control(void)
         "Swap frame control bytes (needed for some APs).",
         &global_capwap_swap_frame_control);
 
+    capwap_control_handle = register_dissector("capwap", dissect_capwap_control, proto_capwap_control);
+    capwap_data_handle    = register_dissector("capwap.data", dissect_capwap_data, proto_capwap_data);
 }
 
 void
 proto_reg_handoff_capwap(void)
 {
-    dissector_handle_t capwap_control_handle, capwap_data_handle;
-
-    capwap_control_handle = create_dissector_handle(dissect_capwap_control, proto_capwap_control);
-    capwap_data_handle    = create_dissector_handle(dissect_capwap_data, proto_capwap_data);
     dtls_handle           = find_dissector_add_dependency("dtls", proto_capwap_control);
     find_dissector_add_dependency("dtls", proto_capwap_data);
     ieee8023_handle       = find_dissector_add_dependency("eth_withoutfcs", proto_capwap_data);

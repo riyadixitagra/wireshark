@@ -30,17 +30,12 @@
 #include "config.h"
 
 #include <errno.h>
-#include <ctype.h>
 
-#include <epan/epan.h>
-#include <epan/proto.h>
 #include <epan/packet.h>
 #include <epan/prefs.h>
 #include <epan/expert.h>
-#include <epan/wmem_scopes.h>
 #include <wsutil/file_util.h>
 #include <wsutil/report_message.h>
-#include <wiretap/wtap-int.h>
 
 #include "packet-snort-config.h"
 
@@ -417,7 +412,7 @@ static void snort_reaper(GPid pid, gint status _U_, gpointer data)
         session->working = session->running = FALSE;
         /* XXX, cleanup */
     } else {
-        g_print("Errrrmm snort_reaper() %d != %d\n", session->pid, pid);
+        g_print("Errrrmm snort_reaper() %"PRIdMAX" != %"PRIdMAX"\n", (intmax_t)session->pid, (intmax_t)pid);
     }
 
     /* Close the snort pid (may only make a difference on Windows?) */
@@ -692,7 +687,7 @@ static guint get_reassembled_in_frame(proto_tree *tree)
             for (i=0; i< items->len; i++) {
                 field_info *field = (field_info *)g_ptr_array_index(items,i);
                 if (strcmp(field->hfinfo->abbrev, "tcp.reassembled_in") == 0) {
-                    value = field->value.value.uinteger;
+                    value = fvalue_get_uinteger(field->value);
                     break;
                 }
             }
@@ -1089,7 +1084,7 @@ static const char *get_user_comment_string(proto_tree *tree)
             for (i=0; i< items->len; i++) {
                 field_info *field = (field_info *)g_ptr_array_index(items,i);
                 if (strcmp(field->hfinfo->abbrev, "frame.comment") == 0) {
-                    value = field->value.value.string;
+                    value = fvalue_get_string(field->value);
                     break;
                 }
                 /* This is the only item that can come before "frame.comment", so otherwise break out */
@@ -1191,9 +1186,6 @@ snort_dissector(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *data 
 
             rec.rec_header.packet_header.caplen = tvb_captured_length(tvb);
             rec.rec_header.packet_header.len = tvb_reported_length(tvb);
-            if (current_session.pdh->encap != rec.rec_header.packet_header.pkt_encap) {
-                /* XXX, warning! convert? */
-            }
 
             /* Dump frame into snort's stdin */
             if (!wtap_dump(current_session.pdh, &rec, tvb_get_ptr(tvb, 0, tvb_reported_length(tvb)), &write_err, &err_info)) {

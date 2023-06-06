@@ -727,6 +727,9 @@ void proto_register_autosar_nm(void)
   prefs_register_range_preference(autosar_nm_module, "ipdum.pdu.id", "AUTOSAR I-PduM PDU IDs",
       "I-PDU Multiplexer PDU IDs.",
       &g_autosar_nm_ipdum_pdus, 0xffffffff);
+
+  nm_handle = register_dissector("autosar-nm", dissect_autosar_nm, proto_autosar_nm);
+  nm_handle_can = register_dissector("autosar-nm.can", dissect_autosar_nm_can, proto_autosar_nm);
 }
 
 void proto_reg_handoff_autosar_nm(void)
@@ -734,14 +737,12 @@ void proto_reg_handoff_autosar_nm(void)
   static gboolean initialized = FALSE;
 
   if (!initialized) {
-      nm_handle = create_dissector_handle(dissect_autosar_nm, proto_autosar_nm);
       dissector_add_for_decode_as_with_preference("udp.port", nm_handle);
 
-      nm_handle_can = create_dissector_handle(dissect_autosar_nm_can, proto_autosar_nm);
       dissector_add_for_decode_as("can.subdissector", nm_handle_can);
 
       /* heuristics default on since they do nothing without IDs being configured */
-      heur_dissector_add("can", dissect_autosar_nm_can_heur, "AUTOSAR over CAN", "autosar_nm_can_heur", proto_autosar_nm, HEURISTIC_ENABLE);
+      heur_dissector_add("can", dissect_autosar_nm_can_heur, "AUTOSAR NM over CAN", "autosar_nm_can_heur", proto_autosar_nm, HEURISTIC_ENABLE);
 
       initialized = TRUE;
   } else {

@@ -623,7 +623,7 @@ typedef enum
     DIS_TDL_TYPE_TCDL                         = 64,
     DIS_TDL_TYPE_LLAPI                        = 65,
     DIS_TDL_TYPE_WEAPONS_DL                   = 66,
-    DIS_TDL_TYPE_AIS                          = 67, 
+    DIS_TDL_TYPE_AIS                          = 67,
     DIS_TDL_TYPE_GC3                          = 99,
     DIS_TDL_TYPE_LINK16_STD                   = 100,
     DIS_TDL_TYPE_LINK16_EDR                   = 101,
@@ -879,6 +879,14 @@ static const value_string DIS_PDU_RadioTransmitState_Strings[] =
     {0,    "Off" },
     {1,    "On but not transmitting" },
     {2,    "On and transmitting" },
+    {0,    NULL }
+};
+
+static const value_string DIS_PDU_RadioReceiveState_Strings[] =
+{
+    {0,    "Off" },
+    {1,    "On but not receiving" },
+    {2,    "On and receiving" },
     {0,    NULL }
 };
 
@@ -4185,13 +4193,6 @@ static const value_string DIS_PDU_IffChangeIndicator_Strings[] =
     {  0, NULL }
 };
 
-static const value_string DIS_PDU_IffNoYes_Strings[] =
-{
-    {  0, "No" },
-    {  1, "Yes" },
-    {  0, NULL }
-};
-
 static const value_string DIS_PDU_IffHeartbeat_Strings[] =
 {
     {  0, "No Heartbeat" },
@@ -4212,13 +4213,6 @@ static const value_string DIS_PDU_IffSimulation_Mode_Strings[] =
 {
     {  0, "Regeneration" },
     {  1, "Interactive" },
-    {  0, NULL }
-};
-
-static const value_string DIS_PDU_IffOffOn_Strings[] =
-{
-    {  0, "Off" },
-    {  1, "On" },
     {  0, NULL }
 };
 
@@ -4437,6 +4431,7 @@ static int hf_dis_em_location_y = -1;
 static int hf_dis_em_location_z = -1;
 static int hf_dis_beam_function = -1;
 static int hf_dis_radio_id = -1;
+static int hf_dis_transmitter_radio_id = -1;
 static int hf_dis_ens = -1;
 static int hf_dis_ens_class = -1;
 static int hf_dis_ens_type = -1;
@@ -4450,6 +4445,7 @@ static int hf_dis_radio_category = -1;
 static int hf_dis_nomenclature_version = -1;
 static int hf_dis_nomenclature = -1;
 static int hf_dis_radio_transmit_state = -1;
+static int hf_dis_radio_receive_state = -1;
 static int hf_dis_radio_input_source = -1;
 static int hf_dis_antenna_location_x = -1;
 static int hf_dis_antenna_location_y = -1;
@@ -4462,6 +4458,7 @@ static int hf_dis_antenna_pattern_length = -1;
 static int hf_dis_transmit_frequency = -1;
 static int hf_dis_transmit_freq_bandwidth = -1;
 static int hf_dis_transmit_power = -1;
+static int hf_dis_receive_power = -1;
 static int hf_dis_spread_spectrum_usage = -1;
 static int hf_dis_frequency_hopping = -1;
 static int hf_dis_pseudo_noise_modulation = -1;
@@ -6956,7 +6953,7 @@ static int dissect_DIS_PARSER_IFF_PDU(tvbuff_t *tvb, packet_info *pinfo, proto_t
     }
 
     if (altitude || (parameter_5 & 0x2000)) col_append_fstr(pinfo->cinfo, COL_INFO, ", C=FL%d", altitude);
-   
+
     if (parameter_6)
     {
         if (tcas_acas_indicator == 0)
@@ -6970,7 +6967,7 @@ static int dissect_DIS_PARSER_IFF_PDU(tvbuff_t *tvb, packet_info *pinfo, proto_t
                 col_append_str(pinfo->cinfo, COL_INFO, ", TCAS II");
             }
         }
-        else 
+        else
         {
             if (tcas_acas_type == 1)
             {
@@ -7244,6 +7241,36 @@ static int dissect_DIS_PARSER_SIGNAL_PDU(tvbuff_t *tvb, packet_info *pinfo, prot
         offset += tvb_reported_length_remaining(tvb, offset);
     }
     /* ****ck******* need to look for padding bytes */
+
+    return offset;
+}
+
+static int dissect_DIS_PARSER_RECEIVER_PDU(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, int offset)
+{
+    guint32 radioID, disRadioReceiveState;
+
+    offset = parseField_Entity(tvb, tree, offset, "Entity ID");
+
+    proto_tree_add_item(tree, hf_dis_radio_id, tvb, offset, 2, ENC_BIG_ENDIAN);
+    radioID = tvb_get_ntohs(tvb, offset);
+    col_append_fstr( pinfo->cinfo, COL_INFO, ", RadioID=%u", radioID);
+    offset += 2;
+
+    disRadioReceiveState = tvb_get_ntohs(tvb, offset);
+    proto_tree_add_item(tree, hf_dis_radio_receive_state, tvb, offset, 2, ENC_BIG_ENDIAN);
+    col_append_fstr( pinfo->cinfo, COL_INFO, ", Receive State=%s", val_to_str_const(disRadioReceiveState, DIS_PDU_RadioReceiveState_Strings, "Unknown Receive State"));
+    offset += 2;
+
+    proto_tree_add_item(tree, hf_dis_padding, tvb, offset, 2, ENC_NA);
+    offset += 2;
+
+    proto_tree_add_item(tree, hf_dis_receive_power, tvb, offset, 4, ENC_BIG_ENDIAN);
+    offset += 4;
+
+    offset = parseField_Entity(tvb, tree, offset, "Transmitter ID");
+
+    proto_tree_add_item(tree, hf_dis_transmitter_radio_id, tvb, offset, 2, ENC_BIG_ENDIAN);
+    offset += 2;
 
     return offset;
 }
@@ -8230,6 +8257,8 @@ static gint parseField_VariableRecord(tvbuff_t *tvb, proto_tree *tree, gint offs
 
 void proto_register_dis(void);
 
+static dissector_handle_t dis_dissector_handle;
+
 static const true_false_string dis_modulation_spread_spectrum = {
     "Spread Spectrum modulation in use",
     "Spread Spectrum modulation not in use"
@@ -8434,8 +8463,8 @@ static gint parse_pdu_payload(tvbuff_t* tvb, packet_info* pinfo, proto_tree* tre
         return dissect_DIS_PARSER_ELECTROMAGNETIC_EMISSION_PDU(tvb, pinfo, tree, offset);
     case DIS_PDUTYPE_UNDERWATER_ACOUSTIC:
         return dissect_DIS_PARSER_UNDERWATER_ACOUSTIC_PDU(tvb, pinfo, tree, offset);
-    
-    /* IFF PDU needs the header information to be parsed, so it is handled separately. 
+
+    /* IFF PDU needs the header information to be parsed, so it is handled separately.
      *    case DIS_PDUTYPE_IFF:
      */
 
@@ -8447,6 +8476,8 @@ static gint parse_pdu_payload(tvbuff_t* tvb, packet_info* pinfo, proto_tree* tre
     case DIS_PDUTYPE_SIGNAL:
     case DIS_PDUTYPE_INTERCOM_SIGNAL:
         return dissect_DIS_PARSER_SIGNAL_PDU(tvb, pinfo, tree, offset);
+    case DIS_PDUTYPE_RECEIVER:
+        return dissect_DIS_PARSER_RECEIVER_PDU(tvb, pinfo, tree, offset);
     case DIS_PDUTYPE_INTERCOM_CONTROL:
         return dissect_DIS_PARSER_INTERCOM_CONTROL_PDU(tvb, pinfo, tree, offset);
     /* DIS Warfare PDUs */
@@ -8562,7 +8593,7 @@ static gint dissect_dis(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, voi
      * or default to "Unknown".
       */
     pduString = val_to_str_ext_const(header.pduType, &DIS_PDU_Type_Strings_Ext, "Unknown");
-    
+
     /* set the basic info column (pdu type) */
     col_add_fstr(pinfo->cinfo, COL_INFO, "PDUType: %d \t ", header.pduType);
 
@@ -8577,7 +8608,7 @@ static gint dissect_dis(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, voi
         /* Locate the string name for the PO PDU type enumeration,
          * or default to "Unknown".
          */
-        pduString = val_to_str(persistentObjectPduType, DIS_PDU_PersistentObjectType_Strings, "Unknown");
+        pduString = val_to_str_const(persistentObjectPduType, DIS_PDU_PersistentObjectType_Strings, "Unknown");
 
         /* Append name of persistent PDU to the basic info column */
         col_append_str(pinfo->cinfo, COL_INFO, pduString);
@@ -9069,6 +9100,11 @@ void proto_register_dis(void)
                 FT_UINT16, BASE_DEC, NULL, 0x0,
                 NULL, HFILL }
             },
+            { &hf_dis_transmitter_radio_id,
+              { "Transmitter Radio ID",  "dis.radio.transmitter_radio_id",
+                FT_UINT16, BASE_DEC, NULL, 0x0,
+                NULL, HFILL }
+            },
             { &hf_dis_ens,
               { "Encoding Scheme",  "dis.radio.encoding_scheme",
                 FT_UINT16, BASE_HEX, NULL, 0x0,
@@ -9134,6 +9170,11 @@ void proto_register_dis(void)
                 FT_UINT8, BASE_DEC, VALS(DIS_PDU_RadioTransmitState_Strings), 0x0,
                 NULL, HFILL }
             },
+            { &hf_dis_radio_receive_state,
+              { "Radio Receive State", "dis.radio.receive_state",
+                FT_UINT16, BASE_DEC, VALS(DIS_PDU_RadioReceiveState_Strings), 0x0,
+                NULL, HFILL }
+            },
             { &hf_dis_radio_input_source,
               { "Radio Input Source", "dis.radio.input_source",
                 FT_UINT8, BASE_DEC, VALS(DIS_PDU_RadioInputSource_Strings), 0x0,
@@ -9191,6 +9232,11 @@ void proto_register_dis(void)
             },
             { &hf_dis_transmit_power,
               { "Transmit Power", "dis.transmit_power",
+                FT_FLOAT, BASE_NONE, NULL, 0x0,
+                NULL, HFILL}
+            },
+            { &hf_dis_receive_power,
+              { "Receive Power", "dis.receive_power",
                 FT_FLOAT, BASE_NONE, NULL, 0x0,
                 NULL, HFILL}
             },
@@ -9456,17 +9502,17 @@ void proto_register_dis(void)
             },
             { &hf_appearance_landform_head_lights,
               { "Head Lights", "dis.appearance.landform.head_lights",
-                FT_UINT32, BASE_DEC, VALS(DIS_PDU_IffOffOn_Strings), 0x00001000,
+                FT_BOOLEAN, 32, TFS(&tfs_on_off), 0x00001000,
                 NULL, HFILL}
             },
             { &hf_appearance_landform_tail_lights,
               { "Tail Lights", "dis.appearance.landform.tail_lights",
-                FT_UINT32, BASE_DEC, VALS(DIS_PDU_IffOffOn_Strings), 0x00002000,
+                FT_BOOLEAN, 32, TFS(&tfs_on_off), 0x00002000,
                 NULL, HFILL}
             },
             { &hf_appearance_landform_brake_lights,
               { "Brake Lights", "dis.appearance.landform.brake_lights",
-                FT_UINT32, BASE_DEC, VALS(DIS_PDU_IffOffOn_Strings), 0x00004000,
+                FT_BOOLEAN, 32, TFS(&tfs_on_off), 0x00004000,
                 NULL, HFILL}
             },
             { &hf_appearance_landform_flaming,
@@ -9516,22 +9562,22 @@ void proto_register_dis(void)
             },
             { &hf_appearance_landform_blackout_lights,
               { "Blackout Lights", "dis.appearance.landform.blackout_lights",
-                FT_UINT32, BASE_DEC, VALS(DIS_PDU_IffOffOn_Strings), 0x04000000,
+                FT_BOOLEAN, 32, TFS(&tfs_on_off), 0x04000000,
                 NULL, HFILL}
             },
             { &hf_appearance_landform_blackout_brake_lights,
               { "Blackout Brake Lights", "dis.appearance.landform.blackout_brake_lights",
-                FT_UINT32, BASE_DEC, VALS(DIS_PDU_IffOffOn_Strings), 0x08000000,
+                FT_BOOLEAN, 32, TFS(&tfs_on_off), 0x08000000,
                 NULL, HFILL}
             },
             { &hf_appearance_landform_spot_lights,
               { "Spot_lights", "dis.appearance.landform.spot_lights",
-                FT_UINT32, BASE_DEC, VALS(DIS_PDU_IffOffOn_Strings), 0x10000000,
+                FT_BOOLEAN, 32, TFS(&tfs_on_off), 0x10000000,
                 NULL, HFILL}
             },
             { &hf_appearance_landform_interior_lights,
               { "Interior_lights", "dis.appearance.landform.interior_lights",
-                FT_UINT32, BASE_DEC, VALS(DIS_PDU_IffOffOn_Strings), 0x20000000,
+                FT_BOOLEAN, 32, TFS(&tfs_on_off), 0x20000000,
                 NULL, HFILL}
             },
             { &hf_appearance_landform_surrender_state,
@@ -9766,7 +9812,7 @@ void proto_register_dis(void)
             },
             { &hf_appearance_lifeform_flash_lights,
               {"Flash Lights", "dis.appearance.lifeform.flash_lights",
-               FT_UINT32, BASE_DEC, VALS(DIS_PDU_IffOffOn_Strings), 0x00001000,
+               FT_BOOLEAN, 32, TFS(&tfs_on_off), 0x00001000,
                NULL, HFILL}
             },
             { &hf_appearance_lifeform_state,
@@ -10013,7 +10059,7 @@ void proto_register_dis(void)
                 NULL, HFILL},
             },
             { &hf_dis_signal_link16_stn,
-              { "Source Track Number", "dis.signal.link16.stn", FT_UINT32, BASE_OCT, NULL, 0x7FFF0,
+              { "Source Track Number", "dis.signal.link16.stn", FT_UINT32, BASE_OCT, NULL, 0x0007FFF0,
                 NULL, HFILL },
             },
             { &hf_dis_signal_link16_sdusn,
@@ -10582,17 +10628,17 @@ void proto_register_dis(void)
             },
             { &hf_dis_iff_change_indicator,
               { "Change Indicator",  "dis.iff.change_indicator",
-                FT_UINT8, BASE_DEC, VALS(DIS_PDU_IffChangeIndicator_Strings), 0x1,
+                FT_UINT8, BASE_DEC, VALS(DIS_PDU_IffChangeIndicator_Strings), 0x01,
                 NULL, HFILL }
             },
             { &hf_dis_iff_alternate_mode_4,
               { "Alternate Mode 4",  "dis.iff.alternate_mode_4",
-                FT_UINT8, BASE_DEC, VALS(DIS_PDU_IffNoYes_Strings), 0x2,
+                FT_BOOLEAN, 8, TFS(&tfs_yes_no), 0x02,
                 NULL, HFILL }
             },
             { &hf_dis_iff_alternate_mode_c,
               { "Alternate Mode C",  "dis.iff.alternate_mode_c",
-               FT_UINT8, BASE_DEC, VALS(DIS_PDU_IffNoYes_Strings), 0x4,
+               FT_BOOLEAN, 8, TFS(&tfs_yes_no), 0x04,
                NULL, HFILL }
             },
             { &hf_dis_iff_heartbeat_indicator,
@@ -10617,7 +10663,7 @@ void proto_register_dis(void)
             },
             { &hf_dis_iff_test_mode,
               { "Test Mode",  "dis.iff.test_mode",
-                FT_UINT8, BASE_DEC, VALS(DIS_PDU_IffOffOn_Strings), 0x80,
+                FT_BOOLEAN, 8, TFS(&tfs_on_off), 0x80,
                 NULL, HFILL }
             },
             { &hf_dis_iff_system_designator,
@@ -10637,7 +10683,7 @@ void proto_register_dis(void)
             },
             { &hf_dis_iff_system_status_system_onoff,
               { "System On/Off",  "dis.iff.system_status.system_onoff",
-                FT_UINT8, BASE_DEC, VALS(DIS_PDU_IffOffOn_Strings), 0x1,
+                FT_BOOLEAN, 8, TFS(&tfs_on_off), 0x01,
                 NULL, HFILL }
             },
             { &hf_dis_iff_system_status_parameter_1,
@@ -10727,22 +10773,22 @@ void proto_register_dis(void)
             },
             { &hf_dis_iff_modifier_emergency,
               { "Military Emergency",  "dis.iff.modifier.emergency",
-                FT_UINT8, BASE_DEC, VALS(DIS_PDU_IffOffOn_Strings), 0x2,
+                FT_BOOLEAN, 8, TFS(&tfs_on_off), 0x02,
                 NULL, HFILL }
             },
             { &hf_dis_iff_modifier_ident,
               { "Ident/Squawk Flash",  "dis.iff.modifier_ident",
-                FT_UINT8, BASE_DEC, VALS(DIS_PDU_IffOffOn_Strings), 0x4,
+                FT_BOOLEAN, 8, TFS(&tfs_on_off), 0x04,
                 NULL, HFILL }
             },
             { &hf_dis_iff_modifier_sti,
               { "STI",  "dis.iff.modifier_sti",
-                FT_UINT8, BASE_DEC, VALS(DIS_PDU_IffOffOn_Strings), 0x8,
+                FT_BOOLEAN, 8, TFS(&tfs_on_off), 0x08,
                 NULL, HFILL }
             },
             { &hf_dis_iff_modifier_unmanned_aircraft,
               { "Unmanned Aircraft",  "dis.iff.modifier_unmanned_aircraft",
-                FT_UINT8, BASE_DEC, VALS(DIS_PDU_IffOffOn_Strings), 0x10,
+                FT_BOOLEAN, 8, TFS(&tfs_on_off), 0x10,
                 NULL, HFILL }
             },
             { &hf_dis_iff_parameter_1,
@@ -10777,22 +10823,22 @@ void proto_register_dis(void)
             },
             { &hf_dis_iff_mode_code_element_1,
               { "Code Element 1",  "dis.iff.mode_code.element_1",
-                FT_UINT16, BASE_OCT, NULL, 0x7,
+                FT_UINT16, BASE_OCT, NULL, 0x0007,
                 NULL, HFILL }
             },
             { &hf_dis_iff_mode_code_element_2,
               { "Code Element 2",  "dis.iff.mode_code.element_2",
-                FT_UINT16, BASE_OCT, NULL, 0x38,
+                FT_UINT16, BASE_OCT, NULL, 0x0038,
                 NULL, HFILL }
             },
             { &hf_dis_iff_mode_code_element_3,
               { "Code Element 3",  "dis.iff.mode_code.element_3",
-                FT_UINT16, BASE_OCT, NULL, 0x1C0,
+                FT_UINT16, BASE_OCT, NULL, 0x01C0,
                 NULL, HFILL }
             },
             { &hf_dis_iff_mode_code_element_4,
               { "Code Element 4",  "dis.iff.mode_code.element_4",
-                FT_UINT16, BASE_OCT, NULL, 0xE00,
+                FT_UINT16, BASE_OCT, NULL, 0x0E00,
                 NULL, HFILL }
             },
             { &hf_dis_iff_rrb,
@@ -10802,17 +10848,17 @@ void proto_register_dis(void)
             },
             { &hf_dis_iff_rrb_rrb_code,
               { "RRB Code",  "dis.iff.rrb.rrb_code",
-                FT_UINT16, BASE_DEC, NULL, 0x1F,
+                FT_UINT16, BASE_DEC, NULL, 0x001F,
                 NULL, HFILL }
             },
             { &hf_dis_iff_rrb_power_reduction_indicator,
               { "Power Reduction Indicator",  "dis.iff.rrb.power_reduction_indicator",
-                FT_UINT16, BASE_DEC, VALS(DIS_PDU_IffOffOn_Strings), 0x800,
+                FT_BOOLEAN, 16, TFS(&tfs_on_off), 0x0800,
                 NULL, HFILL }
             },
             { &hf_dis_iff_rrb_radar_enhancement_indicator,
               { "Radar Enhancement Indicator",  "dis.iff.rrb.radar_enhancement_indicator",
-                FT_UINT16, BASE_DEC, VALS(DIS_PDU_IffOffOn_Strings), 0x1000,
+                FT_BOOLEAN, 16, TFS(&tfs_on_off), 0x1000,
                 NULL, HFILL }
             },
             { &hf_dis_iff_mode_s_interrogator_identifier,
@@ -10822,17 +10868,17 @@ void proto_register_dis(void)
             },
             { &hf_dis_iff_mode_s_interrogator_identifier_primary_ic_type,
               { "Primary IC Type",  "dis.iff.mode_s_interrogator_identifier.primary_ic_type",
-                FT_UINT16, BASE_DEC, VALS(DIS_PDU_IffModeSInterrogatorIdentifierICType_Strings), 0x1,
+                FT_UINT16, BASE_DEC, VALS(DIS_PDU_IffModeSInterrogatorIdentifierICType_Strings), 0x0001,
                 NULL, HFILL }
             },
             { &hf_dis_iff_mode_s_interrogator_identifier_primary_ic_code,
               { "Primary IC Code",  "dis.iff.mode_s_interrogator_identifier.primary_ic_code",
-                 FT_UINT16, BASE_DEC, NULL, 0xFE,
+                 FT_UINT16, BASE_DEC, NULL, 0x00FE,
                  NULL, HFILL }
             },
             { &hf_dis_iff_mode_s_interrogator_identifier_secondary_ic_type,
               { "Secondary IC Type",  "dis.iff.mode_s_interrogator_identifier.secondary_ic_type",
-                FT_UINT16, BASE_DEC, VALS(DIS_PDU_IffModeSInterrogatorIdentifierICType_Strings), 0x100,
+                FT_UINT16, BASE_DEC, VALS(DIS_PDU_IffModeSInterrogatorIdentifierICType_Strings), 0x0100,
                 NULL, HFILL }
             },
             { &hf_dis_iff_mode_s_interrogator_identifier_secondary_ic_code,
@@ -10842,17 +10888,17 @@ void proto_register_dis(void)
             },
             { &hf_dis_iff_mode_4,
               { "Mode 4 Code",  "dis.iff.mode_4",
-                FT_UINT16, BASE_DEC, VALS(DIS_PDU_IffMode4_Strings), 0xFFF,
+                FT_UINT16, BASE_DEC, VALS(DIS_PDU_IffMode4_Strings), 0x0FFF,
                 NULL, HFILL }
             },
             { &hf_dis_iff_mode_c_altitude_indicator,
               { "Altitude Indicator",  "dis.iff.mode_c.altitude_indicator",
-               FT_UINT16, BASE_DEC, VALS(DIS_PDU_IffModeCAltitudeIndicator_Strings), 0x1,
+               FT_UINT16, BASE_DEC, VALS(DIS_PDU_IffModeCAltitudeIndicator_Strings), 0x0001,
                NULL, HFILL }
             },
             { &hf_dis_iff_mode_c_altitude,
               { "Mode C Altitude",  "dis.iff.mode_c.altitude",
-               FT_UINT16, BASE_DEC, VALS(DIS_PDU_IffModeC_Strings), 0xFFE,
+               FT_UINT16, BASE_DEC, VALS(DIS_PDU_IffModeC_Strings), 0x0FFE,
                NULL, HFILL }
             },
             { &hf_dis_iff_tcas_acas,
@@ -10862,22 +10908,22 @@ void proto_register_dis(void)
             },
             { &hf_dis_iff_tcas_acas_basic_advanced_indicator,
               { "Basic/Advanced",  "dis.iff.tcas_acas.basic_advanced_indicator",
-                FT_UINT16, BASE_DEC, VALS(DIS_PDU_IffTCASACASBasicAdvanced_Strings), 0x1,
+                FT_UINT16, BASE_DEC, VALS(DIS_PDU_IffTCASACASBasicAdvanced_Strings), 0x0001,
                 NULL, HFILL }
             },
             { &hf_dis_iff_tcas_acas_tcas_acas_indicator,
               { "TCAS/ACAS",  "dis.iff.tcas_acas.tcas_acas_indicator",
-                FT_UINT16, BASE_DEC, VALS(DIS_PDU_IffTCASACASIndicator_Strings), 0x2,
+                FT_UINT16, BASE_DEC, VALS(DIS_PDU_IffTCASACASIndicator_Strings), 0x0002,
                 NULL, HFILL }
             },
             { &hf_dis_iff_tcas_acas_software_version,
               { "Software Version",  "dis.iff.tcas_acas.software_version",
-                FT_UINT16, BASE_DEC, VALS(DIS_PDU_IffTCASACASSoftwareVersion_Strings), 0x1C,
+                FT_UINT16, BASE_DEC, VALS(DIS_PDU_IffTCASACASSoftwareVersion_Strings), 0x001C,
                 NULL, HFILL }
             },
             { &hf_dis_iff_tcas_acas_tcas_acas_type,
               { "TCAS/ACAS Type",  "dis.iff.tcas_acas.tcas_acas_type",
-                FT_UINT16, BASE_DEC, VALS(DIS_PDU_IffTCASACASType_Strings), 0xE00,
+                FT_UINT16, BASE_DEC, VALS(DIS_PDU_IffTCASACASType_Strings), 0x0E00,
                 NULL, HFILL }
             },
             { &hf_dis_iff_tcas_acas_tcas_type,
@@ -10887,7 +10933,7 @@ void proto_register_dis(void)
             },
             { &hf_dis_iff_mode_status,
               { "Status",  "dis.iff.mode_status",
-                FT_UINT16, BASE_DEC, VALS(DIS_PDU_IffOffOn_Strings), 0x2000,
+                FT_BOOLEAN, 16, TFS(&tfs_on_off), 0x2000,
                 NULL, HFILL }
             },
             { &hf_dis_iff_mode_damage,
@@ -11013,6 +11059,8 @@ void proto_register_dis(void)
     proto_dis = proto_register_protocol("Distributed Interactive Simulation", "DIS", "dis");
     proto_register_field_array(proto_dis, hf, array_length(hf));
     proto_register_subtree_array(ett, array_length(ett));
+
+    dis_dissector_handle = register_dissector("dis", dissect_dis, proto_dis);
 }
 
 /* Register handoff routine for DIS dissector.  This will be invoked initially
@@ -11021,9 +11069,6 @@ void proto_register_dis(void)
  */
 void proto_reg_handoff_dis(void)
 {
-    dissector_handle_t dis_dissector_handle;
-
-    dis_dissector_handle = create_dissector_handle(dissect_dis, proto_dis);
     dissector_add_uint_with_preference("udp.port", DEFAULT_DIS_UDP_PORT, dis_dissector_handle);
 
     link16_handle = find_dissector_add_dependency("link16", proto_dis);

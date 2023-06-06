@@ -662,7 +662,8 @@ static guint global_iec60870_ioa_len = 2;
 
 /* Protocol fields to be filtered */
 static int hf_apdulen = -1;
-static int hf_apcitype = -1;
+static int hf_apcitype_i = -1;
+static int hf_apcitype_s_u = -1;
 static int hf_apciutype = -1;
 static int hf_apcitx = -1;
 static int hf_apcirx = -1;
@@ -740,6 +741,7 @@ static int hf_qcc = -1;
 static int hf_qcc_rqt = -1;
 static int hf_qcc_frz = -1;
 static int hf_qrp  = -1;
+static int hf_bcr = -1;
 static int hf_bcr_count = -1;
 static int hf_bcr_sq = -1;
 static int hf_bcr_cy = -1;
@@ -1454,14 +1456,20 @@ static void get_BSIspt(tvbuff_t *tvb, guint8 *offset, proto_tree *iec104_header_
    ==================================================================== */
 static void get_BCR(tvbuff_t *tvb, guint8 *offset, proto_tree *iec104_header_tree)
 {
-	proto_tree_add_item(iec104_header_tree, hf_bcr_count, tvb, *offset, 4, ENC_LITTLE_ENDIAN);
-	*offset += 4;
+	proto_item* ti;
+	proto_tree* bcr_tree;
 
-	proto_tree_add_item(iec104_header_tree, hf_bcr_sq, tvb, *offset, 1, ENC_LITTLE_ENDIAN);
-	proto_tree_add_item(iec104_header_tree, hf_bcr_cy, tvb, *offset, 1, ENC_LITTLE_ENDIAN);
-	proto_tree_add_item(iec104_header_tree, hf_bcr_ca, tvb, *offset, 1, ENC_LITTLE_ENDIAN);
-	proto_tree_add_item(iec104_header_tree, hf_bcr_iv, tvb, *offset, 1, ENC_LITTLE_ENDIAN);
-	*offset += 1;
+	ti = proto_tree_add_item(iec104_header_tree, hf_bcr, tvb, *offset, 4, ENC_LITTLE_ENDIAN);
+	bcr_tree = proto_item_add_subtree(ti, ett_vti);
+
+	proto_tree_add_item(bcr_tree, hf_bcr_count, tvb, *offset, 4, ENC_LITTLE_ENDIAN);
+	(*offset) += 4;
+
+	proto_tree_add_item(bcr_tree, hf_bcr_sq, tvb, *offset, 1, ENC_LITTLE_ENDIAN);
+	proto_tree_add_item(bcr_tree, hf_bcr_cy, tvb, *offset, 1, ENC_LITTLE_ENDIAN);
+	proto_tree_add_item(bcr_tree, hf_bcr_ca, tvb, *offset, 1, ENC_LITTLE_ENDIAN);
+	proto_tree_add_item(bcr_tree, hf_bcr_iv, tvb, *offset, 1, ENC_LITTLE_ENDIAN);
+	(*offset)++;
 }
 
 /* ====================================================================
@@ -1664,7 +1672,7 @@ static int dissect_iec60870_asdu(tvbuff_t *tvb, packet_info *pinfo, proto_tree *
 	it104 = proto_tree_add_item(tree, proto_iec60870_asdu, tvb, offset, -1, ENC_NA);
 	it104tree = proto_item_add_subtree(it104, ett_asdu);
 
-	res = wmem_strbuf_new_label(pinfo->pool);
+	res = wmem_strbuf_create(pinfo->pool);
 
 	/* Type identification */
 	asduh.TypeId = tvb_get_guint8(tvb, offset);
@@ -2061,7 +2069,7 @@ static int dissect_iec60870_104(tvbuff_t *tvb, packet_info *pinfo, proto_tree *t
 {
 	guint TcpLen = tvb_reported_length(tvb);
 	guint8 Start, len, type, temp8;
-	guint16 apci_txid, apci_rxid;
+	guint32 apci_txid, apci_rxid, apci_u_type;
 	guint Off;
 	proto_item *it104, *ti;
 	proto_tree *it104tree;
@@ -2073,7 +2081,7 @@ static int dissect_iec60870_104(tvbuff_t *tvb, packet_info *pinfo, proto_tree *t
 	it104 = proto_tree_add_item(tree, proto_iec60870_104, tvb, 0, -1, ENC_NA);
 	it104tree = proto_item_add_subtree(it104, ett_apci);
 
-	res = wmem_strbuf_new_label(pinfo->pool);
+	res = wmem_strbuf_create(pinfo->pool);
 
 	Start = 0;
 	for (Off = 0; Off <= TcpLen - 2; Off++) {
@@ -2105,9 +2113,9 @@ static int dissect_iec60870_104(tvbuff_t *tvb, packet_info *pinfo, proto_tree *t
 				type = temp8 & 0x03;
 
 			if (type == I_TYPE)
-				proto_tree_add_bits_item(it104tree, hf_apcitype, tvb, (Off + 2) * 8 + 7, 1, ENC_BIG_ENDIAN);
+				proto_tree_add_item(it104tree, hf_apcitype_i, tvb, Off + 2, 4, ENC_LITTLE_ENDIAN);
 			else
-				proto_tree_add_bits_item(it104tree, hf_apcitype, tvb, (Off + 2) * 8 + 6, 2, ENC_BIG_ENDIAN);
+				proto_tree_add_item(it104tree, hf_apcitype_s_u, tvb, Off + 2, 4, ENC_LITTLE_ENDIAN);
 
 			if (len <= APDU_MAX_LEN) {
 				wmem_strbuf_append_printf(res, "%s %s ",
@@ -2120,20 +2128,17 @@ static int dissect_iec60870_104(tvbuff_t *tvb, packet_info *pinfo, proto_tree *t
 
 			switch(type) {
 			case I_TYPE:
-				apci_txid = tvb_get_letohs(tvb, Off + 2) >> 1;
-				apci_rxid = tvb_get_letohs(tvb, Off + 4) >> 1;
+				proto_tree_add_item_ret_uint(it104tree, hf_apcitx, tvb, Off + 2, 4, ENC_LITTLE_ENDIAN, &apci_txid);
+				proto_tree_add_item_ret_uint(it104tree, hf_apcirx, tvb, Off + 2, 4, ENC_LITTLE_ENDIAN, &apci_rxid);
 				wmem_strbuf_append_printf(res, "(%d,%d) ", apci_txid, apci_rxid);
-				proto_tree_add_uint(it104tree, hf_apcitx, tvb, Off+2, 2, apci_txid);
-				proto_tree_add_uint(it104tree, hf_apcirx, tvb, Off+4, 2, apci_rxid);
 				break;
 			case S_TYPE:
-				apci_rxid = tvb_get_letohs(tvb, Off + 4) >> 1;
+				proto_tree_add_item_ret_uint(it104tree, hf_apcirx, tvb, Off + 2, 4, ENC_LITTLE_ENDIAN, &apci_rxid);
 				wmem_strbuf_append_printf(res, "(%d) ", apci_rxid);
-				proto_tree_add_uint(it104tree, hf_apcirx, tvb, Off+4, 2, apci_rxid);
 				break;
 			case U_TYPE:
-				wmem_strbuf_append_printf(res, "(%s) ", val_to_str_const((temp8 >> 2) & 0x3F, u_types, "<ERR>"));
-				proto_tree_add_item(it104tree, hf_apciutype, tvb, Off + 2, 1, ENC_LITTLE_ENDIAN);
+				proto_tree_add_item_ret_uint(it104tree, hf_apciutype, tvb, Off + 2, 4, ENC_LITTLE_ENDIAN, &apci_u_type);
+				wmem_strbuf_append_printf(res, "(%s) ", val_to_str_const(apci_u_type, u_types, "<ERR>"));
 				break;
 			}
 
@@ -2270,20 +2275,24 @@ proto_register_iec60870_104(void)
 		  { "ApduLen", "iec60870_104.apdulen", FT_UINT8, BASE_DEC, NULL, 0x0,
 		    "APDU Len", HFILL }},
 
-		{ &hf_apcitype,
-		  { "Type", "iec60870_104.type", FT_UINT8, BASE_HEX, VALS(apci_types), 0x00,
+		{ &hf_apcitype_i,
+		  { "Type", "iec60870_104.type", FT_UINT32, BASE_HEX, VALS(apci_types), 0x00000001,
+		    "APCI type", HFILL }},
+
+		{ &hf_apcitype_s_u,
+		  { "Type", "iec60870_104.type", FT_UINT32, BASE_HEX, VALS(apci_types), 0x00000003,
 		    "APCI type", HFILL }},
 
 		{ &hf_apciutype,
-		  { "UType", "iec60870_104.utype", FT_UINT8, BASE_HEX, VALS(u_types), 0xFC,
+		  { "UType", "iec60870_104.utype", FT_UINT32, BASE_HEX, VALS(u_types), 0x000000FC,
 		    "Apci U type", HFILL }},
 
 		{ &hf_apcitx,
-		  { "Tx", "iec60870_104.tx", FT_UINT16, BASE_DEC, NULL, 0,
+		  { "Tx", "iec60870_104.tx", FT_UINT32, BASE_DEC, NULL, 0x0000FFFE,
 		    NULL, HFILL }},
 
 		{ &hf_apcirx,
-		  { "Rx", "iec60870_104.rx", FT_UINT16, BASE_DEC, NULL, 0,
+		  { "Rx", "iec60870_104.rx", FT_UINT32, BASE_DEC, NULL, 0xFFFE0000,
 		    NULL, HFILL }},
 
 		{ &hf_apcidata,
@@ -2573,11 +2582,11 @@ proto_register_iec60870_asdu(void)
 		    NULL, HFILL }},
 
 		{ &hf_coi_r,
-		  { "R", "iec60870_asdu.coi_r", FT_UINT8, BASE_DEC, VALS(coi_r_types), 0x7F,
+		  { "R", "iec60870_asdu.coi.r", FT_UINT8, BASE_DEC, VALS(coi_r_types), 0x7F,
 		    "COI R", HFILL }},
 
 		{ &hf_coi_i,
-		  { "I", "iec60870_asdu.coi_i", FT_BOOLEAN, 8, TFS(&tfs_coi_i), 0x80,
+		  { "I", "iec60870_asdu.coi.i", FT_BOOLEAN, 8, TFS(&tfs_coi_i), 0x80,
 		    "COI I", HFILL }},
 
 		{ &hf_qoi,
@@ -2589,19 +2598,23 @@ proto_register_iec60870_asdu(void)
 		    NULL, HFILL } },
 
 		{ &hf_qcc_rqt,
-		  { "RQT", "iec60870_asdu.rqt", FT_UINT8, BASE_DEC, VALS(rqt_r_types), 0x3F,
+		  { "RQT", "iec60870_asdu.qcc.rqt", FT_UINT8, BASE_DEC, VALS(rqt_r_types), 0x3F,
 		    NULL, HFILL } },
 
 		{ &hf_qcc_frz,
-		  { "FRZ", "iec60870_asdu.frz", FT_UINT8, BASE_DEC, VALS(frz_r_types), 0xC0,
+		  { "FRZ", "iec60870_asdu.qcc.frz", FT_UINT8, BASE_DEC, VALS(frz_r_types), 0xC0,
 		    NULL, HFILL } },
 
 		{ &hf_qrp,
 		  { "QRP", "iec60870_asdu.qrp", FT_UINT8, BASE_DEC, VALS(qrp_r_types), 0,
 		    NULL, HFILL }},
 
+		{ &hf_bcr,
+		  { "BCR", "iec60870_asdu.bcr", FT_INT32, BASE_DEC, NULL, 0x0,
+		    "Binary Counter", HFILL }},
+
 		{ &hf_bcr_count,
-		  { "Binary Counter", "iec60870_asdu.bcr.count", FT_INT32, BASE_DEC, NULL, 0x0,
+		  { "Value", "iec60870_asdu.bcr.count", FT_INT32, BASE_DEC, NULL, 0x0,
 		    NULL, HFILL }},
 
 		{ &hf_bcr_sq,

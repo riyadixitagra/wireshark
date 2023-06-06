@@ -25,7 +25,7 @@
 #include <wsutil/str_util.h>
 
 #include "packet-msrp.h"
-#include "packet-http.h"
+#include "packet-media-type.h"
 
 void proto_register_msrp(void);
 void proto_reg_handoff_msrp(void);
@@ -165,14 +165,14 @@ msrp_add_address( packet_info *pinfo,
      * Check if the ip address and port combination is not
      * already registered as a conversation.
      */
-    p_conv = find_conversation( pinfo->num, addr, &null_addr, ENDPOINT_TCP, port, 0,
+    p_conv = find_conversation( pinfo->num, addr, &null_addr, CONVERSATION_TCP, port, 0,
                                 NO_ADDR_B | NO_PORT_B);
 
     /*
      * If not, create a new conversation.
      */
     if (!p_conv) {
-        p_conv = conversation_new( pinfo->num, addr, &null_addr, ENDPOINT_TCP,
+        p_conv = conversation_new( pinfo->num, addr, &null_addr, CONVERSATION_TCP,
                                    (guint32)port, 0,
                                    NO_ADDR2 | NO_PORT2);
     }
@@ -219,7 +219,7 @@ show_setup_info(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree)
     {
         /* First time, get info from conversation */
         p_conv = find_conversation(pinfo->num, &pinfo->net_dst, &pinfo->net_src,
-                                   ENDPOINT_TCP,
+                                   CONVERSATION_TCP,
                                    pinfo->destport, pinfo->srcport, 0);
 
         if (p_conv)
@@ -457,7 +457,7 @@ dissect_msrp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *data _U_
     int found_match = 0;
     gint content_type_len, content_type_parameter_str_len;
     gchar *media_type_str_lower_case = NULL;
-    http_message_info_t message_info = { HTTP_OTHERS, NULL, NULL, NULL };
+    media_content_info_t content_info = { MEDIA_CONTAINER_OTHER, NULL, NULL, NULL };
     tvbuff_t *next_tvb;
     gint parameter_offset;
     gint semi_colon_offset;
@@ -650,7 +650,7 @@ dissect_msrp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *data _U_
                                     parameter_offset++;
                                 content_type_len = semi_colon_offset - value_offset;
                                 content_type_parameter_str_len = line_end_offset - parameter_offset;
-                                message_info.media_str = tvb_get_string_enc(pinfo->pool, tvb,
+                                content_info.media_str = tvb_get_string_enc(pinfo->pool, tvb,
                                              parameter_offset, content_type_parameter_str_len, ENC_UTF_8|ENC_NA);
                             }
                             media_type_str_lower_case = ascii_strdown_inplace(
@@ -684,7 +684,7 @@ dissect_msrp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *data _U_
                 found_match = dissector_try_string(media_type_dissector_table,
                                                media_type_str_lower_case,
                                                next_tvb, pinfo,
-                                               msrp_data_tree, &message_info);
+                                               msrp_data_tree, &content_info);
                 /* If no match dump as text */
             }
             if ( found_match == 0 )

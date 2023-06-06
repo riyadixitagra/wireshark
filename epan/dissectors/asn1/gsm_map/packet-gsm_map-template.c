@@ -121,7 +121,6 @@ static int hf_gsm_map_cbs_coding_grp4_7_char_set = -1;
 static int hf_gsm_map_cbs_coding_grp4_7_class = -1;
 static int hf_gsm_map_cbs_coding_grp15_mess_code = -1;
 static int hf_gsm_map_cbs_coding_grp15_class = -1;
-static int hf_gsm_map_tmsi = -1;
 static int hf_gsm_map_ie_tag = -1;
 static int hf_gsm_map_len = -1;
 static int hf_gsm_map_disc_par = -1;
@@ -2774,7 +2773,7 @@ static void gsm_map_stat_init(stat_tap_table_ui* new_stat)
 }
 
 static tap_packet_status
-gsm_map_stat_packet(void *tapdata, packet_info *pinfo _U_, epan_dissect_t *edt _U_, const void *gmtr_ptr)
+gsm_map_stat_packet(void *tapdata, packet_info *pinfo _U_, epan_dissect_t *edt _U_, const void *gmtr_ptr, tap_flags_t flags _U_)
 {
   stat_data_t* stat_data = (stat_data_t*)tapdata;
   const gsm_map_tap_rec_t *gmtr = (const gsm_map_tap_rec_t *)gmtr_ptr;
@@ -3217,11 +3216,6 @@ void proto_register_gsm_map(void) {
           FT_UINT8,BASE_DEC, VALS(gsm_map_cbs_coding_grp15_class_vals), 0x03,
           NULL, HFILL }
       },
-      { &hf_gsm_map_tmsi,
-        { "tmsi", "gsm_map.tmsi",
-          FT_BYTES, BASE_NONE, NULL, 0,
-          "gsm_map.TMSI", HFILL }},
-
       { &hf_gsm_map_ie_tag,
         { "Tag", "gsm_map.ie_tag",
           FT_UINT8, BASE_DEC, VALS(gsm_map_tag_vals), 0,

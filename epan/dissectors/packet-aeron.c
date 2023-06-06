@@ -390,10 +390,10 @@ static aeron_transport_t * aeron_transport_add(const aeron_conversation_info_t *
     conversation_t * conv;
     wmem_map_t * session_map;
 
-    conv = find_conversation(frame, cinfo->addr1, cinfo->addr2, ENDPOINT_UDP, cinfo->port1, cinfo->port2, 0);
+    conv = find_conversation(frame, cinfo->addr1, cinfo->addr2, CONVERSATION_UDP, cinfo->port1, cinfo->port2, 0);
     if (conv == NULL)
     {
-        conv = conversation_new(frame, cinfo->addr1, cinfo->addr2, ENDPOINT_UDP, cinfo->port1, cinfo->port2, 0);
+        conv = conversation_new(frame, cinfo->addr1, cinfo->addr2, CONVERSATION_UDP, cinfo->port1, cinfo->port2, 0);
     }
     if (frame > conv->last_frame)
     {
@@ -649,13 +649,13 @@ static gboolean aeron_is_address_multicast(const address * addr)
     switch (addr->type)
     {
         case AT_IPv4:
-            if ((addr_data[0] & 0xf0) == 0xe0)
+            if (addr_data && ((addr_data[0] & 0xf0) == 0xe0))
             {
                 return (TRUE);
             }
             break;
         case AT_IPv6:
-            if (addr_data[0] == 0xff)
+            if (addr_data && (addr_data[0] == 0xff))
             {
                 return (TRUE);
             }
@@ -1808,7 +1808,6 @@ static void aeron_next_offset_report(tvbuff_t * tvb, proto_tree * tree, aeron_tr
             {
                 guint32 next_offset = term_offset + length;
                 guint32 next_offset_term_id = term_id;
-                guint32 next_offset_first_frame = 0;
                 aeron_term_t * next_offset_term = NULL;
                 proto_item * item;
 
@@ -1837,8 +1836,7 @@ static void aeron_next_offset_report(tvbuff_t * tvb, proto_tree * tree, aeron_tr
                     {
                         if (next_offset_fragment->first_frame != NULL)
                         {
-                            next_offset_first_frame = next_offset_fragment->first_frame->frame;
-                            item = proto_tree_add_uint(tree, hf_aeron_data_next_offset_first_frame, tvb, 0, 0, next_offset_first_frame);
+                            item = proto_tree_add_uint(tree, hf_aeron_data_next_offset_first_frame, tvb, 0, 0, next_offset_fragment->first_frame->frame);
                             proto_item_set_generated(item);
                         }
                     }
@@ -3356,6 +3354,8 @@ void proto_register_aeron(void)
     aeron_module = prefs_register_protocol(proto_aeron, NULL);
     aeron_heuristic_subdissector_list = register_heur_dissector_list("aeron_msg_payload", proto_aeron);
 
+    aeron_dissector_handle = register_dissector("aeron", dissect_aeron, proto_aeron);
+
     prefs_register_bool_preference(aeron_module,
         "sequence_analysis",
         "Analyze transport sequencing",
@@ -3383,7 +3383,6 @@ void proto_register_aeron(void)
 /* The registration hand-off routine */
 void proto_reg_handoff_aeron(void)
 {
-    aeron_dissector_handle = create_dissector_handle(dissect_aeron, proto_aeron);
     dissector_add_for_decode_as_with_preference("udp.port", aeron_dissector_handle);
     heur_dissector_add("udp", test_aeron_packet, "Aeron over UDP", "aeron_udp", proto_aeron, HEURISTIC_DISABLE);
 }

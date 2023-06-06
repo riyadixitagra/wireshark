@@ -8,6 +8,7 @@
  */
 
 #include "config.h"
+#include "sttype-pointer.h"
 
 #include "ftypes/ftypes.h"
 #include "syntax-tree.h"
@@ -46,17 +47,9 @@ sttype_fvalue_tostr(const void *data, gboolean pretty)
 	if (pretty)
 		repr = g_strdup(s);
 	else
-		repr = ws_strdup_printf("%s[%s]", fvalue_type_name(fvalue), s);
+		repr = ws_strdup_printf("%s <%s>", s, fvalue_type_name(fvalue));
 	g_free(s);
 	return repr;
-}
-
-static char *
-field_tostr(const void *data, gboolean pretty _U_)
-{
-	const header_field_info *hfinfo = data;
-
-	return g_strdup(hfinfo->abbrev);
 }
 
 static char *
@@ -94,17 +87,24 @@ out:
 	return ws_strdup_printf("'\\x%02lx'", num);
 }
 
+ftenum_t
+sttype_pointer_ftenum(stnode_t *node)
+{
+	switch (node->type->id) {
+		case STTYPE_FIELD:
+		case STTYPE_REFERENCE:
+			return ((header_field_info *)node->data)->type;
+		case STTYPE_FVALUE:
+			return fvalue_type_ftenum(node->data);
+		default:
+			break;
+	}
+	return FT_NONE;
+}
+
 void
 sttype_register_pointer(void)
 {
-	static sttype_t field_type = {
-		STTYPE_FIELD,
-		"FIELD",
-		NULL,
-		NULL,
-		NULL,
-		field_tostr
-	};
 	static sttype_t fvalue_type = {
 		STTYPE_FVALUE,
 		"FVALUE",
@@ -130,7 +130,6 @@ sttype_register_pointer(void)
 		charconst_tostr
 	};
 
-	sttype_register(&field_type);
 	sttype_register(&fvalue_type);
 	sttype_register(&pcre_type);
 	sttype_register(&charconst_type);

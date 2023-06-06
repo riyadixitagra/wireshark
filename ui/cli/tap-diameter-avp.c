@@ -31,7 +31,7 @@
 #include <glib.h>
 
 #include <wsutil/strtoi.h>
-#include <ui/cmdarg_err.h>
+#include <wsutil/cmdarg_err.h>
 
 #include <epan/packet_info.h>
 #include <epan/tap.h>
@@ -94,10 +94,10 @@ diam_tree_to_csv(proto_node *node, gpointer data)
 		fprintf(stderr, "traverse end: hfi not found. node='%p'\n", (void *)node);
 		return FALSE;
 	}
-	ftype = fvalue_type_ftenum(&fi->value);
+	ftype = fvalue_type_ftenum(fi->value);
 	if (ftype != FT_NONE && ftype != FT_PROTOCOL) {
 		/* convert value to string */
-		val_tmp = fvalue_to_string_repr(NULL, &fi->value, FTREPR_DISPLAY, hfi->display);
+		val_tmp = fvalue_to_string_repr(NULL, fi->value, FTREPR_DISPLAY, hfi->display);
 		if (val_tmp)
 		{
 			val_str = g_strdup(val_tmp);
@@ -113,7 +113,7 @@ diam_tree_to_csv(proto_node *node, gpointer data)
 }
 
 static tap_packet_status
-diameteravp_packet(void *pds, packet_info *pinfo, epan_dissect_t *edt _U_, const void *pdi)
+diameteravp_packet(void *pds, packet_info *pinfo, epan_dissect_t *edt _U_, const void *pdi, tap_flags_t flags _U_)
 {
 	tap_packet_status ret = TAP_PACKET_DONT_REDRAW;
 	double resp_time = 0.;

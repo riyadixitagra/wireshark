@@ -12,6 +12,7 @@
  */
 
 #include <config.h>
+#define WS_LOG_DOMAIN  LOG_DOMAIN_MAIN
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -24,8 +25,8 @@
 
 #include <wiretap/wtap.h>
 
-#include <ui/clopts_common.h>
-#include <ui/cmdarg_err.h>
+#include <wsutil/clopts_common.h>
+#include <wsutil/cmdarg_err.h>
 #include <wsutil/filesystem.h>
 #include <wsutil/file_util.h>
 #include <wsutil/privileges.h>
@@ -34,7 +35,7 @@
 #include <wsutil/wslog.h>
 
 #include <cli_main.h>
-#include <ui/version_info.h>
+#include <wsutil/version_info.h>
 
 #ifdef HAVE_PLUGINS
 #include <wsutil/plugins.h>
@@ -66,9 +67,9 @@ print_usage(FILE *output)
     fprintf(output, "                    an empty \"-I\" option will list the merge modes.\n");
     fprintf(output, "\n");
     fprintf(output, "Miscellaneous:\n");
-    fprintf(output, "  -h                display this help and exit.\n");
-    fprintf(output, "  -v                verbose output.\n");
-    fprintf(output, "  -V                print version information and exit.\n");
+    fprintf(output, "  -h, --help        display this help and exit.\n");
+    fprintf(output, "  -V                verbose output.\n");
+    fprintf(output, "  -v, --version     print version information and exit.\n");
 }
 
 /*
@@ -184,7 +185,7 @@ merge_callback(merge_event event, int num,
 int
 main(int argc, char *argv[])
 {
-    char               *init_progfile_dir_error;
+    char               *configuration_init_error;
     static const struct report_message_routines mergecap_report_routines = {
         failure_message,
         failure_message,
@@ -200,7 +201,7 @@ main(int argc, char *argv[])
     int                 opt;
     static const struct ws_option long_options[] = {
         {"help", ws_no_argument, NULL, 'h'},
-        {"version", ws_no_argument, NULL, 'V'},
+        {"version", ws_no_argument, NULL, 'v'},
         {0, 0, 0, 0 }
     };
     gboolean            do_append          = FALSE;
@@ -225,6 +226,8 @@ main(int argc, char *argv[])
     /* Early logging command-line initialization. */
     ws_log_parse_args(&argc, argv, vcmdarg_err, 1);
 
+    ws_noisy("Finished log init and parsing command line log arguments");
+
 #ifdef _WIN32
     create_app_running_mutex();
 #endif /* _WIN32 */
@@ -241,12 +244,12 @@ main(int argc, char *argv[])
      * Attempt to get the pathname of the directory containing the
      * executable file.
      */
-    init_progfile_dir_error = init_progfile_dir(argv[0]);
-    if (init_progfile_dir_error != NULL) {
+    configuration_init_error = configuration_init(argv[0], NULL);
+    if (configuration_init_error != NULL) {
         fprintf(stderr,
                 "mergecap: Can't get pathname of directory containing the mergecap program: %s.\n",
-                init_progfile_dir_error);
-        g_free(init_progfile_dir_error);
+                configuration_init_error);
+        g_free(configuration_init_error);
     }
 
     init_report_message("mergecap", &mergecap_report_routines);
@@ -293,11 +296,11 @@ main(int argc, char *argv[])
                 snaplen = get_nonzero_guint32(ws_optarg, "snapshot length");
                 break;
 
-            case 'v':
+            case 'V':
                 verbose = TRUE;
                 break;
 
-            case 'V':
+            case 'v':
                 show_version();
                 goto clean_exit;
                 break;

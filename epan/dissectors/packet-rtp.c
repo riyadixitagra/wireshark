@@ -58,8 +58,6 @@
 #include "packet-tcp.h"
 
 #include <epan/rtp_pt.h>
-#include <epan/conversation.h>
-#include <epan/reassemble.h>
 #include <epan/tap.h>
 #include <epan/prefs.h>
 
@@ -149,6 +147,7 @@ static dissector_handle_t classicstun_heur_handle;
 static dissector_handle_t stun_heur_handle;
 static dissector_handle_t t38_handle;
 static dissector_handle_t zrtp_handle;
+static dissector_handle_t dtls_handle;
 static dissector_handle_t rtp_rfc2198_handle;
 
 static dissector_handle_t sprt_handle;
@@ -244,6 +243,7 @@ static int hf_rfc4571_header_len = -1;
 #define RTP0_CLASSICSTUN    2
 #define RTP0_T38     3
 #define RTP0_SPRT    4
+#define RTP0_RFC7983 5
 
 static const enum_val_t rtp_version0_types[] = {
     { "invalid", "Invalid or ZRTP packets", RTP0_INVALID },
@@ -251,9 +251,10 @@ static const enum_val_t rtp_version0_types[] = {
     { "classicstun", "CLASSIC-STUN packets", RTP0_CLASSICSTUN },
     { "t38", "T.38 packets", RTP0_T38 },
     { "sprt", "SPRT packets", RTP0_SPRT },
+    { "rfc7983", "Multiplexed as in RFC 7983", RTP0_RFC7983 },
     { NULL, NULL, 0 }
 };
-static gint global_rtp_version0_type = 0;
+static gint global_rtp_version0_type = 5;
 
 /* Forward declaration we need below */
 void proto_register_rtp(void);
@@ -273,7 +274,6 @@ static gboolean desegment_rtp = TRUE;
 
 /* RFC2198 Redundant Audio Data */
 #define RFC2198_DEFAULT_PT_RANGE "99"
-static range_t *rtp_rfc2198_pt_range = NULL;
 
 /* Proto data key values */
 #define RTP_CONVERSATION_PROTO_DATA     0
@@ -655,11 +655,6 @@ static gpointer rtp_value(packet_info *pinfo)
 {
     guint payload_type = GPOINTER_TO_UINT(p_get_proto_data(pinfo->pool, pinfo, proto_rtp, RTP_DECODE_AS_PROTO_DATA));
 
-    /* Dynamic payload range, don't use value as it may change within conversation */
-    if (payload_type > 95)
-        return GUINT_TO_POINTER(0);
-
-    /* Used fixed value range */
     return GUINT_TO_POINTER(payload_type);
 }
 
@@ -970,14 +965,14 @@ bluetooth_add_address(packet_info *pinfo, address *addr, guint32 stream_number,
      * Check if the ip address and port combination is not
      * already registered as a conversation.
      */
-    p_conv = find_conversation(setup_frame_number, addr, &null_addr, ENDPOINT_BLUETOOTH, stream_number, stream_number,
+    p_conv = find_conversation(setup_frame_number, addr, &null_addr, CONVERSATION_BLUETOOTH, stream_number, stream_number,
                    NO_ADDR_B | NO_PORT_B);
 
     /*
      * If not, create a new conversation.
      */
     if (!p_conv || p_conv->setup_frame != setup_frame_number) {
-        p_conv = conversation_new(setup_frame_number, addr, &null_addr, ENDPOINT_BLUETOOTH, stream_number, stream_number,
+        p_conv = conversation_new(setup_frame_number, addr, &null_addr, CONVERSATION_BLUETOOTH, stream_number, stream_number,
                    NO_ADDR2 | NO_PORT2);
     }
 
@@ -1081,7 +1076,7 @@ srtp_add_address(packet_info *pinfo, const port_type ptype, address *addr, int p
      * Check if the ip address and port combination is not
      * already registered as a conversation.
      */
-    p_conv = find_conversation(setup_frame_number, addr, &null_addr, conversation_pt_to_endpoint_type(ptype), port, other_port,
+    p_conv = find_conversation(setup_frame_number, addr, &null_addr, conversation_pt_to_conversation_type(ptype), port, other_port,
                    NO_ADDR_B | (!other_port ? NO_PORT_B : 0));
 
     if (p_conv) {
@@ -1101,7 +1096,7 @@ srtp_add_address(packet_info *pinfo, const port_type ptype, address *addr, int p
      * If not, create a new conversation.
      */
     if (!p_conv || p_conv->setup_frame != setup_frame_number) {
-        p_conv = conversation_new(setup_frame_number, addr, &null_addr, conversation_pt_to_endpoint_type(ptype),
+        p_conv = conversation_new(setup_frame_number, addr, &null_addr, conversation_pt_to_conversation_type(ptype),
                                   (guint32)port, (guint32)other_port,
                       NO_ADDR2 | (!other_port ? NO_PORT2 : 0));
     }
@@ -1220,8 +1215,14 @@ dissect_rtp_heur(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void* data
     octet1 = tvb_get_guint8( tvb, offset );
     version = RTP_VERSION( octet1 );
 
+    /* XXX: Why are we calling these dissectors from the *heuristic*
+     * RTP dissector? These almost all have their own heuristic dissector,
+     * enabled by default (unlike RTP, which has a much less accurate
+     * heuristic.) We should just reject and let the protocols' own heuristic
+     * dissectors handle this.
+     */
     if (version == 0) {
-        if (!(tvb_memeql(tvb, 4, "ZRTP", 4)))
+        if (!(tvb_memeql(tvb, 4, (const guint8*)"ZRTP", 4)))
         {
             call_dissector_only(zrtp_handle, tvb, pinfo, tree, NULL);
             return TRUE;
@@ -1242,7 +1243,7 @@ dissect_rtp_heur(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void* data
                 return TRUE;
 
             case RTP0_INVALID:
-
+            case RTP0_RFC7983:
             default:
                 return FALSE; /* Unknown or unsupported version */
             }
@@ -1291,11 +1292,11 @@ dissect_rtp_heur(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void* data
     }
 
     /* Create a conversation in case none exists so as to allow reassembly code to work */
-    if (!find_conversation(pinfo->num, &pinfo->net_dst, &pinfo->net_src, conversation_pt_to_endpoint_type(pinfo->ptype),
-                           pinfo->destport, pinfo->srcport, NO_ADDR2)) {
+    if (!find_conversation(pinfo->num, &pinfo->net_dst, &pinfo->net_src, conversation_pt_to_conversation_type(pinfo->ptype),
+                           pinfo->destport, pinfo->srcport, NO_ADDR_B)) {
         conversation_t *p_conv;
         struct _rtp_conversation_info *p_conv_data;
-        p_conv = conversation_new(pinfo->num, &pinfo->net_dst, &pinfo->net_src, conversation_pt_to_endpoint_type(pinfo->ptype),
+        p_conv = conversation_new(pinfo->num, &pinfo->net_dst, &pinfo->net_src, conversation_pt_to_conversation_type(pinfo->ptype),
                                   pinfo->destport, pinfo->srcport, NO_ADDR2);
         p_conv_data = (struct _rtp_conversation_info *)conversation_get_proto_data(p_conv, proto_rtp);
         if (! p_conv_data) {
@@ -1418,7 +1419,7 @@ process_rtp_payload(tvbuff_t *newtvb, packet_info *pinfo, proto_tree *tree,
                 * Just add it as data.
                 */
                 if (len > 0)
-                    PROTO_ITEM_SET_HIDDEN(rtp_data);
+                    proto_item_set_hidden(rtp_data);
                 return;
             }
         }
@@ -1426,7 +1427,7 @@ process_rtp_payload(tvbuff_t *newtvb, packet_info *pinfo, proto_tree *tree,
 
     /* if we don't found, it is static OR could be set static from the preferences */
     if (dissector_try_uint(rtp_pt_dissector_table, payload_type, newtvb, pinfo, tree))
-        PROTO_ITEM_SET_HIDDEN(rtp_data);
+        proto_item_set_hidden(rtp_data);
 }
 
 /* Rtp payload reassembly
@@ -1947,14 +1948,55 @@ dissect_rtp( tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *data _U_
      * dissector RTP. In addition, STUN packets sharing one port are common
      * as well.
      *
-     * In practice, the default of RTP0_INVALID rejects packets and lets
-     * heuristic dissectors take a look. The STUN, ZRTP, and DTLS heuristic
-     * dissectors are all enabled by default so out of the box it more or
-     * less looks correct - at least on the second pass, on tshark there's
-     * incorrect RTP information in the tree.
-     * XXX: Maybe there should be a "according to RFC 7983" option in the enum?
+     * In practice, RTP0_INVALID rejects packets and lets heuristic dissectors
+     * take a look. The STUN, ZRTP, and DTLS heuristic dissectors are all
+     * enabled by default so out of the box it more or less looks correct - at
+     * least on the second pass, on tshark there's incorrect RTP information in
+     * the tree. However, the STUN heuristic dissector can change the
+     * dissector for the conversation to itself (the non-heuristic dissector
+     * does not), see #18832, and TURN ChannelData messages are impossible to
+     * heuristically detect.
      */
-    if (version == 0) {
+    if (global_rtp_version0_type == RTP0_RFC7983) {
+        switch (version) {
+        case 0:
+            if (octet1 < 4) {
+                call_dissector(stun_handle, tvb, pinfo, tree);
+                return tvb_captured_length(tvb);
+            } else if ((octet1 & 0xfc) == 0x10) {
+                call_dissector(zrtp_handle, tvb,pinfo, tree);
+                return tvb_captured_length(tvb);
+            } else if (octet1 > 19) {
+                call_dissector(dtls_handle, tvb,pinfo, tree);
+                return tvb_captured_length(tvb);
+            }
+            break;
+        case 1:
+            if (octet1 < 80) {
+                /* The STUN dissector will dissect TURN ChannelData
+                 * XXX: Maybe we should call the turnchannel dissector?
+                 *
+                 * Should we be assuming we have TURN ChannelData for
+                 * the RTP0_STUN and option too?
+                 */
+                call_dissector(stun_handle, tvb, pinfo, tree);
+                return tvb_captured_length(tvb);
+            }
+            break;
+        case 3:
+            if (octet1 == 0xFF) {
+                if (tvb_get_guint8( tvb, offset + 1 ) == 0x10) {
+                    /* Special MS-TURN Multiplexed TURN Channel */
+                    call_dissector(stun_handle, tvb, pinfo, tree);
+                    return tvb_captured_length(tvb);
+                }
+            }
+        /* FALLTHROUGH */
+        case 2:
+        default:
+            break;
+        }
+    } else if (version == 0) {
         switch (global_rtp_version0_type) {
         case RTP0_STUN:
             call_dissector(stun_handle, tvb, pinfo, tree);
@@ -1972,7 +2014,7 @@ dissect_rtp( tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *data _U_
             return tvb_captured_length(tvb);
 
         case RTP0_INVALID:
-            if (!(tvb_memeql(tvb, 4, "ZRTP", 4)))
+            if (!(tvb_memeql(tvb, 4, (const guint8*)"ZRTP", 4)))
             {
                 call_dissector(zrtp_handle, tvb,pinfo, tree);
                 return tvb_captured_length(tvb);
@@ -2087,6 +2129,27 @@ dissect_rtp( tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *data _U_
         rtp_info->info_media_types = p_conv_data->media_types;
         rtp_info->info_extended_seq_num = p_conv_data->extended_seqno;
         rtp_info->info_extended_timestamp = p_conv_data->extended_timestamp;
+    } else {
+      /* Create a conversation in case none exists (decode as is used for marking the packet as RTP) */
+        conversation_t *p_conv;
+        p_conv = conversation_new(pinfo->num, &pinfo->net_dst, &pinfo->net_src, conversation_pt_to_conversation_type(pinfo->ptype),
+                                  pinfo->destport, pinfo->srcport, NO_ADDR2);
+        p_conv_data = (struct _rtp_conversation_info *)conversation_get_proto_data(p_conv, proto_rtp);
+        if (! p_conv_data) {
+            /* Create conversation data */
+            p_conv_data = wmem_new0(wmem_file_scope(), struct _rtp_conversation_info);
+            p_conv_data->extended_seqno = 0x10000;
+            p_conv_data->extended_timestamp = 0x100000000;
+            p_conv_data->rtp_conv_info = wmem_new(wmem_file_scope(), rtp_private_conv_info);
+            p_conv_data->rtp_conv_info->multisegment_pdus = wmem_tree_new(wmem_file_scope());
+            conversation_add_proto_data(p_conv, proto_rtp, p_conv_data);
+        }
+        (void) g_strlcpy(p_conv_data->method, "DECODE AS", MAX_RTP_SETUP_METHOD_SIZE+1);
+        p_conv_data->frame_number = pinfo->num;
+        p_conv_data->media_types = 0;
+        p_conv_data->srtp_info = NULL;
+        p_conv_data->bta2dp_info = NULL;
+        p_conv_data->btvdp_info = NULL;
     }
 
     if (p_conv_data && p_conv_data->srtp_info) is_srtp = TRUE;
@@ -2105,9 +2168,9 @@ dissect_rtp( tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *data _U_
 #endif
 
     if (p_conv_data && p_conv_data->bta2dp_info && p_conv_data->bta2dp_info->codec_dissector) {
-        rtp_info->info_payload_type_str = (const char *) dissector_handle_get_short_name(p_conv_data->bta2dp_info->codec_dissector);
+        rtp_info->info_payload_type_str = (const char *) dissector_handle_get_protocol_short_name(p_conv_data->bta2dp_info->codec_dissector);
     } else if (p_conv_data && p_conv_data->btvdp_info && p_conv_data->btvdp_info->codec_dissector) {
-        rtp_info->info_payload_type_str = (const char *) dissector_handle_get_short_name(p_conv_data->btvdp_info->codec_dissector);
+        rtp_info->info_payload_type_str = (const char *) dissector_handle_get_protocol_short_name(p_conv_data->btvdp_info->codec_dissector);
     }
 
     /* if it is dynamic payload, let use the conv data to see if it is defined */
@@ -2143,9 +2206,9 @@ dissect_rtp( tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *data _U_
     }
 
     if (p_conv_data && p_conv_data->bta2dp_info) {
-        pt = (p_conv_data->bta2dp_info->codec_dissector) ? dissector_handle_get_short_name(p_conv_data->bta2dp_info->codec_dissector) : "Unknown";
+        pt = (p_conv_data->bta2dp_info->codec_dissector) ? dissector_handle_get_protocol_short_name(p_conv_data->bta2dp_info->codec_dissector) : "Unknown";
     } else if (p_conv_data && p_conv_data->btvdp_info) {
-        pt = (p_conv_data->btvdp_info->codec_dissector) ? dissector_handle_get_short_name(p_conv_data->btvdp_info->codec_dissector) : "Unknown";
+        pt = (p_conv_data->btvdp_info->codec_dissector) ? dissector_handle_get_protocol_short_name(p_conv_data->btvdp_info->codec_dissector) : "Unknown";
     } else {
         pt = (payload_type_str ? payload_type_str : val_to_str_ext(payload_type, &rtp_payload_type_vals_ext, "Unknown (%u)"));
     }
@@ -2322,6 +2385,12 @@ dissect_rtp( tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *data _U_
              * There's data left over when you take out
              * the padding; dissect it.
              */
+            struct _rtp_pkt_info *rtp_pkt_info = wmem_new(pinfo->pool, struct _rtp_pkt_info);
+
+            rtp_pkt_info->payload_len = data_len;
+            rtp_pkt_info->padding_len = padding_count - 1;
+            p_add_proto_data(pinfo->pool, pinfo, proto_rtp, pinfo->curr_layer_num, rtp_pkt_info);
+
             /* Ensure that tap is called after packet dissection, even in case of exception */
             TRY {
                 dissect_rtp_data( tvb, pinfo, tree, rtp_tree,
@@ -2391,6 +2460,12 @@ dissect_rtp( tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *data _U_
         }
 
         if (tvb_reported_length_remaining(tvb, offset) > 0) {
+            struct _rtp_pkt_info *rtp_pkt_info = wmem_new(pinfo->pool, struct _rtp_pkt_info);
+
+            rtp_pkt_info->payload_len = tvb_captured_length_remaining(tvb, offset);
+            rtp_pkt_info->padding_len = 0;
+            p_set_proto_data(pinfo->pool, pinfo, proto_rtp, pinfo->curr_layer_num, rtp_pkt_info);
+
             /* Ensure that tap is called after packet dissection, even in case of exception */
             TRY {
                 dissect_rtp_data( tvb, pinfo, tree, rtp_tree, offset,
@@ -2626,7 +2701,7 @@ get_conv_info(packet_info *pinfo, struct _rtp_info *rtp_info)
 
         /* First time, get info from conversation */
         p_conv = find_conversation(pinfo->num, &pinfo->net_dst, &pinfo->net_src,
-                                   conversation_pt_to_endpoint_type(pinfo->ptype),
+                                   conversation_pt_to_conversation_type(pinfo->ptype),
                                    pinfo->destport, pinfo->srcport, NO_ADDR_B);
         if (p_conv)
         {
@@ -3313,7 +3388,7 @@ proto_register_rtp(void)
     rtp_pt_dissector_table = register_dissector_table("rtp.pt",
                                     "RTP payload type", proto_rtp, FT_UINT8, BASE_DEC);
     rtp_dyn_pt_dissector_table = register_dissector_table("rtp_dyn_payload_type",
-                                    "Dynamic RTP payload type", proto_rtp, FT_STRING, TRUE);
+                                    "Dynamic RTP payload type", proto_rtp, FT_STRING, STRING_CASE_INSENSITIVE);
 
 
     rtp_hdr_ext_dissector_table = register_dissector_table("rtp.hdr_ext",
@@ -3321,7 +3396,7 @@ proto_register_rtp(void)
     rtp_hdr_ext_rfc5285_dissector_table = register_dissector_table("rtp.ext.rfc5285.id",
                                     "RTP Generic header extension (RFC 5285)", proto_rtp, FT_UINT8, BASE_DEC);
 
-    rtp_module = prefs_register_protocol(proto_rtp, proto_reg_handoff_rtp);
+    rtp_module = prefs_register_protocol(proto_rtp, NULL);
 
     prefs_register_bool_preference(rtp_module, "show_setup_info",
                                     "Show stream setup information",
@@ -3342,12 +3417,7 @@ proto_register_rtp(void)
                                     "an invalid or ZRTP packet, a CLASSIC-STUN packet, or a T.38 packet",
                                     &global_rtp_version0_type,
                                     rtp_version0_types, FALSE);
-    range_convert_str(wmem_epan_scope(), &rtp_rfc2198_pt_range, RFC2198_DEFAULT_PT_RANGE, 127);
-    prefs_register_range_preference(rtp_module,
-                                    "rfc2198_payload_type", "Payload Types for RFC2198",
-                                    "Payload Types for RFC2198 Redundant Audio Data"
-                                    "; values must be in the range 1-127",
-                                    &rtp_rfc2198_pt_range, 127);
+    prefs_register_obsolete_preference(rtp_module, "rfc2198_payload_type");
 
     reassembly_table_register(&rtp_reassembly_table,
                   &addresses_reassembly_table_functions);
@@ -3359,52 +3429,41 @@ proto_register_rtp(void)
 void
 proto_reg_handoff_rtp(void)
 {
-    static gboolean rtp_prefs_initialized = FALSE;
-    static range_t *rtp_saved_rfc2198_pt_range = NULL;
+    dissector_add_for_decode_as("udp.port", rtp_handle);
+    dissector_add_for_decode_as("tcp.port", rtp_rfc4571_handle);
+    dissector_add_string("rtp_dyn_payload_type", "red", rtp_rfc2198_handle);
+    heur_dissector_add( "udp", dissect_rtp_heur,  "RTP over UDP", "rtp_udp", proto_rtp, HEURISTIC_DISABLE);
+    heur_dissector_add("stun", dissect_rtp_heur, "RTP over TURN", "rtp_stun", proto_rtp, HEURISTIC_DISABLE);
+    heur_dissector_add("classicstun", dissect_rtp_heur, "RTP over CLASSICSTUN", "rtp_classicstun", proto_rtp, HEURISTIC_DISABLE);
+    heur_dissector_add("rtsp", dissect_rtp_heur, "RTP over RTSP", "rtp_rtsp", proto_rtp, HEURISTIC_DISABLE);
 
-    if (!rtp_prefs_initialized) {
-
-        dissector_add_for_decode_as("udp.port", rtp_handle);
-        dissector_add_for_decode_as("tcp.port", rtp_rfc4571_handle);
-        dissector_add_string("rtp_dyn_payload_type", "red", rtp_rfc2198_handle);
-        heur_dissector_add( "udp", dissect_rtp_heur,  "RTP over UDP", "rtp_udp", proto_rtp, HEURISTIC_DISABLE);
-        heur_dissector_add("stun", dissect_rtp_heur, "RTP over TURN", "rtp_stun", proto_rtp, HEURISTIC_DISABLE);
-        heur_dissector_add("classicstun", dissect_rtp_heur, "RTP over CLASSICSTUN", "rtp_classicstun", proto_rtp, HEURISTIC_DISABLE);
-        heur_dissector_add("rtsp", dissect_rtp_heur, "RTP over RTSP", "rtp_rtsp", proto_rtp, HEURISTIC_DISABLE);
-
-        dissector_add_for_decode_as("flip.payload", rtp_handle );
+    dissector_add_for_decode_as("flip.payload", rtp_handle );
 
 
-        rtcp_handle = find_dissector_add_dependency("rtcp", proto_rtp);
-        stun_handle = find_dissector_add_dependency("stun-udp", proto_rtp);
-        classicstun_handle = find_dissector_add_dependency("classicstun", proto_rtp);
-        classicstun_heur_handle = find_dissector_add_dependency("classicstun-heur", proto_rtp);
-        stun_heur_handle = find_dissector_add_dependency("stun-heur", proto_rtp);
-        t38_handle = find_dissector_add_dependency("t38_udp", proto_rtp);
-        zrtp_handle = find_dissector_add_dependency("zrtp", proto_rtp);
+    rtcp_handle = find_dissector_add_dependency("rtcp", proto_rtp);
+    stun_handle = find_dissector_add_dependency("stun-udp", proto_rtp);
+    classicstun_handle = find_dissector_add_dependency("classicstun", proto_rtp);
+    classicstun_heur_handle = find_dissector_add_dependency("classicstun-heur", proto_rtp);
+    stun_heur_handle = find_dissector_add_dependency("stun-heur", proto_rtp);
+    t38_handle = find_dissector_add_dependency("t38_udp", proto_rtp);
+    zrtp_handle = find_dissector_add_dependency("zrtp", proto_rtp);
+    dtls_handle = find_dissector_add_dependency("dtls", proto_rtp);
 
-        sprt_handle = find_dissector_add_dependency("sprt", proto_rtp);
-        v150fw_handle = find_dissector("v150fw");
+    sprt_handle = find_dissector_add_dependency("sprt", proto_rtp);
+    v150fw_handle = find_dissector("v150fw");
 
-        bta2dp_content_protection_header_scms_t = find_dissector_add_dependency("bta2dp_content_protection_header_scms_t", proto_rtp);
-        btvdp_content_protection_header_scms_t = find_dissector_add_dependency("btvdp_content_protection_header_scms_t", proto_rtp);
-        bta2dp_handle = find_dissector_add_dependency("bta2dp", proto_rtp);
-        btvdp_handle = find_dissector_add_dependency("btvdp", proto_rtp);
-        sbc_handle = find_dissector_add_dependency("sbc", proto_rtp);
+    bta2dp_content_protection_header_scms_t = find_dissector_add_dependency("bta2dp_content_protection_header_scms_t", proto_rtp);
+    btvdp_content_protection_header_scms_t = find_dissector_add_dependency("btvdp_content_protection_header_scms_t", proto_rtp);
+    bta2dp_handle = find_dissector_add_dependency("bta2dp", proto_rtp);
+    btvdp_handle = find_dissector_add_dependency("btvdp", proto_rtp);
+    sbc_handle = find_dissector_add_dependency("sbc", proto_rtp);
 
-        dissector_add_string("rtp_dyn_payload_type", "v150fw", v150fw_handle);
-        dissector_add_for_decode_as("rtp.pt", v150fw_handle);
+    dissector_add_string("rtp_dyn_payload_type", "v150fw", v150fw_handle);
+    dissector_add_for_decode_as("rtp.pt", v150fw_handle);
 
-        dissector_add_for_decode_as("btl2cap.cid", rtp_handle);
+    dissector_add_for_decode_as("btl2cap.cid", rtp_handle);
 
-        rtp_prefs_initialized = TRUE;
-    } else {
-        dissector_delete_uint_range("rtp.pt", rtp_saved_rfc2198_pt_range, rtp_rfc2198_handle);
-        wmem_free(wmem_epan_scope(), rtp_saved_rfc2198_pt_range);
-    }
-    rtp_saved_rfc2198_pt_range = range_copy(wmem_epan_scope(), rtp_rfc2198_pt_range);
-    range_remove_value(wmem_epan_scope(), &rtp_saved_rfc2198_pt_range, 0);
-    dissector_add_uint_range("rtp.pt", rtp_saved_rfc2198_pt_range, rtp_rfc2198_handle);
+    dissector_add_uint_range_with_preference("rtp.pt", RFC2198_DEFAULT_PT_RANGE, rtp_rfc2198_handle);
     proto_sdp = proto_get_id_by_filter_name("sdp");
 }
 

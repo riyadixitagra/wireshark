@@ -19,7 +19,8 @@
 
 #include <ui/qt/utils/qt_ui_utils.h>
 #include "rtp_analysis_dialog.h"
-#include "wireshark_application.h"
+#include "progress_frame.h"
+#include "main_application.h"
 #include "ui/qt/widgets/wireshark_file_dialog.h"
 
 #include <QAction>
@@ -132,9 +133,11 @@ public:
             for (int i = 0; i < columnCount(); i++) {
                 QBrush bgBrush = background(i);
                 bgBrush.setColor(bgColor);
+                bgBrush.setStyle(Qt::SolidPattern);
                 setBackground(i, bgBrush);
                 QBrush fgBrush = foreground(i);
                 fgBrush.setColor(textColor);
+                fgBrush.setStyle(Qt::SolidPattern);
                 setForeground(i, fgBrush);
             }
         }
@@ -227,7 +230,13 @@ public:
         case packets_col_:
             return stream_info_->packet_count < other_rstwi.stream_info_->packet_count;
         case lost_col_:
-            return lost_ < other_rstwi.lost_;
+            rtpstream_info_calculate(stream_info_, &calc1);
+            rtpstream_info_calculate(other_rstwi.stream_info_, &calc2);
+            /* XXX: Should this sort on the total number or the percentage?
+             * lost_num is displayed first and lost_perc in parenthesis,
+             * so let's use the total number.
+             */
+            return calc1.lost_num < calc2.lost_num;
         case min_delta_col_:
             return stream_info_->rtp_stats.min_delta < other_rstwi.stream_info_->rtp_stats.min_delta;
         case mean_delta_col_:
@@ -255,7 +264,6 @@ public:
 
 private:
     rtpstream_info_t *stream_info_;
-    guint32 lost_;
     gboolean tod_;
 };
 
@@ -308,7 +316,7 @@ RtpStreamDialog::RtpStreamDialog(QWidget &parent, CaptureFile &cf) :
     find_reverse_button_->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
     find_reverse_button_->setPopupMode(QToolButton::MenuButtonPopup);
 
-    connect(ui->actionFindReverse, SIGNAL(triggered()), this, SLOT(on_actionFindReverseNormal_triggered()));
+    connect(ui->actionFindReverse, &QAction::triggered, this, &RtpStreamDialog::on_actionFindReverseNormal_triggered);
     find_reverse_button_->setDefaultAction(ui->actionFindReverse);
     // Overrides text striping of shortcut undercode in QAction
     find_reverse_button_->setText(ui->actionFindReverseNormal->text());
@@ -317,22 +325,22 @@ RtpStreamDialog::RtpStreamDialog(QWidget &parent, CaptureFile &cf) :
     analyze_button_ = RtpAnalysisDialog::addAnalyzeButton(ui->buttonBox, this);
     prepare_button_ = ui->buttonBox->addButton(ui->actionPrepareFilter->text(), QDialogButtonBox::ActionRole);
     prepare_button_->setToolTip(ui->actionPrepareFilter->toolTip());
-    connect(prepare_button_, SIGNAL(pressed()), this, SLOT(on_actionPrepareFilter_triggered()));
+    connect(prepare_button_, &QPushButton::pressed, this, &RtpStreamDialog::on_actionPrepareFilter_triggered);
     player_button_ = RtpPlayerDialog::addPlayerButton(ui->buttonBox, this);
     copy_button_ = ui->buttonBox->addButton(ui->actionCopyButton->text(), QDialogButtonBox::ActionRole);
     copy_button_->setToolTip(ui->actionCopyButton->toolTip());
     export_button_ = ui->buttonBox->addButton(ui->actionExportAsRtpDump->text(), QDialogButtonBox::ActionRole);
     export_button_->setToolTip(ui->actionExportAsRtpDump->toolTip());
-    connect(export_button_, SIGNAL(pressed()), this, SLOT(on_actionExportAsRtpDump_triggered()));
+    connect(export_button_, &QPushButton::pressed, this, &RtpStreamDialog::on_actionExportAsRtpDump_triggered);
 
     QMenu *copy_menu = new QMenu(copy_button_);
     QAction *ca;
     ca = copy_menu->addAction(tr("as CSV"));
     ca->setToolTip(ui->actionCopyAsCsv->toolTip());
-    connect(ca, SIGNAL(triggered()), this, SLOT(on_actionCopyAsCsv_triggered()));
+    connect(ca, &QAction::triggered, this, &RtpStreamDialog::on_actionCopyAsCsv_triggered);
     ca = copy_menu->addAction(tr("as YAML"));
     ca->setToolTip(ui->actionCopyAsYaml->toolTip());
-    connect(ca, SIGNAL(triggered()), this, SLOT(on_actionCopyAsYaml_triggered()));
+    connect(ca, &QAction::triggered, this, &RtpStreamDialog::on_actionCopyAsYaml_triggered);
     copy_button_->setMenu(copy_menu);
     connect(&cap_file_, SIGNAL(captureEvent(CaptureEvent)),
             this, SLOT(captureEvent(CaptureEvent)));
@@ -352,6 +360,8 @@ RtpStreamDialog::RtpStreamDialog(QWidget &parent, CaptureFile &cf) :
         ui->displayFilterCheckBox->setChecked(true);
     }
 
+    connect(ui->displayFilterCheckBox, &QCheckBox::toggled,
+            this, &RtpStreamDialog::displayFilterCheckBoxToggled);
     connect(this, SIGNAL(updateFilter(QString, bool)),
             &parent, SLOT(filterPackets(QString, bool)));
     connect(&parent, SIGNAL(displayFilterSuccess(bool)),
@@ -369,10 +379,13 @@ RtpStreamDialog::RtpStreamDialog(QWidget &parent, CaptureFile &cf) :
     connect(this, SIGNAL(rtpAnalysisDialogRemoveRtpStreams(QVector<rtpstream_id_t *>)),
             &parent, SLOT(rtpAnalysisDialogRemoveRtpStreams(QVector<rtpstream_id_t *>)));
 
-    /* Scan for RTP streams (redissect all packets) */
-    rtpstream_scan(&tapinfo_, cf.capFile(), NULL);
+    ProgressFrame::addToButtonBox(ui->buttonBox, &parent);
 
     updateWidgets();
+
+    if (cap_file_.isValid()) {
+        cap_file_.delayedRetapPackets();
+    }
 }
 
 RtpStreamDialog::~RtpStreamDialog()
@@ -380,6 +393,7 @@ RtpStreamDialog::~RtpStreamDialog()
     std::lock_guard<std::mutex> lock(mutex_);
     freeLastSelected();
     delete ui;
+    rtpstream_reset(&tapinfo_);
     remove_tap_listener_rtpstream(&tapinfo_);
     pinstance_ = nullptr;
 }
@@ -491,13 +505,16 @@ void RtpStreamDialog::tapReset(rtpstream_tapinfo_t *tapinfo)
         rtp_stream_dialog->freeLastSelected();
         /* Copy currently selected rtpstream_ids */
         QTreeWidgetItemIterator iter(rtp_stream_dialog->ui->streamTreeWidget);
+        rtpstream_id_t selected_id;
         while (*iter) {
             RtpStreamTreeWidgetItem *rsti = static_cast<RtpStreamTreeWidgetItem*>(*iter);
             rtpstream_info_t *stream_info = rsti->streamInfo();
             if ((*iter)->isSelected()) {
-                rtpstream_id_t *i = (rtpstream_id_t *)g_malloc0(sizeof(rtpstream_id_t));
-                rtpstream_id_copy(&stream_info->id, i);
-                rtp_stream_dialog->last_selected_.append(*i);
+                /* QList.append() does a member by member copy, so allocate new
+                 * addresses. rtpstream_id_copy() overwrites all struct members.
+                 */
+                rtpstream_id_copy(&stream_info->id, &selected_id);
+                rtp_stream_dialog->last_selected_.append(selected_id);
             }
             ++iter;
         }
@@ -713,7 +730,7 @@ void RtpStreamDialog::on_actionCopyAsCsv_triggered()
         }
         stream << rdsl.join(",") << '\n';
     }
-    wsApp->clipboard()->setText(stream.readAll());
+    mainApp->clipboard()->setText(stream.readAll());
 }
 
 void RtpStreamDialog::on_actionCopyAsYaml_triggered()
@@ -727,7 +744,7 @@ void RtpStreamDialog::on_actionCopyAsYaml_triggered()
             stream << " - " << v.toString() << '\n';
         }
     }
-    wsApp->clipboard()->setText(stream.readAll());
+    mainApp->clipboard()->setText(stream.readAll());
 }
 
 void RtpStreamDialog::on_actionExportAsRtpDump_triggered()
@@ -740,11 +757,11 @@ void RtpStreamDialog::on_actionExportAsRtpDump_triggered()
     rtpstream_info_t *stream_info = rsti->streamInfo();
     if (stream_info) {
         QString file_name;
-        QDir path(wsApp->lastOpenDir());
+        QDir path(mainApp->lastOpenDir());
         QString save_file = path.canonicalPath() + "/" + cap_file_.fileBaseName();
         QString extension;
-        file_name = WiresharkFileDialog::getSaveFileName(this, wsApp->windowTitleString(tr("Save RTPDump As…")),
-                                                 save_file, "RTPDump Format (*.rtpdump)", &extension);
+        file_name = WiresharkFileDialog::getSaveFileName(this, mainApp->windowTitleString(tr("Save RTPDump As…")),
+                                                 save_file, "RTPDump Format (*.rtp)", &extension);
 
         if (file_name.length() > 0) {
             gchar *dest_file = qstring_strdup(file_name);
@@ -752,7 +769,7 @@ void RtpStreamDialog::on_actionExportAsRtpDump_triggered()
             g_free(dest_file);
             // else error dialog?
             if (save_ok) {
-                wsApp->setLastOpenDirFromFilename(file_name);
+                mainApp->setLastOpenDirFromFilename(file_name);
             }
         }
 
@@ -891,10 +908,10 @@ void RtpStreamDialog::on_streamTreeWidget_itemSelectionChanged()
 
 void RtpStreamDialog::on_buttonBox_helpRequested()
 {
-    wsApp->helpTopicAction(HELP_TELEPHONY_RTP_STREAMS_DIALOG);
+    mainApp->helpTopicAction(HELP_TELEPHONY_RTP_STREAMS_DIALOG);
 }
 
-void RtpStreamDialog::on_displayFilterCheckBox_toggled(bool checked _U_)
+void RtpStreamDialog::displayFilterCheckBoxToggled(bool checked)
 {
     if (!cap_file_.isValid()) {
         return;

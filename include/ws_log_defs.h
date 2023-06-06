@@ -42,6 +42,12 @@
 
 #define LOG_DOMAIN_EXTCAP     "Extcap"
 
+#define LOG_DOMAIN_UTF_8      "UTF-8"
+
+#define LOG_DOMAIN_MMDB       "MaxMindDB"
+
+#define LOG_DOMAIN_EINVAL     "InvalidArg"
+
 /*
  * Ascending order by priority needs to be maintained. Higher priorities have
  * higher values.

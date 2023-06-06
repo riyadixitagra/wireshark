@@ -9,7 +9,7 @@
 
 #include "uat_dialog.h"
 #include <ui_uat_dialog.h>
-#include "wireshark_application.h"
+#include "main_application.h"
 
 #include "epan/strutil.h"
 #include "epan/uat-int.h"
@@ -72,7 +72,7 @@ UatDialog::UatDialog(QWidget *parent, epan_uat *uat) :
 
     // Need to add uat_move or uat_insert to the UAT API.
     ui->uatTreeView->setDragEnabled(false);
-    qDebug() << "FIX Add drag reordering to UAT dialog";
+//    qDebug() << "FIX Add drag reordering to UAT dialog";
 
     // Do NOT start editing the first column for the first item
     ui->uatTreeView->setCurrentIndex(QModelIndex());
@@ -345,11 +345,11 @@ void UatDialog::applyChanges()
 
     if (uat_->flags & UAT_AFFECTS_FIELDS) {
         /* Recreate list with new fields and redissect packets */
-        wsApp->queueAppSignal(WiresharkApplication::FieldsChanged);
+        mainApp->queueAppSignal(MainApplication::FieldsChanged);
     }
     if (uat_->flags & UAT_AFFECTS_DISSECTION) {
         /* Just redissect packets if we have any */
-        wsApp->queueAppSignal(WiresharkApplication::PacketDissectionChanged);
+        mainApp->queueAppSignal(MainApplication::PacketDissectionChanged);
     }
 }
 
@@ -404,12 +404,10 @@ void UatDialog::on_buttonBox_helpRequested()
 
 void UatDialog::resizeColumns()
 {
-    ui->uatTreeView->setVisible(false);
     for (int i = 0; i < uat_model_->columnCount(); i++) {
         ui->uatTreeView->resizeColumnToContents(i);
         if (i == 0) {
             ui->uatTreeView->setColumnWidth(i, ui->uatTreeView->columnWidth(i)+ui->uatTreeView->indentation());
         }
     }
-    ui->uatTreeView->setVisible(true);
 }

@@ -35,8 +35,8 @@ void proto_reg_handoff_mih(void);
 #define MORE_FRAG_MASK  0x1
 #define FRAG_NO_MASK    0xFE
 #define SID_MASK        0xF000
-#define OPCODE_MASK     0xC00
-#define AID_MASK        0x3FF
+#define OPCODE_MASK     0x0C00
+#define AID_MASK        0x03FF
 #define TRANS_ID_MASK   0x0FFF
 #define LEN_OF_LEN_MASK 0x80
 
@@ -2006,6 +2006,7 @@ static int dissect_mih(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void
         mih_tree = proto_item_add_subtree(ti, ett_mih);
         if(mih_tree)
         {
+                /* TODO: should have a different hf item for this version root */
                 item = proto_tree_add_item(mih_tree, hf_mih_version, tvb, offset, 1, ENC_BIG_ENDIAN);
 
                 ver_flags_tree = proto_item_add_subtree(item, ett_ver_flags);
@@ -2037,7 +2038,7 @@ static int dissect_mih(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void
         proto_tree_add_item(mid_tree, hf_mih_service_id, tvb, offset, 2, ENC_BIG_ENDIAN);
 
         /*filling the info column with the service type...*/
-        col_append_fstr(pinfo->cinfo, COL_INFO, "%s ", val_to_str(serviceid, servicevalues, "Unknown"));
+        col_append_fstr(pinfo->cinfo, COL_INFO, "%s ", val_to_str_const(serviceid, servicevalues, "Unknown"));
         opcode = tvb_get_guint8(tvb, offset);
         opcode = opcode & 0x0C;
         opcode >>= 2;
@@ -2045,7 +2046,7 @@ static int dissect_mih(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void
                 proto_tree_add_item(mid_tree, hf_mih_opcode, tvb, offset, 2, ENC_BIG_ENDIAN);
 
         /*filling the info column with the opcode type...*/
-        col_append_fstr(pinfo->cinfo, COL_INFO, "%s ", val_to_str(opcode, opcodevalues, "Unknown"));
+        col_append_fstr(pinfo->cinfo, COL_INFO, "%s ", val_to_str_const(opcode, opcodevalues, "Unknown"));
 
         /*check for type of service..*/
         service = tvb_get_guint8(tvb, offset);
@@ -2059,19 +2060,19 @@ static int dissect_mih(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void
         {
         case 1 :/*for Service Management..*/
                 proto_tree_add_item(mid_tree, hf_mih_serv_actionid, tvb, offset, 2, ENC_BIG_ENDIAN);
-                col_append_fstr(pinfo->cinfo, COL_INFO, "\"%s\"", val_to_str(action, serv_act_id_values, "Unknown"));
+                col_append_fstr(pinfo->cinfo, COL_INFO, "\"%s\"", val_to_str_const(action, serv_act_id_values, "Unknown"));
                 break;
         case 2 :/*for event services..*/
                 proto_tree_add_item(mid_tree, hf_mih_event_actionid, tvb, offset, 2, ENC_BIG_ENDIAN);
-                col_append_fstr(pinfo->cinfo, COL_INFO, "\"%s\"", val_to_str(action, event_act_id_values, "Unknown"));
+                col_append_fstr(pinfo->cinfo, COL_INFO, "\"%s\"", val_to_str_const(action, event_act_id_values, "Unknown"));
                 break;
         case 3 :/*for Command Services..*/
                 proto_tree_add_item(mid_tree, hf_mih_command_actionid, tvb, offset, 2, ENC_BIG_ENDIAN);
-                col_append_fstr(pinfo->cinfo, COL_INFO, "\"%s\"", val_to_str(action, command_act_id_values, "Unknown"));
+                col_append_fstr(pinfo->cinfo, COL_INFO, "\"%s\"", val_to_str_const(action, command_act_id_values, "Unknown"));
                 break;
         case 4 :/*for Information Services..*/
                 proto_tree_add_item(mid_tree, hf_mih_info_actionid, tvb, offset, 2, ENC_BIG_ENDIAN);
-                col_append_fstr(pinfo->cinfo, COL_INFO, "\"%s\"", val_to_str(action, info_act_id_values, "Unknown"));
+                col_append_fstr(pinfo->cinfo, COL_INFO, "\"%s\"", val_to_str_const(action, info_act_id_values, "Unknown"));
                 break;
         }
         offset += 2;
@@ -2154,7 +2155,7 @@ static int dissect_mih(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void
                 {
                         /*for type...*/
                         tlv_tree = proto_tree_add_subtree_format(mih_tree, tvb, offset, 1 + len_of_len + (guint32)len, ett_tlv, NULL,
-                                                "MIH TLV : %s", val_to_str(tvb_get_guint8(tvb, offset), typevaluenames, "UNKNOWN"));
+                                                "MIH TLV : %s", val_to_str_const(tvb_get_guint8(tvb, offset), typevaluenames, "UNKNOWN"));
                         if(tlv_tree)
                         {
                                 proto_tree_add_item(tlv_tree, hf_mih_type, tvb, offset, 1, ENC_BIG_ENDIAN);
@@ -2556,7 +2557,7 @@ void proto_register_mih(void)
                                 FT_BOOLEAN,
                                 32,
                                 NULL,
-                                0x0001,
+                                0x00000001,
                                 NULL, HFILL
                         }
                 },
@@ -2568,7 +2569,7 @@ void proto_register_mih(void)
                                 FT_BOOLEAN,
                                 32,
                                 NULL,
-                                0x0002,
+                                0x00000002,
                                 NULL, HFILL
                         }
                 },
@@ -2580,7 +2581,7 @@ void proto_register_mih(void)
                                 FT_BOOLEAN,
                                 32,
                                 NULL,
-                                0x0004,
+                                0x00000004,
                                 NULL, HFILL
                         }
                 },
@@ -2604,7 +2605,7 @@ void proto_register_mih(void)
                                 FT_BOOLEAN,
                                 32,
                                 NULL,
-                                0x0001,
+                                0x00000001,
                                 NULL, HFILL
                         }
                 },
@@ -2616,7 +2617,7 @@ void proto_register_mih(void)
                                 FT_BOOLEAN,
                                 32,
                                 NULL,
-                                0x0002,
+                                0x00000002,
                                 NULL, HFILL
                         }
                 },
@@ -2628,7 +2629,7 @@ void proto_register_mih(void)
                                 FT_BOOLEAN,
                                 32,
                                 NULL,
-                                0x0004,
+                                0x00000004,
                                 NULL, HFILL
                         }
                 },
@@ -2652,7 +2653,7 @@ void proto_register_mih(void)
                                 FT_BOOLEAN,
                                 32,
                                 NULL,
-                                0x0001,
+                                0x00000001,
                                 NULL, HFILL
                         }
                 },
@@ -2664,7 +2665,7 @@ void proto_register_mih(void)
                                 FT_BOOLEAN,
                                 32,
                                 NULL,
-                                0x0002,
+                                0x00000002,
                                 NULL, HFILL
                         }
                 },
@@ -2676,7 +2677,7 @@ void proto_register_mih(void)
                                 FT_BOOLEAN,
                                 32,
                                 NULL,
-                                0x0004,
+                                0x00000004,
                                 NULL, HFILL
                         }
                 },
@@ -2688,7 +2689,7 @@ void proto_register_mih(void)
                                 FT_BOOLEAN,
                                 32,
                                 NULL,
-                                0x0008,
+                                0x00000008,
                                 NULL, HFILL
                         }
                 },
@@ -2700,7 +2701,7 @@ void proto_register_mih(void)
                                 FT_BOOLEAN,
                                 32,
                                 NULL,
-                                0x0010,
+                                0x00000010,
                                 NULL, HFILL
                         }
                 },
@@ -2724,7 +2725,7 @@ void proto_register_mih(void)
                                 FT_BOOLEAN,
                                 32,
                                 NULL,
-                                0x0001,
+                                0x00000001,
                                 NULL, HFILL
                         }
                 },
@@ -2736,7 +2737,7 @@ void proto_register_mih(void)
                                 FT_BOOLEAN,
                                 32,
                                 NULL,
-                                0x0002,
+                                0x00000002,
                                 NULL, HFILL
                         }
                 },
@@ -2748,7 +2749,7 @@ void proto_register_mih(void)
                                 FT_BOOLEAN,
                                 32,
                                 NULL,
-                                0x0004,
+                                0x00000004,
                                 NULL, HFILL
                         }
                 },
@@ -2760,7 +2761,7 @@ void proto_register_mih(void)
                                 FT_BOOLEAN,
                                 32,
                                 NULL,
-                                0x0008,
+                                0x00000008,
                                 NULL, HFILL
                         }
                 },
@@ -2772,7 +2773,7 @@ void proto_register_mih(void)
                                 FT_BOOLEAN,
                                 32,
                                 NULL,
-                                0x0010,
+                                0x00000010,
                                 NULL, HFILL
                         }
                 },
@@ -2784,7 +2785,7 @@ void proto_register_mih(void)
                                 FT_BOOLEAN,
                                 32,
                                 NULL,
-                                0x0020,
+                                0x00000020,
                                 NULL, HFILL
                         }
                 },
@@ -2808,7 +2809,7 @@ void proto_register_mih(void)
                                 FT_BOOLEAN,
                                 32,
                                 NULL,
-                                0x0001,
+                                0x00000001,
                                 NULL, HFILL
                         }
                 },
@@ -2820,7 +2821,7 @@ void proto_register_mih(void)
                                 FT_BOOLEAN,
                                 32,
                                 NULL,
-                                0x0002,
+                                0x00000002,
                                 NULL, HFILL
                         }
                 },
@@ -2832,7 +2833,7 @@ void proto_register_mih(void)
                                 FT_BOOLEAN,
                                 32,
                                 NULL,
-                                0x0004,
+                                0x00000004,
                                 NULL, HFILL
                         }
                 },
@@ -2844,7 +2845,7 @@ void proto_register_mih(void)
                                 FT_BOOLEAN,
                                 32,
                                 NULL,
-                                0x0008,
+                                0x00000008,
                                 NULL, HFILL
                         }
                 },
@@ -2868,7 +2869,7 @@ void proto_register_mih(void)
                                 FT_BOOLEAN,
                                 32,
                                 NULL,
-                                0x0001,
+                                0x00000001,
                                 NULL, HFILL
                         }
                 },
@@ -2880,7 +2881,7 @@ void proto_register_mih(void)
                                 FT_BOOLEAN,
                                 32,
                                 NULL,
-                                0x0002,
+                                0x00000002,
                                 NULL, HFILL
                         }
                 },

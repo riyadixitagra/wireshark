@@ -104,7 +104,7 @@ static expert_field ei_vcdu_fhp_too_close_to_end_of_vcdu = EI_INIT;
 #define FHP_CONTINUATION      0x7ff
 
 #define LBP_MASK 0x3fff
-#define FHP_MASK 0x7ff
+#define FHP_MASK 0x07ff
 
 /* leap year macro */
 #ifndef Leap
@@ -546,7 +546,7 @@ proto_register_vcdu(void)
 #if 0
         { &hf_smex_spare,
           { "Spare",           "vcdu.smex.spare",
-            FT_UINT16, BASE_DEC, NULL, 0x03f,
+            FT_UINT16, BASE_DEC, NULL, 0x003f,
             "SMEX Spare", HFILL }
         },
 #endif

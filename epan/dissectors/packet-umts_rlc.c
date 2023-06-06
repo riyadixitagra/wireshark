@@ -648,6 +648,9 @@ tree_add_fragment_list_incomplete(struct rlc_sdu *sdu, tvbuff_t *tvb, proto_tree
 /* Add the same description to too the two given proto_items */
 static void
 add_description(proto_item *li_ti, proto_item *length_ti,
+                const char *format, ...)  G_GNUC_PRINTF(3, 4);
+static void
+add_description(proto_item *li_ti, proto_item *length_ti,
                 const char *format, ...)
 {
 #define MAX_INFO_BUFFER 256
@@ -976,14 +979,16 @@ rlc_reset_channel(enum rlc_mode mode, guint8 rbid, guint8 dir, guint32 ueid,
     ch_lookup.ueid = ueid;
     frags = get_frags(NULL, &ch_lookup, atm);
     endlist = get_endlist(NULL, &ch_lookup, atm);
-    DISSECTOR_ASSERT(frags && endlist);
+    if (endlist) {
+        endlist->fail_packet = 0;
+        g_list_free(endlist->list);
+        endlist->list = NULL;
+    }
 
-    endlist->fail_packet = 0;
-    g_list_free(endlist->list);
-    endlist->list = NULL;
-
-    for (i = 0; i < 4096; i++) {
-        frags[i] = NULL;
+    if (frags) {
+        for (i = 0; i < 4096; i++) {
+            frags[i] = NULL;
+        }
     }
 }
 
@@ -1508,7 +1513,8 @@ is_ciphered_according_to_rrc(packet_info *pinfo, fp_info *fpinf, rlc_info *rlcin
             /* Making sure the sequence number where ciphering starts makes sense */
             /* TODO: This check is incorrect if the sequence numbers wrap around */
             if(ciphering_begin_seq >= 0 && ciphering_begin_seq <= seq){
-                return TRUE;
+				/* Finally, make sure the encryption algorithm isn't set to UEA0 (no ciphering)*/
+                return ciphering_info->ciphering_algorithm != 0;
             }
         }
     }
@@ -1692,7 +1698,7 @@ dissect_rlc_tm(enum rlc_channel_type channel, tvbuff_t *tvb, packet_info *pinfo,
 
 
 static void
-rlc_um_reassemble(tvbuff_t *tvb, guint8 offs, packet_info *pinfo, proto_tree *tree,
+rlc_um_reassemble(tvbuff_t *tvb, guint16 offs, packet_info *pinfo, proto_tree *tree,
           proto_tree *top_level, enum rlc_channel_type channel, guint16 seq,
           struct rlc_li *li, guint16 num_li, gboolean li_is_on_2_bytes,
           struct atm_phdr *atm)
@@ -1919,7 +1925,8 @@ dissect_rlc_um(enum rlc_channel_type channel, tvbuff_t *tvb, packet_info *pinfo,
     guint32        orig_num;
     guint8         seq;
     guint8         ext;
-    guint8         next_byte, offs = 0;
+    guint8         next_byte;
+    guint16        offs = 0;
     gint16         cur_tb, num_li  = 0;
     gboolean       is_truncated, li_is_on_2_bytes;
     proto_item    *truncated_ti;
@@ -2011,7 +2018,7 @@ dissect_rlc_um(enum rlc_channel_type channel, tvbuff_t *tvb, packet_info *pinfo,
 }
 
 static void
-dissect_rlc_status(tvbuff_t *tvb, packet_info *pinfo _U_, proto_tree *tree, guint8 offset)
+dissect_rlc_status(tvbuff_t *tvb, packet_info *pinfo _U_, proto_tree *tree, guint16 offset)
 {
     guint8      sufi_type, bits;
     guint64     len, sn, wsn, lsn, l;
@@ -2237,7 +2244,7 @@ dissect_rlc_control(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree)
 }
 
 static void
-rlc_am_reassemble(tvbuff_t *tvb, guint8 offs, packet_info *pinfo,
+rlc_am_reassemble(tvbuff_t *tvb, guint16 offs, packet_info *pinfo,
           proto_tree *tree, proto_tree *top_level,
           enum rlc_channel_type channel, guint16 seq, gboolean poll_set, struct rlc_li *li,
           guint16 num_li, gboolean final, gboolean li_is_on_2_bytes,
@@ -2330,11 +2337,11 @@ dissect_rlc_am(enum rlc_channel_type channel, tvbuff_t *tvb, packet_info *pinfo,
     fp_info       *fpinf;
     rlc_info      *rlcinf;
     guint8         ext, dc;
-    guint8         next_byte, offs = 0;
+    guint8         next_byte;
     guint32        orig_num        = 0;
     gint16         num_li          = 0;
     gint16         cur_tb;
-    guint16        seq;
+    guint16        seq, offs       = 0;
     gboolean       is_truncated, li_is_on_2_bytes;
     proto_item    *truncated_ti, *ti;
     guint64        polling;

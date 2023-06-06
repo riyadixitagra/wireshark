@@ -9,23 +9,24 @@
  */
 
 #include <config.h>
+#define WS_LOG_DOMAIN  LOG_DOMAIN_MAIN
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <glib.h>
 
+#include <ws_exit_codes.h>
 #include <wsutil/ws_getopt.h>
 
 #include <wiretap/wtap.h>
 
-#include <ui/cmdarg_err.h>
-#include <ui/exit_codes.h>
+#include <wsutil/cmdarg_err.h>
 #include <wsutil/filesystem.h>
 #include <wsutil/file_util.h>
 #include <wsutil/privileges.h>
 #include <cli_main.h>
-#include <ui/version_info.h>
+#include <wsutil/version_info.h>
 #include <wiretap/wtap_opttypes.h>
 
 #ifdef HAVE_PLUGINS
@@ -159,7 +160,7 @@ reordercap_cmdarg_err_cont(const char *msg_format, va_list ap)
 int
 main(int argc, char *argv[])
 {
-    char *init_progfile_dir_error;
+    char *configuration_init_error;
     static const struct report_message_routines reordercap_message_routines = {
         failure_message,
         failure_message,
@@ -204,7 +205,9 @@ main(int argc, char *argv[])
     ws_log_init("reordercap", vcmdarg_err);
 
     /* Early logging command-line initialization. */
-    ws_log_parse_args(&argc, argv, vcmdarg_err, INVALID_OPTION);
+    ws_log_parse_args(&argc, argv, vcmdarg_err, WS_EXIT_INVALID_OPTION);
+
+    ws_noisy("Finished log init and parsing command line log arguments");
 
     /* Initialize the version information. */
     ws_init_version_info("Reordercap", NULL, NULL);
@@ -218,12 +221,12 @@ main(int argc, char *argv[])
      * Attempt to get the pathname of the directory containing the
      * executable file.
      */
-    init_progfile_dir_error = init_progfile_dir(argv[0]);
-    if (init_progfile_dir_error != NULL) {
+    configuration_init_error = configuration_init(argv[0], NULL);
+    if (configuration_init_error != NULL) {
         fprintf(stderr,
                 "reordercap: Can't get pathname of directory containing the reordercap program: %s.\n",
-                init_progfile_dir_error);
-        g_free(init_progfile_dir_error);
+                configuration_init_error);
+        g_free(configuration_init_error);
     }
 
     init_report_message("reordercap", &reordercap_message_routines);
@@ -245,7 +248,7 @@ main(int argc, char *argv[])
                 goto clean_exit;
             case '?':
                 print_usage(stderr);
-                ret = INVALID_OPTION;
+                ret = WS_EXIT_INVALID_OPTION;
                 goto clean_exit;
         }
     }
@@ -258,7 +261,7 @@ main(int argc, char *argv[])
     }
     else {
         print_usage(stderr);
-        ret = INVALID_OPTION;
+        ret = WS_EXIT_INVALID_OPTION;
         goto clean_exit;
     }
 
@@ -268,7 +271,7 @@ main(int argc, char *argv[])
     wth = wtap_open_offline(infile, WTAP_TYPE_AUTO, &err, &err_info, TRUE);
     if (wth == NULL) {
         cfile_open_failure_message(infile, err, err_info);
-        ret = OPEN_ERROR;
+        ret = WS_EXIT_OPEN_ERROR;
         goto clean_exit;
     }
     DEBUG_PRINT("file_type_subtype is %d\n", wtap_file_type_subtype(wth));

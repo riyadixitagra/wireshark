@@ -19,9 +19,10 @@
 
 #include <wsutil/glib-compat.h>
 #include <wsutil/inet_ipv6.h>
+#include <wsutil/unicode-utils.h>
 
 #if 0
-#define wtap_debug(...) g_warning(__VA_ARGS__)
+#define wtap_debug(...) ws_warning(__VA_ARGS__)
 #define DEBUG_COUNT_REFS
 #else
 #define wtap_debug(...)
@@ -194,6 +195,29 @@ void wtap_packet_verdict_free(packet_verdict_opt_t* verdict)
     }
 }
 
+static packet_hash_opt_t
+packet_hash_dup(packet_hash_opt_t* hash_src)
+{
+    packet_hash_opt_t hash_dest;
+
+    memset(&hash_dest, 0, sizeof(hash_dest));
+
+    /* Deep copy. */
+    hash_dest.type = hash_src->type;
+    /* array of octets */
+    hash_dest.hash_bytes =
+        g_byte_array_new_take((guint8 *)g_memdup2(hash_src->hash_bytes->data,
+                                                  hash_src->hash_bytes->len),
+                              hash_src->hash_bytes->len);
+    return hash_dest;
+}
+
+void wtap_packet_hash_free(packet_hash_opt_t* hash)
+{
+    /* array of bytes */
+    g_byte_array_free(hash->hash_bytes, TRUE);
+}
+
 static void wtap_opttype_block_register(wtap_blocktype_t *blocktype)
 {
     wtap_block_type_t block_type;
@@ -364,6 +388,10 @@ static void wtap_block_free_option(wtap_block_t block, wtap_option_t *opt)
         wtap_packet_verdict_free(&opt->value.packet_verdictval);
         break;
 
+    case WTAP_OPTTYPE_PACKET_HASH:
+        wtap_packet_hash_free(&opt->value.packet_hash);
+        break;
+
     default:
         break;
     }
@@ -507,6 +535,10 @@ wtap_block_copy(wtap_block_t dest_block, wtap_block_t src_block)
 
         case WTAP_OPTTYPE_PACKET_VERDICT:
             wtap_block_add_packet_verdict_option(dest_block, src_opt->option_id, &src_opt->value.packet_verdictval);
+            break;
+
+        case WTAP_OPTTYPE_PACKET_HASH:
+            wtap_block_add_packet_hash_option(dest_block, src_opt->option_id, &src_opt->value.packet_hash);
             break;
         }
     }
@@ -911,6 +943,21 @@ wtap_block_add_string_option(wtap_block_t block, guint option_id, const char *va
     if (ret != WTAP_OPTTYPE_SUCCESS)
         return ret;
     opt->value.stringval = g_strndup(value, value_length);
+    WS_UTF_8_CHECK(opt->value.stringval, -1);
+    return WTAP_OPTTYPE_SUCCESS;
+}
+
+wtap_opttype_return_val
+wtap_block_add_string_option_owned(wtap_block_t block, guint option_id, char *value)
+{
+    wtap_opttype_return_val ret;
+    wtap_option_t *opt;
+
+    ret = wtap_block_add_option_common(block, option_id, WTAP_OPTTYPE_STRING, &opt);
+    if (ret != WTAP_OPTTYPE_SUCCESS)
+        return ret;
+    opt->value.stringval = value;
+    WS_UTF_8_CHECK(opt->value.stringval, -1);
     return WTAP_OPTTYPE_SUCCESS;
 }
 
@@ -924,6 +971,7 @@ wtap_block_add_string_option_vformat(wtap_block_t block, guint option_id, const 
     if (ret != WTAP_OPTTYPE_SUCCESS)
         return ret;
     opt->value.stringval = ws_strdup_vprintf(format, va);
+    WS_UTF_8_CHECK(opt->value.stringval, -1);
     return WTAP_OPTTYPE_SUCCESS;
 }
 
@@ -1429,6 +1477,19 @@ wtap_block_get_nth_packet_verdict_option_value(wtap_block_t block, guint option_
 }
 
 wtap_opttype_return_val
+wtap_block_add_packet_hash_option(wtap_block_t block, guint option_id, packet_hash_opt_t* value)
+{
+    wtap_opttype_return_val ret;
+    wtap_option_t *opt;
+
+    ret = wtap_block_add_option_common(block, option_id, WTAP_OPTTYPE_PACKET_HASH, &opt);
+    if (ret != WTAP_OPTTYPE_SUCCESS)
+        return ret;
+    opt->value.packet_hash = packet_hash_dup(value);
+    return WTAP_OPTTYPE_SUCCESS;
+}
+
+wtap_opttype_return_val
 wtap_block_remove_option(wtap_block_t block, guint option_id)
 {
     const wtap_opttype_t *opttype;
@@ -1534,8 +1595,45 @@ static void shb_copy_mand(wtap_block_t dest_block, wtap_block_t src_block)
 
 static void nrb_create(wtap_block_t block)
 {
-    block->mandatory_data = NULL;
+    block->mandatory_data = g_new0(wtapng_nrb_mandatory_t, 1);
 }
+
+static void nrb_free_mand(wtap_block_t block)
+{
+    wtapng_nrb_mandatory_t *mand = (wtapng_nrb_mandatory_t *)block->mandatory_data;
+    g_list_free_full(mand->ipv4_addr_list, g_free);
+    g_list_free_full(mand->ipv6_addr_list, g_free);
+}
+
+#if 0
+static gpointer copy_hashipv4(gconstpointer src, gpointer user_data _U_
+{
+    hashipv4_t *src_ipv4 = (hashipv4_t*)src;
+    hashipv4_t *dst = g_new0(hashipv4_t, 1);
+    dst->addr = src_ipv4->addr;
+    (void) g_strlcpy(dst->name, src_ipv4->name, MAXNAMELEN);
+    return dst;
+}
+
+static gpointer copy_hashipv4(gconstpointer src, gpointer user_data _U_
+{
+    hashipv6_t *src_ipv6 = (hashipv6_t*)src;
+    hashipv6_t *dst = g_new0(hashipv6_t, 1);
+    dst->addr = src_ipv4->addr;
+    (void) g_strlcpy(dst->name, src_ipv4->name, MAXNAMELEN);
+    return dst;
+}
+
+static void nrb_copy_mand(wtap_block_t dest_block, wtap_block_t src_block)
+{
+    wtapng_nrb_mandatory_t *src = (wtapng_nrb_mandatory_t *)src_block->mandatory_data;
+    wtapng_nrb_mandatory_t *dst = (wtapng_nrb_mandatory_t *)dest_block->mandatory_data;
+    g_list_free_full(dst->ipv4_addr_list, g_free);
+    g_list_free_full(dst->ipv6_addr_list, g_free);
+    dst->ipv4_addr_list = g_list_copy_deep(src->ipv4_addr_list, copy_hashipv4, NULL);
+    dst->ipv6_addr_list = g_list_copy_deep(src->ipv6_addr_list, copy_hashipv6, NULL);
+}
+#endif
 
 static void isb_create(wtap_block_t block)
 {
@@ -1738,8 +1836,18 @@ void wtap_opttypes_initialize(void)
         "NRB",                      /* name */
         "Name Resolution Block",    /* description */
         nrb_create,                 /* create */
-        NULL,                       /* free_mand */
-        NULL,                       /* copy_mand */
+        nrb_free_mand,              /* free_mand */
+        /* We eventually want to copy these, when dumper actually
+         * writes them out. If we're actually processing packets,
+         * as opposed to just reading and writing a file without
+         * printing (e.g., editcap), do we still want to copy all
+         * the pre-existing NRBs, or do we want to limit it to
+         * the actually used addresses, as currently?
+         */
+#if 0
+        nrb_copy_mand,              /* copy_mand */
+#endif
+        NULL,
         NULL                        /* options */
     };
     static const wtap_opttype_t ns_dnsname = {
@@ -1849,7 +1957,7 @@ void wtap_opttypes_initialize(void)
     static const wtap_opttype_t pkt_hash = {
         "hash",
         "Hash of packet data",
-        WTAP_OPTTYPE_BYTES,  // TODO: replace with a pkt_hash_opt_t
+        WTAP_OPTTYPE_PACKET_HASH,
         WTAP_OPTTYPE_FLAG_MULTIPLE_ALLOWED
     };
     static const wtap_opttype_t pkt_verdict = {

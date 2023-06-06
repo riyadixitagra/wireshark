@@ -46,6 +46,15 @@ void DataPrinter::toClipboard(DataPrinter::DumpType type, IDataPrintable * print
         for (int i = 0; i < printData.length(); i++)
             clipboard_text += QString("%1").arg((uint8_t) printData[i], 2, 16, QChar('0'));
         break;
+    case DP_Base64:
+#if WS_IS_AT_LEAST_GNUC_VERSION(12,1)
+DIAG_OFF(stringop-overread)
+#endif
+        clipboard_text = printData.toBase64();
+#if WS_IS_AT_LEAST_GNUC_VERSION(12,1)
+DIAG_ON(stringop-overread)
+#endif
+        break;
     case DP_EscapedString:
         // Beginning quote
         clipboard_text += QString("\"");
@@ -109,8 +118,25 @@ int DataPrinter::byteLineLength() const
 
 int DataPrinter::hexChars()
 {
-    int row_width = recent.gui_bytes_view == BYTES_HEX ? 16 : 8;
-    int chars_per_byte = recent.gui_bytes_view == BYTES_HEX ? 3 : 9;
+    int row_width, chars_per_byte;
+
+    switch (recent.gui_bytes_view) {
+    case BYTES_HEX:
+        row_width = 16;
+        chars_per_byte = 3;
+        break;
+    case BYTES_BITS:
+        row_width = 8;
+        chars_per_byte = 9;
+        break;
+    case BYTES_DEC:
+    case BYTES_OCT:
+        row_width = 16;
+        chars_per_byte = 4;
+        break;
+    default:
+        ws_assert_not_reached();
+    }
     return (row_width * chars_per_byte) + ((row_width - 1) / separatorInterval());
 }
 
@@ -136,7 +162,7 @@ QString DataPrinter::hexTextDump(const QByteArray printData, bool showASCII)
         cnt++;
     }
 
-    int lines = printData.length() / byteLineLength_;
+    int lines = static_cast<int>(printData.length()) / byteLineLength_;
     if (printData.length() % byteLineLength_ > 0)
         lines++;
 
@@ -155,7 +181,7 @@ QString DataPrinter::hexTextDump(const QByteArray printData, bool showASCII)
             /* separation bytes last line */
             if (cnt == (lines - 1) )
             {
-                int remSpace = byteLineLength_ - dataStr.mid(offset, byteLineLength_).length();
+                int remSpace = byteLineLength_ - static_cast<int>(dataStr.mid(offset, byteLineLength_).length());
                 clipboard_text += QString(remSpace * 3, ' ');
             }
 
@@ -212,6 +238,11 @@ QActionGroup * DataPrinter::copyActions(QObject * copyClass, QObject * data)
     action->setProperty("printertype", DataPrinter::DP_HexStream);
     connect(action, &QAction::triggered, dpi, &DataPrinter::copyIDataBytes);
 
+    action = new QAction(tr("…as a Base64 String"), actions);
+    action->setToolTip(tr("Copy packet bytes as a base64 encoded string."));
+    action->setProperty("printertype", DataPrinter::DP_Base64);
+    connect(action, &QAction::triggered, dpi, &DataPrinter::copyIDataBytes);
+
     action = new QAction(tr("…as Raw Binary"), actions);
     action->setToolTip(tr("Copy packet bytes as application/octet-stream MIME data."));
     action->setProperty("printertype", DataPrinter::DP_Binary);
@@ -240,7 +271,7 @@ void DataPrinter::copyIDataBytes(bool /* state */)
 
     int dump_type = sendingAction->property("printertype").toInt();
 
-    if (dump_type >= 0 && dump_type <= DataPrinter::DP_Binary) {
+    if (dump_type >= 0 && dump_type <= DataPrinter::DP_Base64) {
         DataPrinter printer;
         printer.toClipboard((DataPrinter::DumpType) dump_type, dynamic_cast<IDataPrintable *>(dataObject));
     }

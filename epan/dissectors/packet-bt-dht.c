@@ -567,13 +567,13 @@ test_bt_dht(packet_info *pinfo _U_, tvbuff_t *tvb, int offset, void *data _U_)
   if (tvb_captured_length_remaining(tvb, offset) < DHT_MIN_LEN)
     return FALSE;
 
-  if (tvb_memeql(tvb, offset, "d1:ad", 5) == 0) {
+  if (tvb_memeql(tvb, offset, (const guint8*)"d1:ad", 5) == 0) {
     return TRUE;
-  } else if (tvb_memeql(tvb, offset, "d1:rd", 5) == 0) {
+  } else if (tvb_memeql(tvb, offset, (const guint8*)"d1:rd", 5) == 0) {
     return TRUE;
-  } else if (tvb_memeql(tvb, offset, "d2:ip", 5) == 0) {
+  } else if (tvb_memeql(tvb, offset, (const guint8*)"d2:ip", 5) == 0) {
     return TRUE;
-  } else if (tvb_memeql(tvb, offset, "d1:el", 5) == 0) {
+  } else if (tvb_memeql(tvb, offset, (const guint8*)"d1:el", 5) == 0) {
     return TRUE;
   }
 
@@ -724,6 +724,8 @@ proto_register_bt_dht(void)
 
   expert_bt_dht = expert_register_protocol(proto_bt_dht);
   expert_register_field_array(expert_bt_dht, ei, array_length(ei));
+
+  bt_dht_handle = register_dissector("bt-dht", dissect_bt_dht, proto_bt_dht);
 }
 
 void
@@ -731,7 +733,6 @@ proto_reg_handoff_bt_dht(void)
 {
   heur_dissector_add("udp", dissect_bt_dht_heur, "BitTorrent DHT over UDP", "bittorrent_dht_udp", proto_bt_dht, HEURISTIC_ENABLE);
 
-  bt_dht_handle = create_dissector_handle(dissect_bt_dht, proto_bt_dht);
   dissector_add_for_decode_as_with_preference("udp.port", bt_dht_handle);
 }
 

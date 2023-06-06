@@ -24,7 +24,7 @@
 #include <wsutil/wslog.h>
 
 #include <cli_main.h>
-#include <ui/cmdarg_err.h>
+#include <wsutil/cmdarg_err.h>
 
 #define RANDPKT_EXTCAP_INTERFACE "randpkt"
 #define RANDPKTDUMP_VERSION_MAJOR "0"
@@ -144,6 +144,7 @@ int main(int argc, char *argv[])
 	int all_random = FALSE;
 	char* type = NULL;
 	int produce_type = -1;
+	int file_type_subtype = WTAP_FILE_TYPE_SUBTYPE_UNKNOWN;
 	randpkt_example	*example;
 	wtap_dumper* savedump;
 	int ret = EXIT_FAILURE;
@@ -166,7 +167,7 @@ int main(int argc, char *argv[])
 	 * Attempt to get the pathname of the directory containing the
 	 * executable file.
 	 */
-	err_msg = init_progfile_dir(argv[0]);
+	err_msg = configuration_init(argv[0], NULL);
 	if (err_msg != NULL) {
 		ws_warning("Can't get pathname of directory containing the extcap program: %s.",
 			err_msg);
@@ -306,6 +307,10 @@ int main(int argc, char *argv[])
 
 		wtap_init(FALSE);
 
+		if (file_type_subtype == WTAP_FILE_TYPE_SUBTYPE_UNKNOWN) {
+			file_type_subtype = wtap_pcapng_file_type_subtype();
+		}
+
 		if (!all_random) {
 			produce_type = randpkt_parse_type(type);
 
@@ -315,7 +320,7 @@ int main(int argc, char *argv[])
 
 			ws_debug("Generating packets: %s", example->abbrev);
 
-			randpkt_example_init(example, extcap_conf->fifo, maxbytes);
+			randpkt_example_init(example, extcap_conf->fifo, maxbytes, file_type_subtype);
 			randpkt_loop(example, count, packet_delay_ms);
 			randpkt_example_close(example);
 		} else {
@@ -323,7 +328,7 @@ int main(int argc, char *argv[])
 			example = randpkt_find_example(produce_type);
 			if (!example)
 				goto end;
-			randpkt_example_init(example, extcap_conf->fifo, maxbytes);
+			randpkt_example_init(example, extcap_conf->fifo, maxbytes, file_type_subtype);
 
 			while (count-- > 0) {
 				randpkt_loop(example, 1, packet_delay_ms);

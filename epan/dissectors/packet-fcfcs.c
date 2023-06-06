@@ -701,11 +701,11 @@ dissect_fcfcs (tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void* data)
 
     if ((opcode != FCCT_MSG_ACC) && (opcode != FCCT_MSG_RJT)) {
         conversation = find_conversation (pinfo->num, &pinfo->src, &pinfo->dst,
-                                          conversation_pt_to_endpoint_type(pinfo->ptype), fchdr->oxid,
-                                          fchdr->rxid, NO_PORT2);
+                                          conversation_pt_to_conversation_type(pinfo->ptype), fchdr->oxid,
+                                          fchdr->rxid, NO_PORT_B);
         if (!conversation) {
             conversation = conversation_new (pinfo->num, &pinfo->src, &pinfo->dst,
-                                             conversation_pt_to_endpoint_type(pinfo->ptype), fchdr->oxid,
+                                             conversation_pt_to_conversation_type(pinfo->ptype), fchdr->oxid,
                                              fchdr->rxid, NO_PORT2);
         }
 
@@ -735,8 +735,8 @@ dissect_fcfcs (tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void* data)
     else {
         /* Opcode is ACC or RJT */
         conversation = find_conversation (pinfo->num, &pinfo->src, &pinfo->dst,
-                                          conversation_pt_to_endpoint_type(pinfo->ptype), fchdr->oxid,
-                                          fchdr->rxid, NO_PORT2);
+                                          conversation_pt_to_conversation_type(pinfo->ptype), fchdr->oxid,
+                                          fchdr->rxid, NO_PORT_B);
         isreq = 0;
         if (!conversation) {
             if (opcode == FCCT_MSG_ACC) {
@@ -949,8 +949,8 @@ proto_register_fcfcs (void)
           {"Platform Node Name", "fcs.platform.nodename", FT_FCWWN, BASE_NONE,
            NULL, 0x0, NULL, HFILL}},
         { &hf_fcs_platformtype,
-          {"Platform Type", "fcs.platform.type", FT_UINT8, BASE_HEX,
-           VALS (fc_fcs_plat_type_val), 0x0, NULL, HFILL}},
+          {"Platform Type", "fcs.platform.type", FT_UINT32, BASE_HEX,
+           VALS(fc_fcs_plat_type_val), 0x0, NULL, HFILL}},
         { &hf_fcs_platformaddr,
           {"Management Address", "fcs.platform.mgmtaddr", FT_UINT_STRING, BASE_NONE,
            NULL, 0x0, NULL, HFILL}},

@@ -39,6 +39,7 @@
 #include <epan/wmem_scopes.h>
 #include <epan/oui.h>
 
+#include "packet-enip.h"
 
 #define DEFAULT_COLUMN_INFO            1
 #define PROFINET_SPECIAL_COLUMN_INFO   2
@@ -54,6 +55,8 @@ typedef struct _profinet_lldp_column_info {
 }profinet_lldp_column_info;
 
 static gint column_info_selection = DEFAULT_COLUMN_INFO;
+
+static dissector_handle_t lldp_handle;
 
 void proto_register_lldp(void);
 void proto_reg_handoff_lldp(void);
@@ -92,6 +95,9 @@ static int hf_lldp_tlv_system_cap_router = -1;
 static int hf_lldp_tlv_system_cap_telephone = -1;
 static int hf_lldp_tlv_system_cap_docsis_cable_device = -1;
 static int hf_lldp_tlv_system_cap_station_only = -1;
+static int hf_lldp_tlv_system_cap_cvlan_component = -1;
+static int hf_lldp_tlv_system_cap_svlan_component = -1;
+static int hf_lldp_tlv_system_cap_tpmr_component = -1;
 static int hf_lldp_tlv_system_name = -1;
 static int hf_lldp_tlv_system_desc = -1;
 static int hf_lldp_tlv_enable_system_cap = -1;
@@ -103,6 +109,9 @@ static int hf_lldp_tlv_enable_system_cap_router = -1;
 static int hf_lldp_tlv_enable_system_cap_telephone = -1;
 static int hf_lldp_tlv_enable_system_cap_docsis_cable_device = -1;
 static int hf_lldp_tlv_enable_system_cap_station_only = -1;
+static int hf_lldp_tlv_enable_system_cap_cvlan_component = -1;
+static int hf_lldp_tlv_enable_system_cap_svlan_component = -1;
+static int hf_lldp_tlv_enable_system_cap_tpmr_component = -1;
 static int hf_chassis_id_subtype = -1;
 static int hf_chassis_id = -1;
 static int hf_chassis_id_mac = -1;
@@ -376,6 +385,15 @@ static int hf_profinet_port_tx_delay_local = -1;
 static int hf_profinet_port_tx_delay_remote = -1;
 static int hf_profinet_cable_delay_local = -1;
 static int hf_profinet_mrp_domain_uuid = -1;
+static int hf_profinet_tsn_domain_uuid = -1;
+static int hf_profinet_tsn_nme_management_addr = -1;
+static int hf_profinet_tsn_nme_management_addr_str_length = -1;
+static int hf_profinet_tsn_nme_management_addr_subtype = -1;
+static int hf_profinet_tsn_nme_name_uuid = -1;
+static int hf_profinet_tsn_nme_parameter_uuid = -1;
+static int hf_profinet_time_domain_number = -1;
+static int hf_profinet_time_domain_uuid = -1;
+static int hf_profinet_time_domain_master_identity = -1;
 static int hf_profinet_mrrt_port_status = -1;
 static int hf_profinet_cm_mac = -1;
 static int hf_profinet_master_source_address = -1;
@@ -756,12 +774,17 @@ static const value_string media_application_type[] = {
 
 /* PROFINET subtypes */
 static const value_string profinet_subtypes[] = {
-	{ 1, "Measured Delay Values" },
-	{ 2, "Port Status" },
-	{ 3, "Alias" },
-	{ 4, "MRP Port Status" },
-	{ 5, "Chassis MAC" },
-	{ 6, "PTCP Status" },
+	{ 1,  "Measured Delay Values" },
+	{ 2,  "Port Status" },
+	{ 3,  "Alias" },
+	{ 4,  "MRP Port Status" },
+	{ 5,  "Chassis MAC" },
+	{ 6,  "PTCP Status" },
+	{ 9,  "TSN Domain"},
+	{ 10, "TSN NME Management Address"},
+	{ 11, "TSN NME Name UUID"},
+	{ 12, "TSN NME Parameter UUID"},
+	{ 13, "TSN Time Domain data"},
 	{ 0, NULL }
 };
 /* extreme avaya ap subtypes */
@@ -1050,7 +1073,7 @@ static const value_string operational_mau_type_values[] = {
 	{ 46,	"100BASE-LX10 - One single-mode fiber ONU, long wavelength, 10km" },
 	{ 47,	"1000BASE-BX10D - One single-mode fiber OLT, long wavelength, 10km" },
 	{ 48,	"1000BASE-BX10U - One single-mode fiber ONU, long wavelength, 10km" },
-	{ 49,	"1000BASE-LX10 - Two sigle-mode fiber, long wavelength, 10km" },
+	{ 49,	"1000BASE-LX10 - Two single-mode fiber, long wavelength, 10km" },
 	{ 50,	"1000BASE-PX10D - One single-mode fiber EPON OLT, 10km" },
 	{ 51,	"1000BASE-PX10U - One single-mode fiber EPON ONU, 10km" },
 	{ 52,	"1000BASE-PX20D - One single-mode fiber EPON OLT, 20km" },
@@ -1188,6 +1211,9 @@ static const value_string hytec_mc[] = {
 #define SYSTEM_CAPABILITY_TELEPHONE	0x0020
 #define SYSTEM_CAPABILITY_DOCSIS	0x0040
 #define SYSTEM_CAPABILITY_STATION	0x0080
+#define SYSTEM_CAPABILITY_CVLAN		0x0100
+#define SYSTEM_CAPABILITY_SVLAN		0x0200
+#define SYSTEM_CAPABILITY_TPMR		0x0400
 
 /* Media Capabilities */
 #define MEDIA_CAPABILITY_LLDP				0x0001
@@ -1297,6 +1323,13 @@ static const value_string profinet_mrrt_port_status_vals[] = {
 	{ 2,	"MRRT_UP" },
 	/* all other bits reserved */
 	{ 0,	NULL }
+};
+static const value_string profinet_time_domain_number_vals[] = {
+    { 0x0000, "Global Time" },
+    { 0x0001, "Global Time Redundant" },
+    { 0x0020, "Working Clock" },
+    { 0x0021, "Working Clock Redundant" },
+    { 0, NULL }
 };
 
 /* IEEE 802.1Qbg Subtypes */
@@ -1774,7 +1807,7 @@ dissect_lldp_time_to_live(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, g
 	return offset;
 }
 
-/* Dissect End of LLDPDU TLV (Mandatory) */
+/* Dissect End of LLDPDU TLV */
 static gint32
 dissect_lldp_end_of_lldpdu(tvbuff_t *tvb, packet_info *pinfo _U_, proto_tree *tree, guint32 offset)
 {
@@ -1923,6 +1956,9 @@ dissect_lldp_system_capabilities(tvbuff_t *tvb, packet_info *pinfo _U_, proto_tr
 	proto_tree_add_item(capabilities_summary_tree, hf_lldp_tlv_system_cap_telephone, tvb, offset, 2, ENC_BIG_ENDIAN);
 	proto_tree_add_item(capabilities_summary_tree, hf_lldp_tlv_system_cap_docsis_cable_device, tvb, offset, 2, ENC_BIG_ENDIAN);
 	proto_tree_add_item(capabilities_summary_tree, hf_lldp_tlv_system_cap_station_only, tvb, offset, 2, ENC_BIG_ENDIAN);
+	proto_tree_add_item(capabilities_summary_tree, hf_lldp_tlv_system_cap_cvlan_component, tvb, offset, 2, ENC_BIG_ENDIAN);
+	proto_tree_add_item(capabilities_summary_tree, hf_lldp_tlv_system_cap_svlan_component, tvb, offset, 2, ENC_BIG_ENDIAN);
+	proto_tree_add_item(capabilities_summary_tree, hf_lldp_tlv_system_cap_tpmr_component, tvb, offset, 2, ENC_BIG_ENDIAN);
 
 	offset += 2;
 	/* Get enabled summary */
@@ -1938,6 +1974,9 @@ dissect_lldp_system_capabilities(tvbuff_t *tvb, packet_info *pinfo _U_, proto_tr
 	proto_tree_add_item(capabilities_enabled_tree, hf_lldp_tlv_enable_system_cap_telephone, tvb, offset, 2, ENC_BIG_ENDIAN);
 	proto_tree_add_item(capabilities_enabled_tree, hf_lldp_tlv_enable_system_cap_docsis_cable_device, tvb, offset, 2, ENC_BIG_ENDIAN);
 	proto_tree_add_item(capabilities_enabled_tree, hf_lldp_tlv_enable_system_cap_station_only, tvb, offset, 2, ENC_BIG_ENDIAN);
+	proto_tree_add_item(capabilities_summary_tree, hf_lldp_tlv_enable_system_cap_cvlan_component, tvb, offset, 2, ENC_BIG_ENDIAN);
+	proto_tree_add_item(capabilities_summary_tree, hf_lldp_tlv_enable_system_cap_svlan_component, tvb, offset, 2, ENC_BIG_ENDIAN);
+	proto_tree_add_item(capabilities_summary_tree, hf_lldp_tlv_enable_system_cap_tpmr_component, tvb, offset, 2, ENC_BIG_ENDIAN);
 
 	offset += 2;
 
@@ -3675,6 +3714,61 @@ dissect_profinet_tlv(tvbuff_t *tvb, packet_info *pinfo _U_, proto_tree *tree, pr
 			hf_profinet_green_period_begin_valid, hf_profinet_green_period_begin_offset);
 		break;
 	}
+	case 9:		/* LLDP_PNIO_TSNDOMAIN */
+	{
+		/* DomainUUID */
+		proto_tree_add_item(tree, hf_profinet_tsn_domain_uuid, tvb, offset, 16, ENC_BIG_ENDIAN);
+		/*offset += 16;*/
+		break;
+	}
+	case 10:	/* LLDP_PNIO_TSNNMEManagementAddr */
+	{
+		guint8 management_string_length = 0;
+		management_string_length = tvb_get_guint8(tvb, offset);
+
+		/* Management Address String Length */
+		proto_tree_add_item(tree, hf_profinet_tsn_nme_management_addr_str_length, tvb, offset, 1, ENC_BIG_ENDIAN);
+		offset += 1;
+
+		/* Management Address Subtype */
+		proto_tree_add_item(tree, hf_profinet_tsn_nme_management_addr_subtype, tvb, offset, 1, ENC_BIG_ENDIAN);
+		offset += 1;
+		management_string_length -= 1;
+
+		/* Management Address */
+		proto_tree_add_item(tree, hf_profinet_tsn_nme_management_addr, tvb, offset, management_string_length, ENC_NA);
+		/*offset += management_string_length;*/
+		break;
+	}
+	case 11:	/* LLDP_PNIO_TSNNMENameUUID */
+	{
+		/* TSNNMENameUUID */
+		proto_tree_add_item(tree, hf_profinet_tsn_nme_name_uuid, tvb, offset, 16, ENC_BIG_ENDIAN);
+		/*offset += 16;*/
+		break;
+	}
+	case 12:	/* LLDP_PNIO_TSNNMEParameterUUID */
+	{
+		/* NMEParameterUUID */
+		proto_tree_add_item(tree, hf_profinet_tsn_nme_parameter_uuid, tvb, offset, 16, ENC_BIG_ENDIAN);
+		/*offset += 16;*/
+		break;
+	}
+	case 13:	/* LLDP_PNIO_TSNTimeDomain */
+	{
+		/*TimeDomainNumber*/
+		proto_tree_add_item(tree, hf_profinet_time_domain_number, tvb, offset, 2, ENC_BIG_ENDIAN);
+		offset += 2;
+
+		/*TimeDomainUUID*/
+		proto_tree_add_item(tree, hf_profinet_time_domain_uuid, tvb, offset, 16, ENC_BIG_ENDIAN);
+		offset += 16;
+
+		/*TimeDomainMasterIdentity*/
+		proto_tree_add_item(tree, hf_profinet_time_domain_master_identity, tvb, offset, 8, ENC_NA);
+		/*offset += 8;*/
+		break;
+	}
 	default:
 		proto_tree_add_item(tree, hf_unknown_subtype_content, tvb, offset, -1, ENC_NA);
 	}
@@ -4439,6 +4533,9 @@ dissect_organizational_specific_tlv(tvbuff_t *tvb, packet_info *pinfo, proto_tre
 	case OUI_ONOS:
 		subTypeStr = val_to_str(subType, onos_subtypes, "Unknown subtype (0x%x)");
 		break;
+	case OUI_ODVA:
+		subTypeStr = val_to_str(subType, lldp_cip_subtypes, "Unknown subtype (0x%x)");
+		break;
 	default:
 		subTypeStr = wmem_strdup_printf(pinfo->pool, "Unknown (%d)",subType);
 		break;
@@ -4502,6 +4599,9 @@ dissect_organizational_specific_tlv(tvbuff_t *tvb, packet_info *pinfo, proto_tre
 	case OUI_ONOS:
 		dissect_onos_tlv(vendor_tvb, pinfo, org_tlv_tree);
 		break;
+	case OUI_ODVA:
+		dissect_lldp_cip_tlv(vendor_tvb, pinfo, org_tlv_tree);
+		break;
 	default:
 		dissect_oui_default_tlv(vendor_tvb, pinfo, org_tlv_tree);
 	}
@@ -4548,7 +4648,7 @@ dissect_lldp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void* data _U_
 	gint32 rtnValue = 0;
 	guint16 tempShort;
 	guint8 tlvType;
-	gboolean reachedEnd = FALSE;
+	guint32 tvbLen;
 	profinet_lldp_column_info *pn_lldp_column_info = NULL;
 	col_set_str(pinfo->cinfo, COL_PROTOCOL, "LLDP");
 
@@ -4600,9 +4700,9 @@ dissect_lldp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void* data _U_
 
 	offset += rtnValue;
 
-
-	/* Dissect optional tlv's until end-of-lldpdu is reached */
-	while (!reachedEnd)
+	tvbLen = tvb_captured_length(tvb);
+	/* Dissect optional tlv info that contained in data packets */
+	while (offset < tvbLen)
 	{
 		tempShort = tvb_get_ntohs(tvb, offset);
 		tlvType = TLV_TYPE(tempShort);
@@ -4659,8 +4759,8 @@ dissect_lldp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void* data _U_
 		}
 
 		if (rtnValue < 0) {
-			reachedEnd = TRUE;
 			set_actual_length(tvb, offset + rtnValue);
+			break;
 		}
 		else
 			offset += rtnValue;
@@ -4722,6 +4822,18 @@ proto_register_lldp(void)
 			{ "Station only", "lldp.tlv.system_cap.station_only", FT_BOOLEAN, 16,
 			TFS(&tfs_capable_not_capable), SYSTEM_CAPABILITY_STATION, NULL, HFILL }
 		},
+		{ &hf_lldp_tlv_system_cap_cvlan_component,
+			{ "C-VLAN component", "lldp.tlv.system_cap.cvlan", FT_BOOLEAN, 16,
+			TFS(&tfs_capable_not_capable), SYSTEM_CAPABILITY_CVLAN, NULL, HFILL }
+		},
+		{ &hf_lldp_tlv_system_cap_svlan_component,
+			{ "S-VLAN component", "lldp.tlv.system_cap.svlan", FT_BOOLEAN, 16,
+			TFS(&tfs_capable_not_capable), SYSTEM_CAPABILITY_SVLAN, NULL, HFILL }
+		},
+		{ &hf_lldp_tlv_system_cap_tpmr_component,
+			{ "TPMR component", "lldp.tlv.system_cap.tpmr", FT_BOOLEAN, 16,
+			TFS(&tfs_capable_not_capable), SYSTEM_CAPABILITY_TPMR, NULL, HFILL }
+		},
 		{ &hf_lldp_tlv_system_name,
 			{ "System Name", "lldp.tlv.system.name", FT_STRING, BASE_NONE,
 			NULL, 0, NULL, HFILL }
@@ -4765,6 +4877,18 @@ proto_register_lldp(void)
 		{ &hf_lldp_tlv_enable_system_cap_station_only,
 			{ "Station only", "lldp.tlv.enable_system_cap.station_only", FT_BOOLEAN, 16,
 			TFS(&tfs_capable_not_capable), SYSTEM_CAPABILITY_STATION, NULL, HFILL }
+		},
+		{ &hf_lldp_tlv_enable_system_cap_cvlan_component,
+			{ "C-VLAN component", "lldp.tlv.enable_system_cap.cvlan", FT_BOOLEAN, 16,
+			TFS(&tfs_capable_not_capable), SYSTEM_CAPABILITY_CVLAN, NULL, HFILL }
+		},
+		{ &hf_lldp_tlv_enable_system_cap_svlan_component,
+			{ "S-VLAN component", "lldp.tlv.enable_system_cap.svlan", FT_BOOLEAN, 16,
+			TFS(&tfs_capable_not_capable), SYSTEM_CAPABILITY_SVLAN, NULL, HFILL }
+		},
+		{ &hf_lldp_tlv_enable_system_cap_tpmr_component,
+			{ "TPMR component", "lldp.tlv.enable_system_cap.tpmr", FT_BOOLEAN, 16,
+			TFS(&tfs_capable_not_capable), SYSTEM_CAPABILITY_TPMR, NULL, HFILL }
 		},
 		{ &hf_chassis_id_subtype,
 			{ "Chassis Id Subtype", "lldp.chassis.subtype", FT_UINT8, BASE_DEC,
@@ -4928,15 +5052,15 @@ proto_register_lldp(void)
 		},
 		{ &hf_dcbx_feature_pgid_prio_5,
 			{ "PGID for Prio 5", "lldp.dcbx.feature.pg.pgid_prio5", FT_UINT16, BASE_DEC,
-			NULL, 0xF00, 0, HFILL }
+			NULL, 0x0F00, 0, HFILL }
 		},
 		{ &hf_dcbx_feature_pgid_prio_6,
 			{ "PGID for Prio 6", "lldp.dcbx.feature.pg.pgid_prio6", FT_UINT16, BASE_DEC,
-			NULL, 0xF0, 0, HFILL }
+			NULL, 0x00F0, 0, HFILL }
 		},
 		{ &hf_dcbx_feature_pgid_prio_7,
 			{ "PGID for Prio 7", "lldp.dcbx.feature.pg.pgid_prio7", FT_UINT16, BASE_DEC,
-			NULL, 0xF, 0, HFILL }
+			NULL, 0x000F, 0, HFILL }
 		},
 		{ &hf_dcbx_feature_pg_per_0,
 			{ "Bandwidth for PGID 0", "lldp.dcbx.feature.pg.per0", FT_UINT8, BASE_DEC,
@@ -5692,11 +5816,11 @@ proto_register_lldp(void)
 		},
 		{ &hf_media_l2_prio,
 			{ "L2 Priority", "lldp.media.l2_prio", FT_UINT24, BASE_DEC,
-			NULL, 0x1C0, NULL, HFILL }
+			NULL, 0x0001C0, NULL, HFILL }
 		},
 		{ &hf_media_dscp,
 			{ "DSCP Priority", "lldp.media.dscp", FT_UINT24, BASE_DEC,
-			NULL, 0x3F, NULL, HFILL }
+			NULL, 0x00003F, NULL, HFILL }
 		},
 		{ &hf_media_loc_data_format,
 			{ "Location Data Format", "lldp.media.loc.data_format", FT_UINT8, BASE_DEC,
@@ -5726,10 +5850,9 @@ proto_register_lldp(void)
 			{ "Altitude Resolution", "lldp.media.loc.alt_resolution", FT_UINT16, BASE_DEC,
 			NULL, 0x0FC0, NULL, HFILL }
 		},
-		/* TODO: should mask be 0x3FFFFFFF, or 0x03FFFFFF ? */
 		{ &hf_media_loc_alt,
 			{ "Altitude", "lldp.media.loc.altitude", FT_UINT32, BASE_DEC,
-			NULL, 0x03FFFFFFF, NULL, HFILL }
+			NULL, 0x3FFFFFFF, NULL, HFILL }
 		},
 		{ &hf_media_loc_datum,
 			{ "Datum", "lldp.media.loc.datum", FT_UINT8, BASE_DEC,
@@ -5853,8 +5976,44 @@ proto_register_lldp(void)
 			VALS(profinet_port3_status_PreambleLength), 0x2000, NULL, HFILL }
 		},
 		{ &hf_profinet_mrp_domain_uuid,
-			{ "MRP DomainUUID",	"lldp.profinet.mrp_domain_uuid", FT_GUID, BASE_NONE,
+			{ "MRP DomainUUID", "lldp.profinet.mrp_domain_uuid", FT_GUID, BASE_NONE,
 			NULL, 0x0, NULL, HFILL }
+		},
+		{ &hf_profinet_tsn_domain_uuid,
+			{ "TSN DomainUUID", "lldp.profinet.tsn_domain_uuid", FT_GUID, BASE_NONE,
+			NULL, 0x0, NULL, HFILL }
+		},
+		{ &hf_profinet_tsn_nme_management_addr,
+			{ "TSN NME Management Address",	"lldp.profinet.tsn_nme_management_addr", FT_BYTES, BASE_NONE,
+			NULL, 0x0, NULL, HFILL }
+		},
+		{ &hf_profinet_tsn_nme_management_addr_str_length,
+			{ "TSN NME Management Address String Length", "lldp.profinet.tsn_nme_management_addr_str_length", FT_UINT8, BASE_HEX,
+			NULL, 0x0, NULL, HFILL }
+		},
+		{ &hf_profinet_tsn_nme_management_addr_subtype,
+			{ "TSN NME Management Address Subtype",	"lldp.profinet.tsn_nme_management_addr_subtype", FT_UINT8, BASE_HEX,
+			NULL, 0x0, NULL, HFILL }
+		},
+		{ &hf_profinet_tsn_nme_name_uuid,
+			{ "TSN NME Name UUID", "lldp.profinet.tsn_nme_name_uuid", FT_GUID, BASE_NONE,
+			NULL, 0x0, NULL, HFILL }
+		},
+		{ &hf_profinet_tsn_nme_parameter_uuid,
+			{ "TSN NME Parameter UUID", "lldp.profinet.tsn_nme_parameter_uuid", FT_GUID, BASE_NONE,
+			NULL, 0x0, NULL, HFILL }
+		},
+		{ &hf_profinet_time_domain_number,
+			{ "Time Domain Number",	"lldp.profinet.time_domain_number", FT_UINT16, BASE_HEX,
+			VALS(profinet_time_domain_number_vals), 0x0, NULL, HFILL }
+		},
+		{ &hf_profinet_time_domain_uuid,
+			{ "Time Domain UUID", "lldp.profinet.time_domain_uuid", FT_GUID, BASE_NONE,
+			NULL, 0x0, NULL, HFILL }
+		},
+		{ &hf_profinet_time_domain_master_identity,
+			{ "Time Domain Master Identity", "lldp.profinet.time_domain_master_identity", FT_BYTES, BASE_NONE,
+			0x0, 0x0, NULL, HFILL }
 		},
 		{ &hf_profinet_mrrt_port_status,
 			{ "MRRT PortStatus",	"lldp.profinet.mrrt_port_status", FT_UINT16, BASE_HEX,
@@ -6221,11 +6380,11 @@ proto_register_lldp(void)
 		},
 		{ &hf_ex_avaya_mgnt_vlan,
 			{ "Mgmt VLAN", "lldp.extreme_avaya_ap.mgnt_vlan", FT_UINT24, BASE_DEC,
-			NULL, 0xfff, NULL, HFILL }
+			NULL, 0x000fff, NULL, HFILL }
 		},
 		{ &hf_ex_avaya_vlan,
 			{ "VLAN", "lldp.extreme_avaya_ap.vlan", FT_UINT16, BASE_DEC,
-			NULL, 0xfff, NULL, HFILL }
+			NULL, 0x0fff, NULL, HFILL }
 		},
 		{ &hf_ex_avaya_rsvd,
 			{ "Reserved", "lldp.extreme_avaya_ap.rsvd", FT_UINT8, BASE_DEC,
@@ -6367,6 +6526,7 @@ proto_register_lldp(void)
 
 	/* Register the protocol name and description */
 	proto_lldp = proto_register_protocol("Link Layer Discovery Protocol", "LLDP", "lldp");
+	lldp_handle = register_dissector("lldp", dissect_lldp, proto_lldp);
 
 	/* Register preferences */
 	lldp_module = prefs_register_protocol(proto_lldp, NULL);
@@ -6391,9 +6551,6 @@ proto_register_lldp(void)
 void
 proto_reg_handoff_lldp(void)
 {
-	dissector_handle_t lldp_handle;
-
-	lldp_handle = create_dissector_handle(dissect_lldp,proto_lldp);
 	dissector_add_uint("ethertype", ETHERTYPE_LLDP, lldp_handle);
 	dissector_add_uint("ethertype", ETHERTYPE_ONOS, lldp_handle);
 }

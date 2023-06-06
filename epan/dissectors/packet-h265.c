@@ -364,6 +364,9 @@ static int hf_h265_slice_type = -1;
 static int hf_h265_payloadsize = -1;
 static int hf_h265_payloadtype = -1;
 
+/* access unit delimiter */
+static int hf_h265_pic_type = -1;
+
 /* Initialize the subtree pointers */
 static int ett_h265 = -1;
 static int ett_h265_profile = -1;
@@ -381,6 +384,7 @@ static int ett_h265_filler_data_rbsp = -1;
 static int ett_h265_end_of_seq_rbsp = -1;
 static int ett_h265_end_of_bitstream_rbsp = -1;
 static int ett_h265_profile_tier_level = -1;
+static int ett_h265_ref_pic_set = -1;
 static int ett_h265_vui_parameters = -1;
 static int ett_h265_hrd_parameters = -1;
 static int ett_h265_sprop_parameters = -1;
@@ -389,10 +393,6 @@ static expert_field ei_h265_undecoded = EI_INIT;
 static expert_field ei_h265_format_specific_parameter = EI_INIT;
 static expert_field ei_h265_oversized_exp_golomb_code = EI_INIT;
 static expert_field ei_h265_value_to_large = EI_INIT;
-
-/* The dynamic payload type range which will be dissected as H.265 */
-
-static range_t *temp_dynamic_payload_type_range = NULL;
 
 static dissector_handle_t h265_handle;
 
@@ -681,6 +681,20 @@ static const value_string h265_sei_payload_vals[] = {
 	{ 0, NULL }
 };
 
+/* Table 7-2 - Interpretation of pic_type */
+static const value_string h265_pic_type_vals[] = {
+	{ 0,    "I" },
+	{ 1,    "P, I" },
+	{ 2,    "B, P, I" },
+	{ 0, NULL }
+};
+
+/* Ref 7.3.2.2 Sequence parameter set RBSP syntax
+ * num_short_term_ref_pic_sets specifies the number of st_ref_pic_set( ) syntax structures included in the SPS. The value
+ * of num_short_term_ref_pic_sets shall be in the range of 0 to 64, inclusive
+ */
+#define H265_MAX_NUM_SHORT_TERM_REF_PIC_SETS 64
+
 static int
 dissect_h265(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void* data _U_);
 static int
@@ -690,7 +704,7 @@ dissect_h265_hrd_parameters(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo 
 static int
 dissect_h265_scaling_list_data(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, gint bit_offset);
 static int
-dissect_h265_st_ref_pic_set(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, gint bit_offset, gint stRpsIdx, gint num_short_term_ref_pic_sets);
+dissect_h265_st_ref_pic_set(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, gint bit_offset, gint stRpsIdx, gint num_short_term_ref_pic_sets, gint32 NumDeltaPocs[H265_MAX_NUM_SHORT_TERM_REF_PIC_SETS]);
 static int
 dissect_h265_vui_parameters(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, gint bit_offset, guint8 sps_max_sub_layers_minus1);
 static int
@@ -934,8 +948,8 @@ dissect_h265_exp_golomb_code(proto_tree *tree, int hf_index, tvbuff_t *tvb, pack
 		codenum = G_MAXUINT32;
 		if (descriptor == H265_SE_V) {
 			/* For signed, must read the last bit to get the sign. */
-			value = tvb_get_bits32(tvb, bit_offset + leading_zero_bits / 32, leading_zero_bits % 32, ENC_BIG_ENDIAN);
-			if (value % 1) {
+			value = tvb_get_bits32(tvb, bit_offset + 32*(leading_zero_bits / 32), leading_zero_bits % 32, ENC_BIG_ENDIAN);
+			if (value % 2) {
 				se_value = G_MININT32;
 			} else {
 				se_value = G_MAXINT32;
@@ -951,7 +965,7 @@ dissect_h265_exp_golomb_code(proto_tree *tree, int hf_index, tvbuff_t *tvb, pack
 			if (value != 1) {
 				overflow = TRUE;
 			}
-			if (value % 1) {
+			if (value % 2) {
 				se_value = G_MININT32;
 			} else {
 				se_value = G_MAXINT32;
@@ -1267,11 +1281,6 @@ dissect_h265_video_parameter_set_rbsp(proto_tree *tree, tvbuff_t *tvb, packet_in
 	dissect_h265_rbsp_trailing_bits(tree, tvb, pinfo, bit_offset);
 }
 
-/* Ref 7.3.2.2 Sequence parameter set RBSP syntax
- * num_short_term_ref_pic_sets specifies the number of st_ref_pic_set( ) syntax structures included in the SPS. The value
- * of num_short_term_ref_pic_sets shall be in the range of 0 to 64, inclusive
- */
-#define H265_MAX_NUM_SHORT_TERM_REF_PIC_SETS 64
 static void
 dissect_h265_seq_parameter_set_rbsp(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, gint offset)
 {
@@ -1281,6 +1290,7 @@ dissect_h265_seq_parameter_set_rbsp(proto_tree *tree, tvbuff_t *tvb, packet_info
 	gboolean	sps_sub_layer_ordering_info_present_flag = 0, scaling_list_enabled_flag = 0, sps_scaling_list_data_present_flag = 0,
 		pcm_enabled_flag = 0, long_term_ref_pics_present_flag = 0, vui_parameters_present_flag = 0, sps_extension_present_flag = 0,
 		sps_range_extension_flag = 0, sps_multilayer_extension_flag = 0, sps_3d_extension_flag = 0, sps_scc_extension_flag = 0;
+	gint32 NumDeltaPocs[H265_MAX_NUM_SHORT_TERM_REF_PIC_SETS] = { 0 }; // num_negative_pics + num_positive_pics;
 	proto_tree *profile_tier_level_tree, *vui_parameters_tree;
 
 	sps_max_sub_layers_minus1 = tvb_get_bits8(tvb, offset << 3, 8) >> 1 & 0x07;
@@ -1382,7 +1392,7 @@ dissect_h265_seq_parameter_set_rbsp(proto_tree *tree, tvbuff_t *tvb, packet_info
 		return;
 	}
 	for (i = 0; i < num_short_term_ref_pic_sets; i++)
-		bit_offset = dissect_h265_st_ref_pic_set(tree, tvb, pinfo, bit_offset, i, num_short_term_ref_pic_sets);
+		bit_offset = dissect_h265_st_ref_pic_set(tree, tvb, pinfo, bit_offset, i, num_short_term_ref_pic_sets, NumDeltaPocs);
 
 	long_term_ref_pics_present_flag = tvb_get_bits8(tvb, bit_offset, 1);
 	proto_tree_add_bits_item(tree, hf_h265_long_term_ref_pics_present_flag, tvb, bit_offset, 1, ENC_BIG_ENDIAN);
@@ -1659,9 +1669,17 @@ dissect_h265_sei_rbsp(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, gint 
 static void
 dissect_h265_access_unit_delimiter_rbsp(proto_tree *tree, tvbuff_t *tvb, packet_info *pinfo, gint offset)
 {
+	gint bit_offset = offset << 3;
+
 	proto_tree *access_unit_delimiter_rbsp_tree;
 	access_unit_delimiter_rbsp_tree = proto_tree_add_subtree(tree, tvb, offset, 1, ett_h265_access_unit_delimiter_rbsp, NULL, "Access unit delimiter RBSP");
-	proto_tree_add_expert(access_unit_delimiter_rbsp_tree, pinfo, &ei_h265_undecoded, tvb, offset, -1);
+
+	/* pic_type u(3) */
+	proto_tree_add_bits_item(access_unit_delimiter_rbsp_tree, hf_h265_pic_type, tvb, bit_offset, 3, ENC_BIG_ENDIAN);
+	bit_offset += 3;
+
+	/* rbsp_trailing_bits */
+	dissect_h265_rbsp_trailing_bits(access_unit_delimiter_rbsp_tree, tvb, pinfo, bit_offset);
 }
 
 /* Ref 7.3.2.6 End of sequence RBSP syntax*/
@@ -2224,14 +2242,16 @@ dissect_h265_sei_message(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo, gi
 
 /* 7.3.7 Short-term reference picture set syntax */
 static int
-dissect_h265_st_ref_pic_set(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo _U_, gint bit_offset, gint stRpsIdx, gint num_short_term_ref_pic_sets)
+dissect_h265_st_ref_pic_set(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo _U_, gint bit_offset, gint stRpsIdx, gint num_short_term_ref_pic_sets, gint32 NumDeltaPocs[H265_MAX_NUM_SHORT_TERM_REF_PIC_SETS])
 {
 	gint j;
 	guint i;
 	guint32 num_negative_pics, num_positive_pics;
 	gboolean inter_ref_pic_set_prediction_flag = 0;
 	gboolean used_by_curr_pic_flag;
-	gint32 NumDeltaPocs[64] = { 0 }; //TODO: need to initlize
+	gint RefRpsIdx;
+	gint delta_idx_minus1 = 0;
+	tree = proto_tree_add_subtree_format(tree, tvb, bit_offset >> 3, 1, ett_h265_ref_pic_set, NULL, "ref_pic_set %d", stRpsIdx);
 
 	if (stRpsIdx != 0) {
 		inter_ref_pic_set_prediction_flag = tvb_get_bits8(tvb, bit_offset, 1);
@@ -2240,12 +2260,13 @@ dissect_h265_st_ref_pic_set(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo 
 	}
 	if (inter_ref_pic_set_prediction_flag) {
 		if (stRpsIdx == num_short_term_ref_pic_sets) {
-			dissect_h265_exp_golomb_code(tree, hf_h265_delta_idx_minus1, tvb, pinfo, &bit_offset, H265_UE_V);
+			delta_idx_minus1 = dissect_h265_exp_golomb_code(tree, hf_h265_delta_idx_minus1, tvb, pinfo, &bit_offset, H265_UE_V);
 		}
 		proto_tree_add_bits_item(tree, hf_h265_delta_rps_sign, tvb, bit_offset, 1, ENC_BIG_ENDIAN);
 		bit_offset++;
 		dissect_h265_exp_golomb_code(tree, hf_h265_abs_delta_rps_minus1, tvb, pinfo, &bit_offset, H265_UE_V);
-		for (j = 0; j <= NumDeltaPocs[stRpsIdx]; j++) {
+		RefRpsIdx = stRpsIdx - (delta_idx_minus1 + 1);
+		for (j = 0; j <= NumDeltaPocs[RefRpsIdx]; j++) {
 			used_by_curr_pic_flag = tvb_get_bits8(tvb, bit_offset, 1);
 			proto_tree_add_bits_item(tree, hf_h265_used_by_curr_pic_flag/*[j]*/, tvb, bit_offset, 1, ENC_BIG_ENDIAN);
 			bit_offset++;
@@ -2254,10 +2275,12 @@ dissect_h265_st_ref_pic_set(proto_tree* tree, tvbuff_t* tvb, packet_info* pinfo 
 				bit_offset++;
 			}
 		}
+		NumDeltaPocs[stRpsIdx] = NumDeltaPocs[RefRpsIdx];
 	}
 	else {
 		num_negative_pics = dissect_h265_exp_golomb_code(tree, hf_h265_num_negative_pics, tvb, pinfo, &bit_offset, H265_UE_V);
 		num_positive_pics = dissect_h265_exp_golomb_code(tree, hf_h265_num_positive_pics, tvb, pinfo, &bit_offset, H265_UE_V);
+		NumDeltaPocs[stRpsIdx] = num_negative_pics + num_positive_pics;
 		for (i = 0; i < num_negative_pics; i++) {
 			dissect_h265_exp_golomb_code(tree, hf_h265_delta_poc_s0_minus1/*[i]*/, tvb, pinfo, &bit_offset, H265_UE_V);
 			proto_tree_add_bits_item(tree, hf_h265_used_by_curr_pic_s0_flag/*[i]*/, tvb, bit_offset, 1, ENC_BIG_ENDIAN);
@@ -2922,7 +2945,7 @@ dissect_h265(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void* data _U_
 
 
 	/* Make entries in Protocol column and Info column on summary display */
-	col_set_str(pinfo->cinfo, COL_PROTOCOL, "H265");
+	col_set_str(pinfo->cinfo, COL_PROTOCOL, "H.265");
 
 	guint16 h265_nalu_hextet = tvb_get_guint16(tvb, offset, ENC_BIG_ENDIAN);
 	type = h265_nalu_hextet >> 9 & 0x3F;
@@ -2936,9 +2959,9 @@ dissect_h265(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void* data _U_
 
 		/* if the type is 49, it would be draw another title */
 		if (type == 49)
-			h265_nal_tree = proto_tree_add_subtree(h265_tree, tvb, offset, 1, ett_h265_nal, NULL, "FU identifier");
+			h265_nal_tree = proto_tree_add_subtree(h265_tree, tvb, offset, 2, ett_h265_nal, NULL, "FU identifier");
 		else
-			h265_nal_tree = proto_tree_add_subtree(h265_tree, tvb, offset, 1, ett_h265_nal, NULL, "NAL unit header or first byte of the payload");
+			h265_nal_tree = proto_tree_add_subtree(h265_tree, tvb, offset, 2, ett_h265_nal, NULL, "NAL unit header or first two bytes of the payload");
 
 		/*   decode the HEVC payload header according to section 4:
 		0                   1
@@ -3051,6 +3074,63 @@ dissect_h265(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void* data _U_
 		}
 	} /* if (tree) */
 	return tvb_captured_length(tvb);
+}
+
+/* Annex B "Byte stream format" */
+static int
+dissect_h265_bytestream(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void* data _U_)
+{
+	tvbuff_t *next_tvb; //, *rbsp_tvb;
+	gint offset = 0, end_offset;
+	guint32 dword;
+
+	/* Look for the first start word. Assume byte aligned. */
+	while (1) {
+	        if (tvb_reported_length(tvb) < 4) {
+			return 0;
+		}
+		dword = tvb_get_guint32(tvb, offset, ENC_BIG_ENDIAN);
+		if ((dword >> 8) == 1 || dword == 1) {
+			break;
+		} else if (dword != 0) {
+			return 0;
+		}
+		offset += 2;
+	}
+
+	col_set_str(pinfo->cinfo, COL_PROTOCOL, "H.265");
+        col_clear(pinfo->cinfo, COL_INFO);
+
+	while (tvb_reported_length_remaining(tvb, offset)) {
+		dword = tvb_get_guint32(tvb, offset, ENC_BIG_ENDIAN);
+		if ((dword >> 8) != 1) {
+			/* zero_byte */
+			offset++;
+		}
+		/* start_code_prefix_one_3bytes */
+		offset += 3;
+		gint nal_length = tvb_reported_length_remaining(tvb, offset);
+		/* Search for \0\0\1 or \0\0\0\1 */
+		end_offset = tvb_find_guint16(tvb, offset, -1, 0);
+		while (end_offset != -1) {
+			if (tvb_find_guint16(tvb, end_offset + 1, 3, 1) != -1) {
+				nal_length = end_offset - offset;
+				break;
+			}
+			end_offset = tvb_find_guint16(tvb, end_offset + 1, -1, 0);
+		}
+
+		/* If end_offset is -1, we got to the end; assume this is the
+		 * end of the NAL. Handling NALs split across lower level
+		 * packets requires something like epan/stream.h
+		 */
+
+		next_tvb = tvb_new_subset_length(tvb, offset, nal_length);
+
+		dissect_h265(next_tvb, pinfo, tree, data);
+		offset += nal_length;
+	}
+	return tvb_reported_length(tvb);
 }
 
 void
@@ -4604,6 +4684,11 @@ proto_register_h265(void)
 			FT_UINT32, BASE_DEC, VALS(h265_sei_payload_vals), 0x0,
 			NULL, HFILL }
 		},
+		{ &hf_h265_pic_type,
+		{ "pic_type", "h265.pic_type",
+			FT_UINT8, BASE_DEC, VALS(h265_pic_type_vals), 0x0,
+			"slice_type values that may be present in the coded picture", HFILL }
+		},
 			/* SDP parameters*/
 		{ &hf_h265_sdp_parameter_sprop_vps,
 		{ "sprop-vps", "h265.sdp.sprop_vps",
@@ -4640,6 +4725,7 @@ proto_register_h265(void)
 		&ett_h265_end_of_seq_rbsp,
 		&ett_h265_end_of_bitstream_rbsp,
 		&ett_h265_profile_tier_level,
+		&ett_h265_ref_pic_set,
 		&ett_h265_vui_parameters,
 		&ett_h265_hrd_parameters,
 		&ett_h265_sprop_parameters
@@ -4663,38 +4749,20 @@ proto_register_h265(void)
 	/* Register a configuration option for port */
 
 
-	h265_module = prefs_register_protocol(proto_h265, proto_reg_handoff_h265);
+	h265_module = prefs_register_protocol(proto_h265, NULL);
 
-
-	prefs_register_range_preference(h265_module, "dynamic.payload.type",
-		"H.265 dynamic payload types",
-		"Dynamic payload types which will be interpreted as H.265"
-		"; values must be in the range 1 - 127",
-		&temp_dynamic_payload_type_range, 127);
+	prefs_register_obsolete_preference(h265_module, "dynamic.payload.type");
 
 	h265_handle = register_dissector("h265", dissect_h265, proto_h265);
+	register_dissector_with_description("h265_bytestream", "H.265 Annex B Byte stream format", dissect_h265_bytestream, proto_h265);
 }
 
 /* Register the protocol with Wireshark */
 void
 proto_reg_handoff_h265(void)
 {
-	static range_t  *dynamic_payload_type_range = NULL;
-	static gboolean  h265_prefs_initialized = FALSE;
-
-	if (!h265_prefs_initialized) {
-		dissector_add_string("rtp_dyn_payload_type", "H265", h265_handle);
-
-		h265_prefs_initialized = TRUE;
-	}
-	else {
-		dissector_delete_uint_range("rtp.pt", dynamic_payload_type_range, h265_handle);
-		wmem_free(wmem_epan_scope(), dynamic_payload_type_range);
-	}
-
-	dynamic_payload_type_range = range_copy(wmem_epan_scope(), temp_dynamic_payload_type_range);
-	range_remove_value(wmem_epan_scope(), &dynamic_payload_type_range, 0);
-	dissector_add_uint_range("rtp.pt", dynamic_payload_type_range, h265_handle);
+        dissector_add_string("rtp_dyn_payload_type", "H265", h265_handle);
+	dissector_add_uint_range_with_preference("rtp.pt", "", h265_handle);
 }
 
 /*

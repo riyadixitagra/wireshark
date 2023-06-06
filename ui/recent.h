@@ -55,7 +55,9 @@ typedef struct _col_width_data {
 
 typedef enum {
     BYTES_HEX,
-    BYTES_BITS
+    BYTES_BITS,
+    BYTES_DEC,
+    BYTES_OCT
 } bytes_view_type;
 
 typedef enum {
@@ -128,7 +130,9 @@ typedef struct recent_settings_tag {
     gboolean    sys_warn_if_no_capture;
     GList      *col_width_list;                     /* column widths */
     GList      *conversation_tabs;                  /* enabled conversation dialog tabs */
+    GList      *conversation_tabs_columns;          /* save the columns for conversation dialogs */
     GList      *endpoint_tabs;                      /* enabled endpoint dialog tabs */
+    GList      *endpoint_tabs_columns;              /* save the columns for endpoint dialogs */
     gchar      *gui_fileopen_remembered_dir;        /* folder of last capture loaded in File Open dialog */
     gboolean    gui_rlc_use_pdus_from_mac;
     GList      *custom_colors;

@@ -203,12 +203,6 @@ static const value_string lapsat_ctl_u_modifier_vals_resp[] = {
  * Fragment stuff
  */
 
-static const value_string true_false_vals[] = {
-	{ 0, "False" },
-	{ 1, "True" },
-	{ 0, NULL },
-};
-
 
 static const fragment_items lapsat_frag_items = {
 	/* Fragment subtrees */
@@ -505,7 +499,7 @@ dissect_lapsat(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void* dissec
 		pinfo->fragmented = !!(addr & LAPSAT_SI);
 
 		/* Rely on caller to provide a way to group fragments */
-		fragment_id = (conversation_get_endpoint_by_id(pinfo, ENDPOINT_GSMTAP, USE_LAST_ENDPOINT) << 3) | (sapi << 1) | pinfo->p2p_dir;
+		fragment_id = (conversation_get_id_from_elements(pinfo, CONVERSATION_GSMTAP, USE_LAST_ENDPOINT) << 3) | (sapi << 1) | pinfo->p2p_dir;
 
 		/* Fragment reconstruction helpers */
 		fd_m = fragment_add_seq_next(
@@ -634,17 +628,17 @@ proto_register_lapsat(void)
 		},
 		{ &hf_lapsat_ctl_p,
 		  { "Poll", "lapsat.control.p",
-		    FT_UINT16, BASE_DEC, VALS(true_false_vals), LAPSAT_CTL_P_F << 4,
+		    FT_BOOLEAN, 16, TFS(&tfs_true_false), LAPSAT_CTL_P_F << 4,
 		    NULL, HFILL }
 		},
 		{ &hf_lapsat_ctl_f,
 		  { "Final", "lapsat.control.f",
-		    FT_UINT16, BASE_DEC, VALS(true_false_vals), LAPSAT_CTL_P_F << 4,
+		    FT_BOOLEAN, 16, TFS(&tfs_true_false), LAPSAT_CTL_P_F << 4,
 		    NULL, HFILL }
 		},
 		{ &hf_lapsat_ctl_mii,
 		  { "MII", "lapsat.control.mii",
-		    FT_UINT16, BASE_DEC, VALS(true_false_vals), LAPSAT_CTL_MII << 4,
+		    FT_BOOLEAN, 16, TFS(&tfs_true_false), LAPSAT_CTL_MII << 4,
 		    "Mobile Identity Indicator", HFILL }
 		},
 

@@ -250,11 +250,11 @@ get_lnet_conv(packet_info *pinfo, guint64 match_bits) {
     lnet_conv_info_t *conv_info;
 
     // Ignore ports because this is kernel level and there can only be one Lustre instance per server
-    conversation = find_conversation(pinfo->num, &pinfo->src, &pinfo->dst, conversation_pt_to_endpoint_type(pinfo->ptype),
+    conversation = find_conversation(pinfo->num, &pinfo->src, &pinfo->dst, conversation_pt_to_conversation_type(pinfo->ptype),
                                      0, 0, 0);
     if (conversation == NULL)
         conversation = conversation_new(pinfo->num, &pinfo->src,
-                                        &pinfo->dst, conversation_pt_to_endpoint_type(pinfo->ptype), 0, 0, 0);
+                                        &pinfo->dst, conversation_pt_to_conversation_type(pinfo->ptype), 0, 0, 0);
 
     conv_info = (lnet_conv_info_t *)conversation_get_proto_data(conversation, proto_lnet);
     if (!conv_info) {
@@ -359,7 +359,7 @@ lnet_dissect_struct_nid(tvbuff_t * tvb, proto_tree *parent_tree, int offset, int
     item = proto_tree_add_item(parent_tree, hf_index, tvb, offset, 8, ENC_NA);
     tree = proto_item_add_subtree(item, ett_lnet_nid);
 
-    ip = tvb_get_ntohl(tvb, offset);
+    ip = tvb_get_ipv4(tvb, offset);
     proto_tree_add_item(tree, hf_lnet_nid_addr, tvb, offset, 4, ENC_LITTLE_ENDIAN);
     offset+=4;
     proto_tree_add_item_ret_uint(tree, hf_lnet_nid_interface, tvb, offset, 2, ENC_LITTLE_ENDIAN, &interface);

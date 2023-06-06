@@ -3900,8 +3900,8 @@ BACnetErrorCode [] = {
     {  54, "abort - segmentation - not - supported" },
     {  55, "abort - proprietary" },
     {  56, "abort - other" },
-    {  57, "reject - invalid - tag" },
-    {  58, "reject - network - down" },
+    {  57, "invalid - tag" },
+    {  58, "network - down" },
     {  59, "reject - buffer - overflow" },
     {  60, "reject - inconsistent - parameters" },
     {  61, "reject - invalid - parameter - data - type" },
@@ -5265,7 +5265,7 @@ BACnetSuccessFilter [] = {
 
 /* These values are (manually) transferred from
  * http://www.bacnet.org/VendorID/BACnet Vendor IDs.htm
- * Version: "As of January 12, 2022"
+ * Version: "As of July 27, 2022"
  */
 
 static const value_string
@@ -6578,40 +6578,71 @@ BACnetVendorIdentifiers [] = {
     { 1306, "GBX Technology, LLC" },
     { 1307, "Kaiterra" },
     { 1308, "ThinKuan loT Technology (Shanghai) Co., Ltd" },
-    { 1309,	"HoCoSto B.V." },
-    { 1310,	"Shenzhen AS-AI Technology Co., Ltd." },
-    { 1311,	"RPS S.p.a." },
-    { 1312,	"Delta Dore Ems" },
-    { 1313,	"IOTech Systems Limited" },
-    { 1314,	"i-AutoLogic Co., Ltd." },
-    { 1315,	"New Age Micro, LLC" },
-    { 1316,	"Guardian Glass" },
-    { 1317,	"Guangzhou Zhaoyu Information Technology" },
-    { 1318,	"ACE IoT Solutions LLC" },
-    { 1319,	"Poris Electronics Co., Ltd." },
-    { 1320,	"Terminus Technologies Group" },
-    { 1321,	"Intech 21, Inc." },
-    { 1322,	"Accurate Electronics" },
-    { 1323,	"Fluence Bioengineering" },
-    { 1324,	"Mun Hean Singapore Pte Ltd" },
-    { 1325,	"Katronic AG & Co. KG" },
-    { 1326,	"Suzhou XinAo Information Technology Co. Ltd" },
-    { 1327,	"Linktekk Technology, JSC." },
-    { 1328,	"Stirling Ultracold" },
-    { 1329,	"UV Partners, Inc." },
-    { 1330,	"ProMinent GmbH" },
-    { 1331,	"Multi-Tech Systems, Inc." },
-    { 1332,	"JUMO GmbH & Co. KG" },
-    { 1333,	"Qingdao Huarui Technology Co. Ltd." },
-    { 1334,	"Cairn Systemes" },
-    { 1335,	"NeuroLogic Research Corp." },
-    { 1336,	"Transition Technologies Advanced Solutions Sp. z o.o" },
-    { 1337,	"Xxter bv" },
-    { 1338,	"PassiveLogic" },
-    { 1339,	"EnSmart Controls" },
-    { 1340,	"Watts Heating and Hot Water Solutions, dba Lync" },
-    { 1341,	"Troposphaira Technologies LLP" },
-    { 1342,	"Network Thermostat" },
+    { 1309, "HoCoSto B.V." },
+    { 1310, "Shenzhen AS-AI Technology Co., Ltd." },
+    { 1311, "RPS S.p.a." },
+    { 1312, "Delta Dore Ems" },
+    { 1313, "IOTech Systems Limited" },
+    { 1314, "i-AutoLogic Co., Ltd." },
+    { 1315, "New Age Micro, LLC" },
+    { 1316, "Guardian Glass" },
+    { 1317, "Guangzhou Zhaoyu Information Technology" },
+    { 1318, "ACE IoT Solutions LLC" },
+    { 1319, "Poris Electronics Co., Ltd." },
+    { 1320, "Terminus Technologies Group" },
+    { 1321, "Intech 21, Inc." },
+    { 1322, "Accurate Electronics" },
+    { 1323, "Fluence Bioengineering" },
+    { 1324, "Mun Hean Singapore Pte Ltd" },
+    { 1325, "Katronic AG & Co. KG" },
+    { 1326, "Suzhou XinAo Information Technology Co. Ltd" },
+    { 1327, "Linktekk Technology, JSC." },
+    { 1328, "Stirling Ultracold" },
+    { 1329, "UV Partners, Inc." },
+    { 1330, "ProMinent GmbH" },
+    { 1331, "Multi-Tech Systems, Inc." },
+    { 1332, "JUMO GmbH & Co. KG" },
+    { 1333, "Qingdao Huarui Technology Co. Ltd." },
+    { 1334, "Cairn Systemes" },
+    { 1335, "NeuroLogic Research Corp." },
+    { 1336, "Transition Technologies Advanced Solutions Sp. z o.o" },
+    { 1337, "Xxter bv" },
+    { 1338, "PassiveLogic" },
+    { 1339, "EnSmart Controls" },
+    { 1340, "Watts Heating and Hot Water Solutions, dba Lync" },
+    { 1341, "Troposphaira Technologies LLP" },
+    { 1342, "Network Thermostat" },
+    { 1343, "Titanium Intelligent Solutions, LLC" },
+    { 1344, "Numa Products, LLC" },
+    { 1345, "WAREMA Renkhoff SE" },
+    { 1346, "Frese A/S" },
+    { 1347, "Mapped" },
+    { 1348, "ELEKTRODESIGN ventilatory s.r.o" },
+    { 1349, "AirCare Automation, Inc." },
+    { 1350, "Antrum" },
+    { 1351, "Bao Linh Connect Technology" },
+    { 1352, "Virginia Controls, LLC" },
+    { 1353, "Duosys SDN BHD" },
+    { 1354, "Onsen SAS" },
+    { 1355, "Vaughn Thermal Corporation" },
+    { 1356, "Thermoplastic Engineering Ltd (TPE)" },
+    { 1357, "Wirth Research Ltd." },
+    { 1358, "SST Automation" },
+    { 1359, "Shanghai Bencol Electronic Technology Co., Ltd" },
+    { 1360, "AIWAA Systems Private Limited" },
+    { 1361, "Enless Wireless" },
+    { 1362, "Ozuno Engineering Pty Ltd" },
+    { 1363, "Hubbell, The Electric Heater Company" },
+    { 1364, "Industrial Turnaround Corporation (ITAC)" },
+    { 1365, "Wadsworth Control Systems" },
+    { 1366, "Services Hilo Inc." },
+    { 1367, "iDM Energiesysteme GmbH" },
+    { 1368, "BeNext B.V." },
+    { 1369, "CleanAir.ai Corporation" },
+    { 1370, "Revolution Microelectronics (America) Inc." },
+    { 1371, "Arendar IT-Security GmbH" },
+    { 1372, "ZedBee Technologies Pvt Ltd." },
+    { 1373, "Winmate Technology Solutions Pvt. Ltd." },
     {    0, NULL }
 };
 static value_string_ext BACnetVendorIdentifiers_ext = VALUE_STRING_EXT_INIT(BACnetVendorIdentifiers);
@@ -6744,7 +6775,7 @@ bacapp_get_address_label(const char *tag, address *addr)
 }
 
 static tap_packet_status
-bacapp_stats_tree_packet(stats_tree* st, packet_info* pinfo, epan_dissect_t* edt _U_, const void* p)
+bacapp_stats_tree_packet(stats_tree* st, packet_info* pinfo, epan_dissect_t* edt _U_, const void* p, tap_flags_t flags _U_)
 {
     int    packets_for_this_dst;
     int    packets_for_this_src;
@@ -6798,7 +6829,7 @@ bacapp_service_stats_tree_init(stats_tree* st)
 }
 
 static tap_packet_status
-bacapp_stats_tree_service(stats_tree* st, packet_info* pinfo, epan_dissect_t* edt _U_, const void* p)
+bacapp_stats_tree_service(stats_tree* st, packet_info* pinfo, epan_dissect_t* edt _U_, const void* p, tap_flags_t flags _U_)
 {
     int    servicetype;
     int    src, dst;
@@ -6840,7 +6871,7 @@ bacapp_objectid_stats_tree_init(stats_tree* st)
 }
 
 static tap_packet_status
-bacapp_stats_tree_objectid(stats_tree* st, packet_info* pinfo, epan_dissect_t* edt _U_, const void* p)
+bacapp_stats_tree_objectid(stats_tree* st, packet_info* pinfo, epan_dissect_t* edt _U_, const void* p, tap_flags_t flags _U_)
 {
     int    servicetype;
     int    src, dst;
@@ -6881,7 +6912,7 @@ bacapp_instanceid_stats_tree_init(stats_tree* st)
 }
 
 static tap_packet_status
-bacapp_stats_tree_instanceid(stats_tree* st, packet_info* pinfo, epan_dissect_t* edt _U_, const void* p)
+bacapp_stats_tree_instanceid(stats_tree* st, packet_info* pinfo, epan_dissect_t* edt _U_, const void* p, tap_flags_t flags _U_)
 {
     int    servicetype;
     int    src, dst;
@@ -8602,7 +8633,7 @@ fBitStringTagVSBase(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, guint o
     guint           start = offset;
     guint           offs;
     guint32         lvt, i, numberOfBytes;
-    guint8          bf_arr[256 + 1];
+    char            bf_arr[256 + 1];
     proto_tree     *subtree = tree;
 
     offs = fTagHeader(tvb, pinfo, offset, &tag_no, &tag_info, &lvt);
@@ -8616,7 +8647,7 @@ fBitStringTagVSBase(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, guint o
         tmp = tvb_get_guint8(tvb, (offset)+i + 1);
         if (i == numberOfBytes - 1) { skip = unused; }
         for (j = 0; j < 8 - skip; j++) {
-            bf_arr[MIN(255, (i * 8) + j)] = tmp & (1 << (7 - j)) ? 'T' : 'F';
+            bf_arr[MIN(sizeof(bf_arr) - 2, (i * 8) + j)] = tmp & (1 << (7 - j)) ? 'T' : 'F';
         }
     }
 
@@ -8625,8 +8656,9 @@ fBitStringTagVSBase(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, guint o
                                     ett_bacapp_tag, NULL,
                                     "%s(Bit String) (%s)", label, bf_arr);
     } else {
-        subtree = proto_tree_add_subtree(tree, tvb, offset, offs+lvt, ett_bacapp_tag, NULL, "present-value");
-        proto_tree_add_string(subtree, hf_bacapp_present_value_bit_string, tvb, offset, offs+lvt, bf_arr);
+        subtree = proto_tree_add_subtree_format(tree, tvb, start, offs+lvt,
+                                    ett_bacapp_tag, NULL,
+                                    "present-value (%s)", bf_arr);
     }
 
     fTagHeaderTree(tvb, pinfo, subtree, start, &tag_no, &tag_info, &lvt);
@@ -9009,7 +9041,9 @@ fAbstractSyntaxNType(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, guint 
         lastoffset = offset;
         fTagHeader(tvb, pinfo, offset, &tag_no, &tag_info, &lvt);
         if (tag_is_closing(tag_info)) { /* closing tag, but not for me */
-            if (depth <= 0) return offset;
+            if (depth <= 0) {
+                goto cleanup;
+            }
         }
 
         do_default_handling = FALSE;
@@ -9756,6 +9790,8 @@ fAbstractSyntaxNType(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, guint 
         }
         if (offset <= lastoffset) break;     /* nothing happened, exit loop */
     }
+
+cleanup:
     recursion_depth = p_get_proto_depth(pinfo, proto_bacapp);
     p_set_proto_depth(pinfo, proto_bacapp, recursion_depth - 1);
     return offset;
@@ -10202,9 +10238,7 @@ fSCDirectConnection(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, guint o
         }
         switch (tag_no) {
         case 0: /* uri */
-            offset += fTagHeaderTree(tvb, pinfo, tree, offset, &tag_no, &tag_info, &lvt);
             offset = fCharacterString(tvb, pinfo, tree, offset, "uri: ");
-            offset += fTagHeaderTree(tvb, pinfo, tree, offset, &tag_no, &tag_info, &lvt);
             break;
         case 1: /* connection-state */
             offset = fEnumeratedTag(tvb, pinfo, tree, offset, "connection-state: ", BACnetSCConnectionState);
@@ -10236,9 +10270,7 @@ fSCDirectConnection(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, guint o
             offset += fTagHeaderTree(tvb, pinfo, tree, offset, &tag_no, &tag_info, &lvt);
             break;
         case 8: /* details - OPTIONAL */
-            offset += fTagHeaderTree(tvb, pinfo, tree, offset, &tag_no, &tag_info, &lvt);
             offset = fCharacterString(tvb, pinfo, tree, offset, "details: ");
-            offset += fTagHeaderTree(tvb, pinfo, tree, offset, &tag_no, &tag_info, &lvt);
             break;
         default:
             return offset;
@@ -10300,9 +10332,7 @@ fSCFailedConnectionRequest(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, 
             offset += fTagHeaderTree(tvb, pinfo, tree, offset, &tag_no, &tag_info, &lvt);
             break;
         case 5: /* details - OPTIONAL */
-            offset += fTagHeaderTree(tvb, pinfo, tree, offset, &tag_no, &tag_info, &lvt);
             offset = fCharacterString(tvb, pinfo, tree, offset, "details: ");
-            offset += fTagHeaderTree(tvb, pinfo, tree, offset, &tag_no, &tag_info, &lvt);
             break;
         default:
             return offset;
@@ -10360,9 +10390,7 @@ fSCHubConnection(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, guint offs
             offset += fTagHeaderTree(tvb, pinfo, tree, offset, &tag_no, &tag_info, &lvt);
             break;
         case 4: /* details - OPTIONAL */
-            offset += fTagHeaderTree(tvb, pinfo, tree, offset, &tag_no, &tag_info, &lvt);
             offset = fCharacterString(tvb, pinfo, tree, offset, "details: ");
-            offset += fTagHeaderTree(tvb, pinfo, tree, offset, &tag_no, &tag_info, &lvt);
             break;
         default:
             return offset;
@@ -10434,9 +10462,7 @@ fSCHubFunctionConnection(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, gu
             offset += fTagHeaderTree(tvb, pinfo, tree, offset, &tag_no, &tag_info, &lvt);
             break;
         case 7: /* details - OPTIONAL */
-            offset += fTagHeaderTree(tvb, pinfo, tree, offset, &tag_no, &tag_info, &lvt);
             offset = fCharacterString(tvb, pinfo, tree, offset, "details: ");
-            offset += fTagHeaderTree(tvb, pinfo, tree, offset, &tag_no, &tag_info, &lvt);
             break;
         default:
             return offset;
@@ -10877,7 +10903,9 @@ BACnetPropertyStatesEnums[] = {
     {  55, BACnetLiftCarMode },
     {  56, BACnetLiftGroupMode },
     {  57, BACnetLiftFault },
-    {  58, BACnetProtocolLevel }
+    {  58, BACnetProtocolLevel },
+    {  59, BACnetAuditLevel },
+    {  60, BACnetAuditOperation }
 };
 #define BACnetPropertyStatesEnums_Size \
     (sizeof(BACnetPropertyStatesEnums) / sizeof(BACnetPropertyStatesEnums[0]))
@@ -10900,6 +10928,12 @@ fBACnetPropertyStates(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, guint
         offset = fBooleanTag(tvb, pinfo, tree, offset, label);
         break;
     case 11:
+        offset = fUnsignedTag(tvb, pinfo, tree, offset, label);
+        break;
+    case 41:
+        offset = fSignedTag(tvb, pinfo, tree, offset, label);
+        break;
+    case 63:
         offset = fUnsignedTag(tvb, pinfo, tree, offset, label);
         break;
     default:
@@ -11560,8 +11594,19 @@ fNotificationParameters(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, gui
             switch (fTagNo(tvb, offset)) {
             case 0: /* new-value */
                 offset += fTagHeaderTree(tvb, pinfo, subtree, offset, &tag_no, &tag_info, &lvt);
-                offset  = fApplicationTypes(tvb, pinfo, subtree, offset, "new-value: ");
-                offset  = fDeviceObjectPropertyValue(tvb, pinfo, subtree, offset);
+
+                fTagHeader(tvb, pinfo, offset, &tag_no, &tag_info, &lvt);
+                if (tag_is_opening(tag_info))
+                {
+                    offset += fTagHeaderTree(tvb, pinfo, subtree, offset, &tag_no, &tag_info, &lvt);
+                    offset  = fDateTime(tvb, pinfo, subtree, offset, "new-value: ");
+                    offset += fTagHeaderTree(tvb, pinfo, subtree, offset, &tag_no, &tag_info, &lvt);
+                }
+                else
+                {
+                    offset  = fApplicationTypes(tvb, pinfo, subtree, offset, "new-value: ");
+                }
+
                 offset += fTagHeaderTree(tvb, pinfo, subtree, offset, &tag_no, &tag_info, &lvt);
                 break;
             case 1: /* status-flags */
@@ -11867,8 +11912,25 @@ fEventParameter(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, guint offse
                 break;
             case 2: /* parameters */
                 offset += fTagHeaderTree(tvb, pinfo, tree, offset, &tag_no, &tag_info, &lvt);
-                offset = fApplicationTypes(tvb, pinfo, tree, offset, "parameters: ");
-                offset = fAbstractSyntaxNType(tvb, pinfo, tree, offset);
+                while ((tvb_reported_length_remaining(tvb, offset) > 0)&&(offset>lastoffset)) {  /* exit loop if nothing happens inside */
+                    lastoffset = offset;
+                    fTagHeader(tvb, pinfo, offset, &tag_no, &tag_info, &lvt);
+                    if (tag_is_closing(tag_info) && tag_no == 2) {
+                        break;
+                    }
+
+                    if ( ! tag_is_context_specific(tag_info)) {
+                        offset  = fApplicationTypes(tvb, pinfo, tree, offset, "parameters: ");
+                    } else {
+                        if (tag_no == 0) {
+                            offset += fTagHeaderTree(tvb, pinfo, tree, offset, &tag_no, &tag_info, &lvt);
+                            offset  = fDeviceObjectPropertyReference(tvb, pinfo, tree, offset);
+                            offset += fTagHeaderTree(tvb, pinfo, tree, offset, &tag_no, &tag_info, &lvt);
+                        } else {
+                            offset = fAbstractSyntaxNType(tvb, pinfo, tree, offset);
+                        }
+                    }
+                }
                 offset += fTagHeaderTree(tvb, pinfo, tree, offset, &tag_no, &tag_info, &lvt);
                 lastoffset = offset;
                 break;
@@ -16368,9 +16430,6 @@ dissect_bacapp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void* data _
     bacinfo.invoke_id = NULL;
     bacinfo.instance_ident = NULL;
     bacinfo.object_ident = NULL;
-
-    /* Recursion depth */
-    p_add_proto_data(pinfo->pool, pinfo, proto_bacapp, 0, GUINT_TO_POINTER(0));
 
     switch (bacapp_type) {
     case BACAPP_TYPE_CONFIRMED_SERVICE_REQUEST:

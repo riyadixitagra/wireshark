@@ -24,8 +24,8 @@
 
 #include "config.h"
 
-/* Start with G_MESSAGES_DEBUG=sftp to see messages. */
-#define G_LOG_DOMAIN "sftp"
+/* Start with WIRESHARK_LOG_DOMAINS=sftp and WIRESHARK_LOG_LEVEL=debug to see messages. */
+#define WS_LOG_DOMAIN "sftp"
 
 #include <epan/packet.h>
 #include <epan/expert.h>
@@ -484,7 +484,7 @@ static int dissect_sftp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, voi
         return offset;
 }
 
-static int dissect_sftp_attrs(tvbuff_t *packet_tvb, packet_info *pinfo,
+static int dissect_sftp_attrs(tvbuff_t *packet_tvb, packet_info *pinfo _U_,
         int offset, proto_item *msg_type_tree)
 {
         wmem_strbuf_t *title = wmem_strbuf_new(wmem_packet_scope(), "SFTP attributes");
@@ -527,8 +527,6 @@ static int dissect_sftp_attrs(tvbuff_t *packet_tvb, packet_info *pinfo,
         proto_item_set_len(sftp_attrs_tree, offset - offset0);
 
         return offset - offset0;
-
-(void)pinfo;
 }
 
 void
@@ -697,7 +695,7 @@ proto_register_sftp(void)
         &ett_sftp_attrs,
     };
 
-    proto_sftp = proto_register_protocol("SFTP Protocol", "SFTP", "sftp");
+    proto_sftp = proto_register_protocol("SSH File Transfer Protocol", "SFTP", "sftp");
     proto_register_field_array(proto_sftp, hf, array_length(hf));
     proto_register_subtree_array(ett, array_length(ett));
 

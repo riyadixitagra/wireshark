@@ -180,9 +180,6 @@
 #include <ctype.h>
 
 #include <wsutil/wsgcrypt.h>
-#if GCRYPT_VERSION_NUMBER >= 0x010600 /* 1.6.0 */
-#define LIBGCRYPT_OK
-#endif
 
 #include <epan/packet.h>
 #include <epan/proto.h>
@@ -595,7 +592,7 @@ typedef struct _dof_packet_data
      * NON-DPS FIELDS, USED FOR WIRESHARK COMMUNICATION/PROCESSING
      * Protocol-specific data.
      */
-    GSList *data_list;
+    wmem_list_t *data_list;
 
     /**
      * The Wireshark frame. Note that a single frame can have multiple DPS packets.
@@ -838,9 +835,6 @@ static void dof_session_delete_proto_data(dof_session_data *session, int proto);
 
 static void dof_packet_add_proto_data(dof_packet_data *packet, int proto, void *proto_data);
 static void* dof_packet_get_proto_data(dof_packet_data *packet, int proto);
-#if 0 /* TODO not used yet */
-static void dof_packet_delete_proto_data(dof_packet_data *packet, int proto);
-#endif
 
 /* DOF PROTOCOL STACK */
 #define DOF_PROTOCOL_STACK "DOF Protocol Stack"
@@ -1938,7 +1932,6 @@ static const value_string sgmp_opcode_strings[] = {
 #if 0 /* TODO not used yet */
 static gboolean sgmp_validate_session_key(sgmp_packet_data *cmd_data, guint8 *confirmation, guint8 *kek, guint8 *key)
 {
-#ifdef LIBGCRYPT_OK
     gcry_mac_hd_t hmac;
     gcry_error_t result;
 
@@ -1952,9 +1945,6 @@ static gboolean sgmp_validate_session_key(sgmp_packet_data *cmd_data, guint8 *co
     gcry_mac_write(hmac, key, 32);
     result = gcry_mac_verify(hmac, confirmation, sizeof(confirmation));
     return result == 0;
-#else
-    return FALSE;
-#endif
 }
 #endif
 
@@ -5680,6 +5670,7 @@ static dof_packet_data* create_packet_data(packet_info *pinfo)
     /* Create the packet data. */
     dof_packet_data *packet = wmem_new0(wmem_file_scope(), dof_packet_data);
 
+    packet->data_list = wmem_list_new(wmem_file_scope());
     packet->frame = pinfo->fd->num;
     packet->dof_frame = next_dof_frame++;
 
@@ -5724,17 +5715,17 @@ static int dissect_dof_udp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, 
         } */
 
         /* Register the source address as being DPS for the sender UDP port. */
-        conversation = find_conversation(pinfo->fd->num, &pinfo->src, &pinfo->dst, conversation_pt_to_endpoint_type(pinfo->ptype), pinfo->srcport, pinfo->destport, NO_ADDR_B | NO_PORT_B);
+        conversation = find_conversation(pinfo->fd->num, &pinfo->src, &pinfo->dst, conversation_pt_to_conversation_type(pinfo->ptype), pinfo->srcport, pinfo->destport, NO_ADDR_B | NO_PORT_B);
         if (!conversation)
         {
-            conversation = conversation_new(pinfo->fd->num, &pinfo->src, &pinfo->dst, conversation_pt_to_endpoint_type(pinfo->ptype), pinfo->srcport, pinfo->destport, NO_ADDR_B | NO_PORT_B);
+            conversation = conversation_new(pinfo->fd->num, &pinfo->src, &pinfo->dst, conversation_pt_to_conversation_type(pinfo->ptype), pinfo->srcport, pinfo->destport, NO_ADDR2 | NO_PORT2);
             conversation_set_dissector(conversation, dof_udp_handle);
         }
 
         /* Find or create the conversation for this transport session. For UDP, the transport session is determined entirely by the
          * server port. This assumes that the first packet seen is from a client to the server.
          */
-        conversation = find_conversation(pinfo->fd->num, &pinfo->dst, &pinfo->src, ENDPOINT_UDP, pinfo->destport, pinfo->srcport, NO_ADDR_B | NO_PORT_B);
+        conversation = find_conversation(pinfo->fd->num, &pinfo->dst, &pinfo->src, CONVERSATION_UDP, pinfo->destport, pinfo->srcport, NO_ADDR_B | NO_PORT_B);
         if (conversation)
         {
             /* TODO: Determine if this is valid or not. */
@@ -5743,7 +5734,7 @@ static int dissect_dof_udp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, 
         }
 
         if (!conversation)
-            conversation = conversation_new(pinfo->fd->num, &pinfo->dst, &pinfo->src, ENDPOINT_UDP, pinfo->destport, pinfo->srcport, NO_ADDR2 | NO_PORT2 | CONVERSATION_TEMPLATE);
+            conversation = conversation_new(pinfo->fd->num, &pinfo->dst, &pinfo->src, CONVERSATION_UDP, pinfo->destport, pinfo->srcport, NO_ADDR2 | NO_PORT2 | CONVERSATION_TEMPLATE);
 
         transport_session = (udp_session_data *)conversation_get_proto_data(conversation, proto_2008_1_dof_udp);
         if (transport_session == NULL)
@@ -9103,7 +9094,6 @@ static int dissect_sgmp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, voi
     return offset;
 }
 
-#ifdef LIBGCRYPT_OK
 static gboolean validate_session_key(tep_rekey_data *rekey, guint S_length, guint8 *S, guint8 *confirmation, guint8 *key)
 {
     guint8 pad[16];
@@ -9125,12 +9115,6 @@ static gboolean validate_session_key(tep_rekey_data *rekey, guint S_length, guin
     result = gcry_mac_verify(hmac, confirmation, 32);
     return result == 0;
 }
-#else
-static gboolean validate_session_key(tep_rekey_data *rekey _U_, guint S_length _U_, guint8 *S _U_, guint8 *confirmation _U_, guint8 *key _U_)
-{
-   return FALSE;
-}
-#endif
 
 static int dissect_tep_dsp(tvbuff_t *tvb, packet_info *pinfo _U_, proto_tree *tree, void *data _U_)
 {
@@ -10459,7 +10443,7 @@ static void dof_tun_register(void)
     proto_register_field_array(proto_2012_1_tunnel, hf, array_length(hf));
     proto_register_subtree_array(ett, array_length(ett));
 
-    register_dissector(TUNNEL_PROTOCOL_STACK, dissect_tunnel_common, proto_2012_1_tunnel);
+    register_dissector_with_description("dof.tunnel", TUNNEL_PROTOCOL_STACK, dissect_tunnel_common, proto_2012_1_tunnel);
     dof_tun_app_dissectors = register_dissector_table("dof.tunnel.app", "DOF Tunnel Version", proto_2012_1_tunnel, FT_UINT8, BASE_DEC);
 }
 
@@ -10476,7 +10460,7 @@ static void dof_tun_handoff(void)
 {
     static dissector_handle_t tcp_handle;
 
-    register_dissector(TUNNEL_APPLICATION_PROTOCOL, dissect_tun_app_common, proto_2008_1_app);
+    register_dissector_with_description("dof.app", TUNNEL_APPLICATION_PROTOCOL, dissect_tun_app_common, proto_2008_1_app);
 
     tcp_handle = create_dissector_handle(dissect_tunnel_tcp, proto_2012_1_tunnel);
 
@@ -10927,7 +10911,7 @@ static void dof_handoff(void)
 {
     static dissector_handle_t tcp_handle;
 
-    dof_oid_handle = register_dissector(DOF_OBJECT_IDENTIFIER, dissect_2009_11_type_4, oid_proto);
+    dof_oid_handle = register_dissector_with_description("dof.oid", DOF_OBJECT_IDENTIFIER, dissect_2009_11_type_4, oid_proto);
 
     tcp_handle = create_dissector_handle(dissect_dof_tcp, proto_2008_1_dof);
     dof_udp_handle = create_dissector_handle(dissect_dof_udp, proto_2008_1_dof);
@@ -11315,11 +11299,7 @@ static void dof_register_dpp_2(void)
         { &ei_dpp_default_flags, { "dof.dpp.v2.flags_included", PI_COMMENTS_GROUP, PI_NOTE, "Default flag value is included explicitly.", EXPFILL } },
         { &ei_dpp_explicit_sender_sid_included, { "dof.dpp.v2.sender_sid_included", PI_PROTOCOL, PI_NOTE, "Explicit SID could be optimized, same as sender.", EXPFILL } },
         { &ei_dpp_explicit_receiver_sid_included, { "dof.dpp.v2.receiver_sid_included", PI_PROTOCOL, PI_NOTE, "Explicit SID could be optimized, same as receiver.", EXPFILL } },
-#ifdef LIBGCRYPT_OK
         { &ei_dpp_no_security_context, { "dof.dpp.v2.no_context", PI_UNDECODED, PI_WARN, "No security context to enable packet decryption.", EXPFILL } },
-#else
-        { &ei_dpp_no_security_context, { "dof.dpp.v2.no_context", PI_UNDECODED, PI_WARN, "This version of wireshark was built without DOF decryption capability", EXPFILL } },
-#endif
     };
 
     static gint *sett[] =
@@ -12466,48 +12446,28 @@ static void dof_packet_add_proto_data(dof_packet_data *packet, int proto, void *
 
     /* Add it to the list of items for this conversation. */
 
-    packet->data_list = g_slist_insert_sorted(packet->data_list, (gpointer *)p1, p_compare);
+    wmem_list_insert_sorted(packet->data_list, (gpointer *)p1, p_compare);
 }
 
 static void *dof_packet_get_proto_data(dof_packet_data *packet, int proto)
 {
     dof_proto_data temp, *p1;
-    GSList *item;
+    wmem_list_frame_t *item;
 
     temp.proto = proto;
     temp.proto_data = NULL;
 
-    item = g_slist_find_custom(packet->data_list, (gpointer *)&temp,
+    item = wmem_list_find_custom(packet->data_list, (gpointer *)&temp,
                                p_compare);
 
     if (item != NULL)
     {
-        p1 = (dof_proto_data *)item->data;
+        p1 = (dof_proto_data *)wmem_list_frame_data(item);
         return p1->proto_data;
     }
 
     return NULL;
 }
-
-#if 0 /* TODO not used yet */
-static void dof_packet_delete_proto_data(dof_packet_data *packet, int proto)
-{
-    dof_proto_data temp;
-    GSList *item;
-
-    temp.proto = proto;
-    temp.proto_data = NULL;
-
-    item = g_slist_find_custom(packet->data_list, (gpointer *)&temp,
-                               p_compare);
-
-    while (item)
-    {
-        packet->data_list = g_slist_remove(packet->data_list, item->data);
-        item = item->next;
-    }
-}
-#endif
 
 static gint dof_dissect_pdu_as_field(dissector_t dissector, tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, int offset, int item, int ett, void *result)
 {

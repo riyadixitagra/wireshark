@@ -1160,7 +1160,7 @@ dissect_zbncp_dump_info(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree)
 
     zbncp_dump_info_tree = proto_tree_add_subtree(tree, tvb, 0, ZBNCP_DUMP_INFO_SIZE, ett_zbncp_dump, NULL, "ZBNCP Dump");
 
-    proto_tree_add_item(zbncp_dump_info_tree, hf_zbncp_dump_preambule, tvb, 0, ZBNCP_DUMP_INFO_SIGN_SIZE, (ENC_ASCII | ENC_NA));
+    proto_tree_add_item(zbncp_dump_info_tree, hf_zbncp_dump_preambule, tvb, 0, ZBNCP_DUMP_INFO_SIGN_SIZE, ENC_ASCII|ENC_NA);
     offset = ZBNCP_DUMP_INFO_SIGN_SIZE;
 
     proto_tree_add_item(zbncp_dump_info_tree, hf_zbncp_dump_version, tvb, offset, 1, ENC_NA);
@@ -4695,7 +4695,7 @@ dissect_zbncp_packet(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, guint 
                     memcpy(zbncp_ctx_str, tmp, strlen(tmp) + 1);
 
                     conversation = conversation_new(pinfo->num,  &pinfo->src, &pinfo->dst,
-                        conversation_pt_to_endpoint_type(pinfo->ptype),
+                        conversation_pt_to_conversation_type(pinfo->ptype),
                         pinfo->srcport, pinfo->destport, 0);
 
                     conversation_add_proto_data(conversation, zbncp_frame, (void *)zbncp_ctx_str);
@@ -4710,7 +4710,7 @@ dissect_zbncp_packet(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, guint 
             dissect_zbncp_fragmentation_body(tvb, pinfo, tree, offset);
 
             conversation = find_conversation(pinfo->num, &pinfo->src, &pinfo->dst,
-                conversation_pt_to_endpoint_type(pinfo->ptype),
+                conversation_pt_to_conversation_type(pinfo->ptype),
                 pinfo->srcport, pinfo->destport, 0);
 
             if (conversation != NULL)
@@ -5231,11 +5231,11 @@ void proto_register_zbncp(void)
 
         {&hf_zbncp_data_flags_user_desc_av,
          {"User desc available", "zbncp.data.flags.user_desc_av", FT_BOOLEAN, 16, NULL,
-          0x10, NULL, HFILL}},
+          0x0010, NULL, HFILL}},
 
         {&hf_zbncp_data_flags_freq_868,
          {"868MHz BPSK Band", "zbncp.data.flags.freq.868mhz", FT_BOOLEAN, 16, NULL,
-          0x800, NULL, HFILL}},
+          0x0800, NULL, HFILL}},
 
         {&hf_zbncp_data_flags_freq_902,
          {"902MHz BPSK Band", "zbncp.data.flags.freq.902mhz", FT_BOOLEAN, 16, NULL,
@@ -5254,19 +5254,19 @@ void proto_register_zbncp(void)
 
         {&hf_zbncp_data_srv_msk_prim_tc,
          {"Primary Trust Center", "zbncp.data.srv_msk.prim_tc", FT_BOOLEAN, 16, NULL,
-          0x1, NULL, HFILL}},
+          0x0001, NULL, HFILL}},
 
         {&hf_zbncp_data_srv_msk_backup_tc,
          {"Backup Trust Center", "zbncp.data.srv_msk.backup_tc", FT_BOOLEAN, 16, NULL,
-          0x2, NULL, HFILL}},
+          0x0002, NULL, HFILL}},
 
         {&hf_zbncp_data_srv_msk_prim_bind_tbl_cache,
          {"Primary Binding Table Cache", "zbncp.data.srv_msk.prim_bind_tbl_cache", FT_BOOLEAN, 16, NULL,
-          0x4, NULL, HFILL}},
+          0x0004, NULL, HFILL}},
 
         {&hf_zbncp_data_srv_msk_backup_bind_tbl_cache,
          {"Backup Binding Table Cache", "zbncp.data.srv_msk.backup_bind_tbl_cache", FT_BOOLEAN, 16, NULL,
-          0x8, NULL, HFILL}},
+          0x0008, NULL, HFILL}},
 
         {&hf_zbncp_data_remote_bind_offset,
          {"Remote Bind Offset", "zbncp.data.remote_bind_access", FT_UINT8, BASE_HEX, NULL,
@@ -5277,15 +5277,15 @@ void proto_register_zbncp(void)
 
         {&hf_zbncp_data_srv_msk_prim_disc_cache,
          {"Primary Discovery Cache", "zbncp.data.srv_msk.prim_disc_cache", FT_BOOLEAN, 16, NULL,
-          0x10, NULL, HFILL}},
+          0x0010, NULL, HFILL}},
 
         {&hf_zbncp_data_srv_msk_backup_disc_cache,
          {"Backup Discovery Cache", "zbncp.data.srv_msk.backup_disc_cache", FT_BOOLEAN, 16, NULL,
-          0x20, NULL, HFILL}},
+          0x0020, NULL, HFILL}},
 
         {&hf_zbncp_data_srv_msk_nwk_manager,
          {"Network Manager", "zbncp.data.srv_msk.nwk_manager", FT_BOOLEAN, 16, NULL,
-          0x40, NULL, HFILL}},
+          0x0040, NULL, HFILL}},
 
         {&hf_zbncp_data_srv_msk_stack_compl_rev,
          {"Stack Compliance Revision", "zbncp.data.srv_msk.stack_compl_rev", FT_UINT16, BASE_DEC, NULL,
@@ -5382,7 +5382,7 @@ void proto_register_zbncp(void)
           0x20, NULL, HFILL}},
 
         {&hf_zbncp_data_tx_opt_send_route_record,
-         {"Send route record for this request", "zbncp.data.force_mesh_route", FT_BOOLEAN, 8, NULL,
+         {"Send route record for this request", "zbncp.data.send_route_record", FT_BOOLEAN, 8, NULL,
           0x40, NULL, HFILL}},
 
         {&hf_zbncp_data_lqi,
@@ -5631,19 +5631,19 @@ void proto_register_zbncp(void)
          {"Trace mask", "zbncp.data.trace_mask", FT_UINT32, BASE_HEX, NULL, 0x0, NULL, HFILL}},
 
         {&hf_zbncp_data_trace_wireless_traf,
-         {"Wireless traffic", "zbncp.data.trace_mask", FT_UINT32, BASE_DEC, NULL, 0x1, NULL, HFILL}},
+         {"Wireless traffic", "zbncp.data.trace_wireless_traf", FT_UINT32, BASE_DEC, NULL, 0x1, NULL, HFILL}},
 
         {&hf_zbncp_data_trace_reserved,
-         {"Reserved", "zbncp.data.trace_mask", FT_UINT32, BASE_DEC, NULL, 0x2, NULL, HFILL}},
+         {"Reserved", "zbncp.data.trace_reserved", FT_UINT32, BASE_DEC, NULL, 0x2, NULL, HFILL}},
 
         {&hf_zbncp_data_trace_ncp_ll_proto,
-         {"NCP LL protocol", "zbncp.data.trace_mask", FT_UINT32, BASE_DEC, NULL, 0x4, NULL, HFILL}},
+         {"NCP LL protocol", "zbncp.data.trace_ncp_ll_proto", FT_UINT32, BASE_DEC, NULL, 0x4, NULL, HFILL}},
 
         {&hf_zbncp_data_trace_host_int_line,
-         {"HOST INT line", "zbncp.data.trace_mask", FT_UINT32, BASE_DEC, NULL, 0x8, NULL, HFILL}},
+         {"HOST INT line", "zbncp.data.trace_host_int_line", FT_UINT32, BASE_DEC, NULL, 0x8, NULL, HFILL}},
 
         {&hf_zbncp_data_trace_sleep_awake,
-         {"Sleep/awake", "zbncp.data.trace_mask", FT_UINT32, BASE_DEC, NULL, 0x10, NULL, HFILL}},
+         {"Sleep/awake", "zbncp.data.trace_sleep_awake", FT_UINT32, BASE_DEC, NULL, 0x10, NULL, HFILL}},
 
         {&hf_zbncp_data_keepalive_rec,
          {"Keepalive Received", "zbncp.data.keepalive_rec", FT_BOOLEAN, BASE_NONE, NULL, 0x0, NULL, HFILL}},

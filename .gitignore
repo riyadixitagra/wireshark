@@ -60,6 +60,7 @@ wireshark-tap-register.c
 /*build*/
 CMakeCache.txt
 CMakeFiles
+CMakeUserPresets.json
 cmake_install.cmake
 CPackConfig.cmake
 CPackSourceConfig.cmake
@@ -80,7 +81,6 @@ epan/dissectors/dcerpc/*-stamp
 ########
 doc/*.html
 doc/*.[14]
-doc/AUTHORS-SHORT
 doc/ws.css
 docbook/developer-guide*.xml
 docbook/user-guide*.xml
@@ -103,6 +103,7 @@ wsar_html.zip
 /ui/qt/qrc_*.cpp
 /ui/qt/ui_*.h
 /ui/qt/console.lua
+*.ui.autosave
 
 # Windows Stuff #
 #################
@@ -152,7 +153,7 @@ compile_commands.json
 CMakeLists.txt.user*
 
 # Debian packaging
-debian/
+/debian/
 
 # Misc #
 ########
@@ -168,3 +169,4 @@ vgcore.*
 .pytest_cache/
 test/*.log
 *.code-workspace
+__pycache__/

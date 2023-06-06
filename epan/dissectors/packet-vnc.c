@@ -139,12 +139,6 @@ static const true_false_string auth_result_tfs = {
 	"OK"
 };
 
-static const value_string yes_no_vs[] = {
-	{ 0, "No"  },
-	{ 1, "Yes" },
-	{ 0,  NULL }
-};
-
 typedef enum {
 	/* Required */
 	VNC_CLIENT_MESSAGE_TYPE_SET_PIXEL_FORMAT	  =   0,
@@ -1101,7 +1095,7 @@ static gboolean test_vnc_protocol(tvbuff_t *tvb, packet_info *pinfo,
 
 	if (vnc_is_client_or_server_version_message(tvb, NULL, NULL)) {
 		conversation = conversation_new(pinfo->num, &pinfo->src,
-						&pinfo->dst, conversation_pt_to_endpoint_type(pinfo->ptype),
+						&pinfo->dst, conversation_pt_to_conversation_type(pinfo->ptype),
 						pinfo->srcport,
 						pinfo->destport, 0);
 		conversation_set_dissector(conversation, vnc_handle);
@@ -2358,7 +2352,6 @@ vnc_rre_encoding(tvbuff_t *tvb, packet_info *pinfo, gint *offset,
 		return(0);
 	}
 
-	*offset += 2;
 	VNC_BYTES_NEEDED(bytes_per_pixel);
 	proto_tree_add_item(tree, hf_vnc_rre_bg_pixel, tvb, *offset,
 			    bytes_per_pixel, ENC_NA);
@@ -4367,7 +4360,7 @@ proto_register_vnc(void)
 
 		{ &hf_vnc_zrle_rle,
 		  { "RLE", "vnc.zrle_rle",
-		    FT_UINT8, BASE_DEC, VALS(yes_no_vs), 0x80, /* Upper bit */
+		    FT_BOOLEAN, 8, TFS(&tfs_yes_no), 0x80, /* Upper bit */
 		    "Specifies that data is run-length encoded", HFILL }
 		},
 
@@ -4507,7 +4500,7 @@ proto_register_vnc(void)
 		},
 		{ &hf_vnc_mirrorlink_pixel_format,
 		  { "Pixel Format", "vnc.mirrorlink_pixel_format",
-		    FT_UINT16, BASE_HEX, NULL, 0x0,
+		    FT_UINT32, BASE_HEX, NULL, 0x0,
 		    "Pixel format support", HFILL }
 		},
 		{ &hf_vnc_mirrorlink_display_width,
@@ -4888,6 +4881,7 @@ proto_register_vnc(void)
 
 	/* Register the protocol name and description */
 	proto_vnc = proto_register_protocol("Virtual Network Computing", "VNC", "vnc");
+	vnc_handle = register_dissector("vnc", dissect_vnc, proto_vnc);
 
 	/* Required function calls to register the header fields and subtrees */
 	proto_register_field_array(proto_vnc, hf, array_length(hf));
@@ -4909,8 +4903,6 @@ proto_register_vnc(void)
 void
 proto_reg_handoff_vnc(void)
 {
-	vnc_handle = create_dissector_handle(dissect_vnc, proto_vnc);
-
 	dissector_add_uint_range_with_preference("tcp.port", VNC_PORT_RANGE, vnc_handle);
 	heur_dissector_add("tcp", test_vnc_protocol, "VNC over TCP", "vnc_tcp", proto_vnc, HEURISTIC_ENABLE);
 	/* We don't register a port for the VNC HTTP server because

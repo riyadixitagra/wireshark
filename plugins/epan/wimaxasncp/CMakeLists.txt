@@ -26,7 +26,7 @@ add_lex_files(LEX_FILES PLUGIN_FILES
 )
 
 set_source_files_properties(
-	${PLUGIN_FILES}
+	${DISSECTOR_SRC}
 	PROPERTIES
 	COMPILE_FLAGS "${WERROR_COMMON_FLAGS}"
 )
@@ -36,7 +36,7 @@ register_plugin_files(plugin.c
 	${DISSECTOR_SRC}
 )
 
-add_plugin_library(wimaxasncp epan)
+add_wireshark_plugin_library(wimaxasncp epan)
 
 target_link_libraries(wimaxasncp epan)
 

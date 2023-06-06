@@ -18,6 +18,8 @@
 void proto_register_ath(void);
 void proto_reg_handoff_ath(void);
 
+static dissector_handle_t ath_handle;
+
 /* IMPORTANT IMPLEMENTATION NOTES
  *
  * You need to be looking at:
@@ -64,6 +66,19 @@ static gint ett_ath = -1;
 static expert_field ei_ath_hlen_invalid  = EI_INIT;
 static expert_field ei_ath_hmark_invalid = EI_INIT;
 
+static gboolean
+test_ath(tvbuff_t *tvb)
+{
+  /* Apache Tribes packets start with "TRIBES-B" in ASCII.
+   * tvb_strneql returns -1 if there aren't enough bytes.
+   */
+  if (tvb_strneql(tvb, 0, "TRIBES-B", 8) != 0) {
+    return FALSE;
+  }
+
+  return TRUE;
+}
+
 static int
 dissect_ath(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void* data _U_)
 {
@@ -85,6 +100,10 @@ dissect_ath(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void* data _U_)
 
   proto_item *ti, *hlen_item;
   proto_tree *ath_tree;
+
+  if (!test_ath(tvb)) {
+    return 0;
+  }
 
   col_set_str(pinfo->cinfo, COL_PROTOCOL, "ATH");
 
@@ -421,14 +440,12 @@ proto_register_ath(void)
   expert_ath = expert_register_protocol(proto_ath);
   expert_register_field_array(expert_ath, ei, array_length(ei));
 
+  ath_handle = register_dissector("ath", dissect_ath, proto_ath);
 }
 
 void
 proto_reg_handoff_ath(void)
 {
-  dissector_handle_t ath_handle;
-
-  ath_handle = create_dissector_handle(dissect_ath, proto_ath);
   dissector_add_uint_with_preference("udp.port", ATH_PORT, ath_handle);
 }
 

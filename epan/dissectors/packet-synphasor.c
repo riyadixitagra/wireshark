@@ -1211,7 +1211,7 @@ static gint dissect_PHSCALE(tvbuff_t *tvb, proto_tree *tree, gint offset, gint c
 
 		data_flag_tree = proto_tree_add_subtree_format(single_phasor_scaling_and_flags_tree, tvb, offset, 4,
 							       ett_conf_phflags, NULL, "Phasor Data flags: %s",
-							       conf_phasor_type[tvb_get_guint8(tvb, offset + 2)].strptr);
+							       val_to_str_const(tvb_get_guint8(tvb, offset + 2), conf_phasor_type, "Unknown"));
 
 		/* first and second bytes - phasor modification flags*/
 		phasor_flag1_tree = proto_tree_add_subtree_format(data_flag_tree, tvb, offset, 2, ett_conf_phmod_flags,
@@ -1631,7 +1631,7 @@ static int dissect_config_3_frame(tvbuff_t *tvb, proto_item *config_item)
 		pmu_elev = tvb_get_ntohieee_float(tvb, offset + 8);
 
 		/* PMU_LAT */
-		if ((isinf(pmu_lat) == 1) || (isinf(pmu_lat) == -1)) {
+		if (isinf(pmu_lat)) {
 			proto_tree_add_float_format_value(wgs84_tree, hf_conf_pmu_lat_unknown, tvb, offset,
 					      4, INFINITY, "%s", unspecified_location);
 		}
@@ -1641,7 +1641,7 @@ static int dissect_config_3_frame(tvbuff_t *tvb, proto_item *config_item)
 		offset += 4;
 
 		/* PMU_LON */
-		if ((isinf(pmu_long) == 1) || (isinf(pmu_long) == -1)) {
+		if (isinf(pmu_long)) {
 			proto_tree_add_float_format_value(wgs84_tree, hf_conf_pmu_lon_unknown, tvb, offset,
 					      4, INFINITY, "%s", unspecified_location);
 		}
@@ -1651,7 +1651,7 @@ static int dissect_config_3_frame(tvbuff_t *tvb, proto_item *config_item)
 		offset += 4;
 
 		/* PMU_ELEV */
-		if ((isinf(pmu_elev) == 1) || (isinf(pmu_elev) == -1)) {
+		if (isinf(pmu_elev)) {
 			proto_tree_add_float_format_value(wgs84_tree, hf_conf_pmu_elev_unknown, tvb, offset,
 					      4, INFINITY, "%s", unspecified_location);
 		}
@@ -1853,7 +1853,7 @@ static int dissect_common(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, v
 
 	frame_type = tvb_get_guint8(tvb, 1) >> 4;
 
-	col_add_fstr(pinfo->cinfo, COL_INFO, "%s", val_to_str_const(frame_type, typenames, "invalid packet type"));
+	col_add_str(pinfo->cinfo, COL_INFO, val_to_str_const(frame_type, typenames, "invalid packet type"));
 
 	/* CFG-2, CFG3, and DATA frames need special treatment during the first run:
 	 * For CFG-2 & CFG-3 frames, a 'config_frame' struct is created to hold the

@@ -63,9 +63,10 @@
 #include <epan/prefs.h>
 #include <epan/strutil.h>
 #include <epan/proto_data.h>
+#include <epan/dissectors/packet-http.h>
 #include <epan/dissectors/packet-http2.h>
+#include <epan/dissectors/packet-media-type.h>
 
-#include "packet-http.h"
 #include "wsutil/pint.h"
 
 #define GRPC_MESSAGE_HEAD_LEN 5
@@ -404,11 +405,10 @@ static int
 dissect_grpc(tvbuff_t* tvb, packet_info* pinfo, proto_tree* tree, void* data)
 {
     int ret;
-    http_conv_t* http_conv;
+    http_req_res_t* curr_req_res;
     tvbuff_t* real_data_tvb;
     grpc_context_info_t grpc_ctx = { 0 };
-    conversation_t* conv = find_or_create_conversation(pinfo);
-    http_message_info_t* http_msg_info = (http_message_info_t*)data;
+    media_content_info_t* content_info = (media_content_info_t*)data;
     gboolean is_grpc_web_text = g_str_has_prefix(pinfo->match_string, "application/grpc-web-text");
 
     if (is_grpc_web_text) {
@@ -429,11 +429,14 @@ dissect_grpc(tvbuff_t* tvb, packet_info* pinfo, proto_tree* tree, void* data)
         grpc_ctx.encoding = http2_get_header_value(pinfo, HTTP2_HEADER_GRPC_ENCODING, FALSE);
     }
     else if (proto_is_frame_protocol(pinfo->layers, "http")) {
-        http_conv = (http_conv_t*)conversation_get_proto_data(conv, proto_http);
-        DISSECTOR_ASSERT_HINT(http_conv && http_msg_info, "Unexpected error: HTTP conversation or HTTP message info not available.");
-        grpc_ctx.is_request = (http_msg_info->type == HTTP_REQUEST);
-        grpc_ctx.path = http_conv->request_uri;
+        curr_req_res = (http_req_res_t*)p_get_proto_data(wmem_file_scope(), pinfo, proto_http, 0);
+        DISSECTOR_ASSERT_HINT(curr_req_res && content_info, "Unexpected error: HTTP request/reply or HTTP message info not available.");
+        grpc_ctx.is_request = (content_info->type == MEDIA_CONTAINER_HTTP_REQUEST);
+        grpc_ctx.path = curr_req_res->request_uri;
         grpc_ctx.content_type = pinfo->match_string; /* only for grpc-web(-text) over http1.1 */
+        if (content_info->data) {
+            grpc_ctx.encoding = (const gchar*)wmem_map_lookup((wmem_map_t *)content_info->data, HTTP2_HEADER_GRPC_ENCODING);
+        }
     }
     else {
         /* unexpected protocol error */
@@ -504,7 +507,7 @@ proto_register_grpc(void)
     proto_register_field_array(proto_grpc, hf, array_length(hf));
     proto_register_subtree_array(ett, array_length(ett));
 
-    grpc_module = prefs_register_protocol(proto_grpc, proto_reg_handoff_grpc);
+    grpc_module = prefs_register_protocol(proto_grpc, NULL);
 
     prefs_register_bool_preference(grpc_module, "detect_json_automatically",
         "Always check whether the message is JSON regardless of content-type.",
@@ -536,7 +539,7 @@ proto_register_grpc(void)
     */
     grpc_message_type_subdissector_table =
         register_dissector_table("grpc_message_type",
-            "GRPC message type", proto_grpc, FT_STRING, BASE_NONE);
+            "GRPC message type", proto_grpc, FT_STRING, STRING_CASE_SENSITIVE);
 }
 
 void

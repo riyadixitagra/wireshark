@@ -23,6 +23,16 @@ value_new(fvalue_t *fv)
 	fv->value.protocol.tvb = NULL;
 	fv->value.protocol.proto_string = NULL;
 	fv->value.protocol.tvb_is_private = FALSE;
+	fv->value.protocol.length = -1;
+}
+
+static void
+value_copy(fvalue_t *dst, const fvalue_t *src)
+{
+	dst->value.protocol.tvb = tvb_clone(src->value.protocol.tvb);
+	dst->value.protocol.proto_string = g_strdup(src->value.protocol.proto_string);
+	dst->value.protocol.tvb_is_private = TRUE;
+	dst->value.protocol.length = src->value.protocol.length;
 }
 
 static void
@@ -35,18 +45,21 @@ value_free(fvalue_t *fv)
 }
 
 static void
-value_set(fvalue_t *fv, tvbuff_t *value, const gchar *name)
+value_set(fvalue_t *fv, tvbuff_t *value, const gchar *name, int length)
 {
-	/* Free up the old value, if we have one */
-	value_free(fv);
+	if (value != NULL) {
+		/* Free up the old value, if we have one */
+		value_free(fv);
 
-	/* Set the protocol description and an (optional, nullable) tvbuff. */
-	fv->value.protocol.tvb = value;
-	fv->value.protocol.proto_string = g_strdup(name);
+		/* Set the protocol description and an (optional, nullable) tvbuff. */
+		fv->value.protocol.tvb = value;
+		fv->value.protocol.proto_string = g_strdup(name);
+	}
+	fv->value.protocol.length = length;
 }
 
 static gboolean
-val_from_string(fvalue_t *fv, const char *s, gchar **err_msg _U_)
+val_from_string(fvalue_t *fv, const char *s, size_t len, gchar **err_msg _U_)
 {
 	tvbuff_t *new_tvb;
 	guint8 *private_data;
@@ -54,11 +67,14 @@ val_from_string(fvalue_t *fv, const char *s, gchar **err_msg _U_)
 	/* Free up the old value, if we have one */
 	value_free(fv);
 
+	if (len == 0)
+		len = strlen(s);
+
 	/* Make a tvbuff from the string. We can drop the
 	 * terminating NUL. */
-	private_data = (guint8 *)g_memdup2(s, (guint)strlen(s));
+	private_data = (guint8 *)g_memdup2(s, (guint)len);
 	new_tvb = tvb_new_real_data(private_data,
-			(guint)strlen(s), (gint)strlen(s));
+			(guint)len, (gint)len);
 
 	/* Let the tvbuff know how to delete the data. */
 	tvb_set_free_cb(new_tvb, g_free);
@@ -70,6 +86,7 @@ val_from_string(fvalue_t *fv, const char *s, gchar **err_msg _U_)
 	 * (e.g., proto_expert) */
 	fv->value.protocol.tvb = new_tvb;
 	fv->value.protocol.proto_string = g_strdup("");
+	fv->value.protocol.length = -1;
 	return TRUE;
 }
 
@@ -83,6 +100,7 @@ val_from_literal(fvalue_t *fv, const char *s, gboolean allow_partial_value _U_, 
 	value_free(fv);
 	fv->value.protocol.tvb = NULL;
 	fv->value.protocol.proto_string = NULL;
+	fv->value.protocol.length = -1;
 
 	/* Does this look like a byte string? */
 	bytes = byte_array_from_literal(s, err_msg);
@@ -121,6 +139,7 @@ val_from_charconst(fvalue_t *fv, unsigned long num, gchar **err_msg)
 	value_free(fv);
 	fv->value.protocol.tvb = NULL;
 	fv->value.protocol.proto_string = NULL;
+	fv->value.protocol.length = -1;
 
 	/* Does this look like a byte string? */
 	bytes = byte_array_from_charconst(num, err_msg);
@@ -150,7 +169,7 @@ val_from_charconst(fvalue_t *fv, unsigned long num, gchar **err_msg)
 }
 
 static char *
-val_to_repr(wmem_allocator_t *scope, const fvalue_t *fv, ftrepr_t rtype _U_, int field_display _U_)
+val_to_repr(wmem_allocator_t *scope, const fvalue_t *fv, ftrepr_t rtype, int field_display _U_)
 {
 	guint length;
 	char *volatile buf = NULL;
@@ -159,10 +178,17 @@ val_to_repr(wmem_allocator_t *scope, const fvalue_t *fv, ftrepr_t rtype _U_, int
 		return NULL;
 
 	TRY {
-		length = tvb_captured_length(fv->value.protocol.tvb);
+		if (fv->value.protocol.length >= 0)
+			length = fv->value.protocol.length;
+		else
+			length = tvb_captured_length(fv->value.protocol.tvb);
 
-		if (length)
-			buf = bytes_to_str_punct_maxlen(scope, tvb_get_ptr(fv->value.protocol.tvb, 0, length), length, ':', 0);
+		if (length) {
+			if (rtype == FTREPR_DFILTER)
+				buf = bytes_to_dfilter_repr(scope, tvb_get_ptr(fv->value.protocol.tvb, 0, length), length);
+			else
+				buf = bytes_to_str_punct_maxlen(scope, tvb_get_ptr(fv->value.protocol.tvb, 0, length), length, ':', 0);
+		}
 	}
 	CATCH_ALL {
 		/* nothing */
@@ -171,10 +197,12 @@ val_to_repr(wmem_allocator_t *scope, const fvalue_t *fv, ftrepr_t rtype _U_, int
 	return buf;
 }
 
-static gpointer
+static tvbuff_t *
 value_get(fvalue_t *fv)
 {
-	return fv->value.protocol.tvb;
+	if (fv->value.protocol.length < 0)
+		return fv->value.protocol.tvb;
+	return tvb_new_subset_length_caplen(fv->value.protocol.tvb, 0, fv->value.protocol.length, fv->value.protocol.length);
 }
 
 static guint
@@ -183,8 +211,13 @@ len(fvalue_t *fv)
 	volatile guint length = 0;
 
 	TRY {
-		if (fv->value.protocol.tvb)
-			length = tvb_captured_length(fv->value.protocol.tvb);
+		if (fv->value.protocol.tvb) {
+			if (fv->value.protocol.length >= 0)
+				length = fv->value.protocol.length;
+			else
+				length = tvb_captured_length(fv->value.protocol.tvb);
+
+		}
 	}
 	CATCH_ALL {
 		/* nothing */
@@ -198,11 +231,16 @@ static void
 slice(fvalue_t *fv, GByteArray *bytes, guint offset, guint length)
 {
 	const guint8* data;
+	volatile guint len = length;
 
 	if (fv->value.protocol.tvb) {
+		if (fv->value.protocol.length >= 0 && (guint)fv->value.protocol.length < len) {
+			len = fv->value.protocol.length;
+		}
+
 		TRY {
-			data = tvb_get_ptr(fv->value.protocol.tvb, offset, length);
-			g_byte_array_append(bytes, data, length);
+			data = tvb_get_ptr(fv->value.protocol.tvb, offset, len);
+			g_byte_array_append(bytes, data, len);
 		}
 		CATCH_ALL {
 			/* nothing */
@@ -213,18 +251,28 @@ slice(fvalue_t *fv, GByteArray *bytes, guint offset, guint length)
 }
 
 static int
-_tvbcmp(tvbuff_t *a, tvbuff_t *b)
+_tvbcmp(const protocol_value_t *a, const protocol_value_t *b)
 {
-	guint	a_len = tvb_captured_length(a);
-	guint	b_len = tvb_captured_length(b);
+	guint	a_len;
+	guint	b_len;
+
+	if (a->length < 0)
+		a_len = tvb_captured_length(a->tvb);
+	else
+		a_len = a->length;
+
+	if (b->length < 0)
+		b_len = tvb_captured_length(b->tvb);
+	else
+		b_len = b->length;
 
 	if (a_len != b_len)
 		return a_len < b_len ? -1 : 1;
-	return memcmp(tvb_get_ptr(a, 0, a_len), tvb_get_ptr(b, 0, a_len), a_len);
+	return memcmp(tvb_get_ptr(a->tvb, 0, a_len), tvb_get_ptr(b->tvb, 0, a_len), a_len);
 }
 
-static int
-cmp_order(const fvalue_t *fv_a, const fvalue_t *fv_b)
+static enum ft_result
+cmp_order(const fvalue_t *fv_a, const fvalue_t *fv_b, int *cmp)
 {
 	const protocol_value_t	*a = (const protocol_value_t *)&fv_a->value.protocol;
 	const protocol_value_t	*b = (const protocol_value_t *)&fv_b->value.protocol;
@@ -232,7 +280,7 @@ cmp_order(const fvalue_t *fv_a, const fvalue_t *fv_b)
 
 	TRY {
 		if ((a->tvb != NULL) && (b->tvb != NULL)) {
-			c = _tvbcmp(a->tvb, b->tvb);
+			c = _tvbcmp(a, b);
 		} else {
 			c = strcmp(a->proto_string, b->proto_string);
 		}
@@ -242,25 +290,26 @@ cmp_order(const fvalue_t *fv_a, const fvalue_t *fv_b)
 	}
 	ENDTRY;
 
-	return c;
+	*cmp = c;
+	return FT_OK;
 }
 
-static gboolean
-cmp_contains(const fvalue_t *fv_a, const fvalue_t *fv_b)
+static enum ft_result
+cmp_contains(const fvalue_t *fv_a, const fvalue_t *fv_b, gboolean *contains)
 {
-	volatile gboolean contains = FALSE;
+	volatile gboolean yes = FALSE;
 
 	TRY {
 		/* First see if tvb exists for both sides */
 		if ((fv_a->value.protocol.tvb != NULL) && (fv_b->value.protocol.tvb != NULL)) {
 			if (tvb_find_tvb(fv_a->value.protocol.tvb, fv_b->value.protocol.tvb, 0) > -1) {
-				contains = TRUE;
+				yes = TRUE;
 			}
 		} else {
 			/* Otherwise just compare strings */
 			if ((strlen(fv_b->value.protocol.proto_string) != 0) &&
 				strstr(fv_a->value.protocol.proto_string, fv_b->value.protocol.proto_string)) {
-				contains = TRUE;
+				yes = TRUE;
 			}
 		}
 	}
@@ -269,11 +318,12 @@ cmp_contains(const fvalue_t *fv_a, const fvalue_t *fv_b)
 	}
 	ENDTRY;
 
-	return contains;
+	*contains = yes;
+	return FT_OK;
 }
 
-static gboolean
-cmp_matches(const fvalue_t *fv, const ws_regex_t *regex)
+static enum ft_result
+cmp_matches(const fvalue_t *fv, const ws_regex_t *regex, gboolean *matches)
 {
 	const protocol_value_t *a = (const protocol_value_t *)&fv->value.protocol;
 	volatile gboolean rc = FALSE;
@@ -281,7 +331,7 @@ cmp_matches(const fvalue_t *fv, const ws_regex_t *regex)
 	guint32 tvb_len; /* tvb length */
 
 	if (! regex) {
-		return FALSE;
+		return FT_BADARG;
 	}
 	TRY {
 		if (a->tvb != NULL) {
@@ -296,7 +346,16 @@ cmp_matches(const fvalue_t *fv, const ws_regex_t *regex)
 		rc = FALSE;
 	}
 	ENDTRY;
-	return rc;
+
+	*matches = rc;
+	return FT_OK;
+}
+
+static guint
+val_hash(const fvalue_t *fv)
+{
+	const protocol_value_t *value = &fv->value.protocol;
+	return g_direct_hash(value->tvb) ^ g_int_hash(&value->length) ^ g_str_hash(value->proto_string);
 }
 
 static gboolean
@@ -316,27 +375,55 @@ ftype_register_tvbuff(void)
 		"Protocol",			/* pretty_name */
 		0,				/* wire_size */
 		value_new,			/* new_value */
+		value_copy,			/* copy_value */
 		value_free,			/* free_value */
 		val_from_literal,		/* val_from_literal */
 		val_from_string,		/* val_from_string */
 		val_from_charconst,		/* val_from_charconst */
 		val_to_repr,			/* val_to_string_repr */
 
+		NULL,				/* val_to_uinteger64 */
+		NULL,				/* val_to_sinteger64 */
+
 		{ .set_value_protocol = value_set },	/* union set_value */
-		{ .get_value_ptr = value_get },		/* union get_value */
+		{ .get_value_protocol = value_get },	/* union get_value */
 
 		cmp_order,
 		cmp_contains,
 		cmp_matches,
 
+		val_hash,
 		is_zero,
+		NULL,
 		len,
 		slice,
 		NULL,
+		NULL,				/* unary_minus */
+		NULL,				/* add */
+		NULL,				/* subtract */
+		NULL,				/* multiply */
+		NULL,				/* divide */
+		NULL,				/* modulo */
 	};
 
 
 	ftype_register(FT_PROTOCOL, &protocol_type);
+}
+
+void
+ftype_register_pseudofields_tvbuff(int proto)
+{
+	static int hf_ft_protocol;
+
+	static hf_register_info hf_ftypes[] = {
+		{ &hf_ft_protocol,
+		    { "FT_PROTOCOL", "_ws.ftypes.protocol",
+			FT_PROTOCOL, BASE_NONE, NULL, 0x00,
+			NULL, HFILL }
+		},
+	};
+
+	proto_register_field_array(proto, hf_ftypes, array_length(hf_ftypes));
 }
 
 /*

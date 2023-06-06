@@ -223,6 +223,7 @@ static int hf_docsis_tlv_mcap_dipl_up_upper_band_edge_65 = -1;
 static int hf_docsis_tlv_mcap_dipl_up_upper_band_edge_85 = -1;
 static int hf_docsis_tlv_mcap_dipl_up_upper_band_edge_117 = -1;
 static int hf_docsis_tlv_mcap_dipl_up_upper_band_edge_204 = -1;
+static int hf_docsis_tlv_mcap_low_latency_sup = -1;
 
 static int hf_docsis_tlv_clsfr_ref = -1;
 static int hf_docsis_tlv_clsfr_id = -1;
@@ -567,12 +568,6 @@ static gint ett_docsis_ucd_reassembled = -1;
 static expert_field ei_docsis_tlv_tlvlen_bad = EI_INIT;
 static expert_field ei_docsis_tlv_tlvval_bad = EI_INIT;
 
-
-static const value_string on_off_vals[] = {
-  {0, "Off"},
-  {1, "On"},
-  {0, NULL},
-};
 
 static const true_false_string ena_dis_tfs = {
   "Enable",
@@ -3019,7 +3014,7 @@ dissect_modemcap (tvbuff_t * tvb, packet_info* pinfo, proto_tree * tree, int sta
                 expert_add_info_format(pinfo, mcap_item, &ei_docsis_tlv_tlvlen_bad, "Wrong TLV length: %u", length);
               }
             break;
-         case CAP_DIPL_DOWN_UPPER_BAND_EDGE:
+          case CAP_DIPL_DOWN_UPPER_BAND_EDGE:
             if (length == 1)
               {
                 static int * const dipl_down_upper_band_edge[] = {
@@ -3051,6 +3046,17 @@ dissect_modemcap (tvbuff_t * tvb, packet_info* pinfo, proto_tree * tree, int sta
 
                 proto_tree_add_bitmask(mcap_tree, tvb, pos, hf_docsis_tlv_mcap_dipl_up_upper_band_edge,
                          ett_docsis_tlv_mcap_dipl_up_upper_band_edge, dipl_up_upper_band_edge, ENC_BIG_ENDIAN);
+              }
+            else
+              {
+                expert_add_info_format(pinfo, mcap_item, &ei_docsis_tlv_tlvlen_bad, "Wrong TLV length: %u", length);
+              }
+            break;
+          case CAP_LOW_LATENCY_SUP:
+            if (length == 1)
+              {
+                proto_tree_add_item (mcap_tree, hf_docsis_tlv_mcap_low_latency_sup, tvb,
+                                     pos, length, ENC_BIG_ENDIAN);
               }
             else
               {
@@ -5676,12 +5682,12 @@ proto_register_docsis_tlv (void)
     },
     {&hf_docsis_tlv_mcap_8021P_filter,
      {".9 802.1P Filtering Support", "docsis_tlv.mcap.dot1pfiltering",
-      FT_UINT8, BASE_DEC, VALS (on_off_vals), 0x80,
+      FT_BOOLEAN, 8, TFS(&tfs_on_off), 0x80,
       "802.1P Filtering Support", HFILL}
     },
     {&hf_docsis_tlv_mcap_8021Q_filter,
      {".9 802.1Q Filtering Support", "docsis_tlv.mcap.dot1qfilt",
-      FT_UINT8, BASE_DEC, VALS (on_off_vals), 0x40,
+      FT_BOOLEAN, 8, TFS(&tfs_on_off), 0x40,
       "802.1Q Filtering Support", HFILL}
     },
     {&hf_docsis_tlv_mcap_xmit_eq_taps_per_sym,
@@ -5716,25 +5722,25 @@ proto_register_docsis_tlv (void)
     },
     {&hf_docsis_tlv_mcap_rnghoff_cm,
      {".16 Ranging Hold-Off (CM)","docsis_tlv.mcap.rnghoffcm",
-      FT_UINT32, BASE_DEC, VALS (on_off_vals), 0x1,
+      FT_BOOLEAN, 32, TFS(&tfs_on_off), 0x00000001,
       "Ranging Hold-Off (CM)", HFILL}
     },
     {&hf_docsis_tlv_mcap_rnghoff_erouter,
      {".16 Ranging Hold-Off (ePS or eRouter)",
       "docsis_tlv.mcap.rnghofferouter",
-      FT_UINT32, BASE_DEC, VALS (on_off_vals), 0x2,
+      FT_BOOLEAN, 32, TFS(&tfs_on_off), 0x00000002,
       "Ranging Hold-Off (ePS or eRouter)", HFILL}
     },
     {&hf_docsis_tlv_mcap_rnghoff_emta,
      {".16 Ranging Hold-Off (eMTA or EDVA)",
       "docsis_tlv.mcap.rnghoffemta",
-      FT_UINT32, BASE_DEC, VALS (on_off_vals), 0x4,
+      FT_BOOLEAN, 32, TFS(&tfs_on_off), 0x00000004,
       "Ranging Hold-Off (eMTA or EDVA)", HFILL}
     },
     {&hf_docsis_tlv_mcap_rnghoff_estb,
      {".16 Ranging Hold-Off (DSG/eSTB)",
       "docsis_tlv.mcap.rnghoffestb",
-      FT_UINT32, BASE_DEC, VALS (on_off_vals), 0x8,
+      FT_BOOLEAN, 32, TFS(&tfs_on_off), 0x00000008,
       "Ranging Hold-Off (DSG/eSTB)", HFILL}
     },
     {&hf_docsis_tlv_mcap_l2vpn,
@@ -5762,37 +5768,37 @@ proto_register_docsis_tlv (void)
     {&hf_docsis_tlv_mcap_us_srate_160,
      {".21 Upstream Symbol Rate 160ksps supported",
       "docsis_tlv.mcap.srate160",
-      FT_UINT8, BASE_DEC, VALS (on_off_vals), 0x1,
+      FT_BOOLEAN, 8, TFS(&tfs_on_off), 0x01,
       "Upstream Symbol Rate 160ksps supported", HFILL}
     },
     {&hf_docsis_tlv_mcap_us_srate_320,
      {".21 Upstream Symbol Rate 320ksps supported",
       "docsis_tlv.mcap.srate320",
-      FT_UINT8, BASE_DEC, VALS (on_off_vals), 0x2,
+      FT_BOOLEAN, 8, TFS(&tfs_on_off), 0x02,
       "Upstream Symbol Rate 320ksps supported", HFILL}
     },
     {&hf_docsis_tlv_mcap_us_srate_640,
      {".21 Upstream Symbol Rate 640ksps supported",
       "docsis_tlv.mcap.srate640",
-      FT_UINT8, BASE_DEC, VALS (on_off_vals), 0x4,
+      FT_BOOLEAN, 8, TFS(&tfs_on_off), 0x04,
       "Upstream Symbol Rate 640ksps supported", HFILL}
     },
     {&hf_docsis_tlv_mcap_us_srate_1280,
      {".21 Upstream Symbol Rate 1280ksps supported",
       "docsis_tlv.mcap.srate1280",
-      FT_UINT8, BASE_DEC, VALS (on_off_vals), 0x8,
+      FT_BOOLEAN, 8, TFS(&tfs_on_off), 0x08,
       "Upstream Symbol Rate 1280ksps supported", HFILL}
     },
     {&hf_docsis_tlv_mcap_us_srate_2560,
      {".21 Upstream Symbol Rate 2560ksps supported",
       "docsis_tlv.mcap.srate2560",
-      FT_UINT8, BASE_DEC, VALS (on_off_vals), 0x10,
+      FT_BOOLEAN, 8, TFS(&tfs_on_off), 0x10,
       "Upstream Symbol Rate 2560ksps supported", HFILL}
     },
     {&hf_docsis_tlv_mcap_us_srate_5120,
      {".21 Upstream Symbol Rate 5120ksps supported",
       "docsis_tlv.mcap.srate5120",
-      FT_UINT8, BASE_DEC, VALS (on_off_vals), 0x20,
+      FT_BOOLEAN, 8, TFS(&tfs_on_off), 0x20,
       "Upstream Symbol Rate 5120ksps supported", HFILL}
     },
     {&hf_docsis_tlv_mcap_sac,
@@ -6280,6 +6286,12 @@ proto_register_docsis_tlv (void)
       FT_BOOLEAN, 8, NULL, 0x10,
       NULL, HFILL}
     },
+    {&hf_docsis_tlv_mcap_low_latency_sup,
+     {".62 Low Latency Support",
+      "docsis_tlv.mcap.low_latancy_sup",
+      FT_UINT8, BASE_HEX, NULL, 0x0,
+      "Low Latency Support", HFILL}
+    },
     {&hf_docsis_tlv_cm_mic,
      {"6 CM MIC", "docsis_tlv.cmmic",
       FT_BYTES, BASE_NONE, NULL, 0x0,
@@ -6706,47 +6718,47 @@ proto_register_docsis_tlv (void)
     },
     {&hf_docsis_tlv_sflow_reqxmit_all_cm_broadcast,
      {"Service flow use \"all CMs\" broadcast request opportunities", "docsis_tlv.sflow.reqxmitpol.all_cm_broadcast",
-      FT_BOOLEAN, 32, TFS(&tfs_must_not_must), 0x01,
+      FT_BOOLEAN, 32, TFS(&tfs_must_not_must), 0x00000001,
       NULL, HFILL}
     },
     {&hf_docsis_tlv_sflow_reqxmit_priority_multicast,
      {"Service flow use priority multicast request opportunities", "docsis_tlv.sflow.reqxmitpol.priority_multicast",
-      FT_BOOLEAN, 32, TFS(&tfs_must_not_must), 0x02,
+      FT_BOOLEAN, 32, TFS(&tfs_must_not_must), 0x00000002,
       NULL, HFILL}
     },
     {&hf_docsis_tlv_sflow_reqxmit_req_data_requests,
      {"Service flow use Request/Data opportunities for requests", "docsis_tlv.sflow.reqxmitpol.req_data_requests",
-      FT_BOOLEAN, 32, TFS(&tfs_must_not_must), 0x04,
+      FT_BOOLEAN, 32, TFS(&tfs_must_not_must), 0x00000004,
       NULL, HFILL}
     },
     {&hf_docsis_tlv_sflow_reqxmit_req_data_data,
      {"Service flow use Request/Data opportunities for data", "docsis_tlv.sflow.reqxmitpol.req_data_data",
-      FT_BOOLEAN, 32, TFS(&tfs_must_not_must), 0x08,
+      FT_BOOLEAN, 32, TFS(&tfs_must_not_must), 0x00000008,
       NULL, HFILL}
     },
     {&hf_docsis_tlv_sflow_reqxmit_piggy_back,
      {"Service flow use piggy back requests with data", "docsis_tlv.sflow.reqxmitpol.piggy_back",
-      FT_BOOLEAN, 32, TFS(&tfs_must_not_must), 0x10,
+      FT_BOOLEAN, 32, TFS(&tfs_must_not_must), 0x00000010,
       NULL, HFILL}
     },
     {&hf_docsis_tlv_sflow_reqxmit_concatenate_data,
      {"Service flow concatenate data", "docsis_tlv.sflow.reqxmitpol.concatenate_data",
-      FT_BOOLEAN, 32, TFS(&tfs_must_not_must), 0x20,
+      FT_BOOLEAN, 32, TFS(&tfs_must_not_must), 0x00000020,
       NULL, HFILL}
     },
     {&hf_docsis_tlv_sflow_reqxmit_fragment,
      {"Service flow fragment data", "docsis_tlv.sflow.reqxmitpol.fragment",
-      FT_BOOLEAN, 32, TFS(&tfs_must_not_must), 0x40,
+      FT_BOOLEAN, 32, TFS(&tfs_must_not_must), 0x00000040,
       NULL, HFILL}
     },
     {&hf_docsis_tlv_sflow_reqxmit_suppress_payload,
      {"Service flow suppress payload headers", "docsis_tlv.sflow.reqxmitpol.suppress_payload",
-      FT_BOOLEAN, 32, TFS(&tfs_must_not_must), 0x80,
+      FT_BOOLEAN, 32, TFS(&tfs_must_not_must), 0x00000080,
       NULL, HFILL}
     },
     {&hf_docsis_tlv_sflow_reqxmit_drop_packets,
      {"Service flow drop packets that do not fit in the UGS size", "docsis_tlv.sflow.reqxmitpol.drop_packets",
-      FT_BOOLEAN, 32, TFS(&tfs_must_must_not), 0x100,
+      FT_BOOLEAN, 32, TFS(&tfs_must_must_not), 0x00000100,
       NULL, HFILL}
     },
     {&hf_docsis_tlv_sflow_nominal_polling,

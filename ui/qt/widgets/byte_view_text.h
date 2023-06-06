@@ -121,7 +121,7 @@ private:
     bool show_hex_;             // Should we show the hex display?
     bool show_ascii_;           // Should we show the ASCII display?
     int row_width_;             // Number of bytes per line
-    int font_width_;            // Single character width and text margin. NOTE: Use fontMetrics::width for multiple characters.
+    int em_width_;              // Single character width and text margin. NOTE: Use fontMetrics::width for multiple characters.
     int line_height_;           // Font line spacing
     QList<QRect> hover_outlines_; // Hovered byte outlines.
 
@@ -133,6 +133,8 @@ private:
     // Context menu actions
     QAction *action_allow_hover_selection_;
     QAction *action_bytes_hex_;
+    QAction *action_bytes_dec_;
+    QAction *action_bytes_oct_;
     QAction *action_bytes_bits_;
     QAction *action_bytes_enc_from_packet_;
     QAction *action_bytes_enc_ascii_;

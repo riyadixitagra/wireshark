@@ -38,7 +38,7 @@ PROJECT_NAME           = "Wireshark"
 # could be handy for archiving the generated documentation or if some version
 # control system is used.
 
-PROJECT_NUMBER         = @VERSION@
+PROJECT_NUMBER         = @PROJECT_VERSION@
 
 # Using the PROJECT_BRIEF tag one can provide an optional one line description
 # for a project that appears at the top of each page and should give viewer a
@@ -837,7 +837,6 @@ INPUT                  = @DOXYGEN_INPUT_DIRECTORY@/wireshark.dox \
                          @DOXYGEN_INPUT_DIRECTORY@/extcap \
                          @DOXYGEN_INPUT_DIRECTORY@/plugins \
                          @DOXYGEN_INPUT_DIRECTORY@/randpkt_core \
-                         @DOXYGEN_INPUT_DIRECTORY@/speexdsp \
                          @DOXYGEN_INPUT_DIRECTORY@/ui \
                          @DOXYGEN_INPUT_DIRECTORY@/wiretap \
                          @DOXYGEN_INPUT_DIRECTORY@/writecap \

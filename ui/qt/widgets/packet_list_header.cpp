@@ -17,7 +17,7 @@
 
 #include <packet_list.h>
 
-#include <wireshark_application.h>
+#include <main_application.h>
 #include <epan/column.h>
 #include <ui/recent.h>
 #include <ui/preference_utils.h>
@@ -25,14 +25,13 @@
 #include <ui/qt/main_window.h>
 
 #include <models/packet_list_model.h>
+#include <models/pref_models.h>
 #include <ui/qt/utils/wireshark_mime_data.h>
 #include <ui/qt/widgets/packet_list_header.h>
 
-PacketListHeader::PacketListHeader(Qt::Orientation orientation, capture_file * cap_file, QWidget *parent) :
+PacketListHeader::PacketListHeader(Qt::Orientation orientation, QWidget *parent) :
     QHeaderView(orientation, parent),
-    cap_file_(cap_file),
-    sectionIdx(-1),
-    lastSize(-1)
+    sectionIdx(-1)
 {
     setAcceptDrops(true);
     setSectionsMovable(true);
@@ -98,7 +97,7 @@ void PacketListHeader::dropEvent(QDropEvent *event)
             event->setDropAction(Qt::CopyAction);
             event->accept();
 
-            MainWindow * mw = qobject_cast<MainWindow *>(wsApp->mainWindow());
+            MainWindow * mw = qobject_cast<MainWindow *>(mainApp->mainWindow());
             if (mw)
             {
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0 ,0)
@@ -129,7 +128,6 @@ void PacketListHeader::mousePressEvent(QMouseEvent *e)
 #endif
 
         QString headerName = model()->headerData(sectIdx, orientation()).toString();
-        lastSize = sectionSize(sectIdx);
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0 ,0)
         QToolTip::showText(e->globalPosition().toPoint(), QString("Width: %1").arg(sectionSize(sectIdx)));
 #else
@@ -145,7 +143,6 @@ void PacketListHeader::mouseMoveEvent(QMouseEvent *e)
     {
         /* no move is happening */
         sectionIdx = -1;
-        lastSize = -1;
     }
     else if (e->buttons() & Qt::LeftButton)
     {
@@ -162,28 +159,27 @@ void PacketListHeader::mouseMoveEvent(QMouseEvent *e)
         {
             /* Only run for the current moving section after a change */
             QString headerName = model()->headerData(sectionIdx, orientation()).toString();
-            lastSize = sectionSize(sectionIdx);
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0 ,0)
-            QToolTip::showText(e->globalPosition().toPoint(), QString("Width: %1").arg(lastSize));
+            QToolTip::showText(e->globalPosition().toPoint(), QString("Width: %1").arg(sectionSize(sectionIdx)));
 #else
-            QToolTip::showText(e->globalPos(), QString("Width: %1").arg(lastSize));
+            QToolTip::showText(e->globalPos(), QString("Width: %1").arg(sectionSize(sectionIdx)));
 #endif
         }
     }
     QHeaderView::mouseMoveEvent(e);
 }
 
-void PacketListHeader::setCaptureFile(capture_file *cap_file)
-{
-    this->cap_file_ = cap_file;
-}
-
 void PacketListHeader::contextMenuEvent(QContextMenuEvent *event)
 {
     int sectionIdx = logicalIndexAt(event->pos());
+    if (sectionIdx < 0 || sectionIdx >= prefs.num_cols)
+        return;
+
     char xalign = recent_get_column_xalign(sectionIdx);
-    QAction * action = Q_NULLPTR;
+    QAction * action = nullptr;
+
     QMenu * contextMenu = new QMenu(this);
+    contextMenu->setAttribute(Qt::WA_DeleteOnClose);
     contextMenu->setProperty("column", QVariant::fromValue(sectionIdx));
 
     QActionGroup * alignmentActions = new QActionGroup(contextMenu);
@@ -216,8 +212,9 @@ void PacketListHeader::contextMenuEvent(QContextMenuEvent *event)
     connect(action, &QAction::triggered, this, &PacketListHeader::resizeToWidth);
 
     action = contextMenu->addAction(tr("Resolve Names"));
-    bool canResolve = resolve_column(sectionIdx, cap_file_);
+    bool canResolve = model()->headerData(sectionIdx, Qt::Horizontal, PacketListModel::HEADER_CAN_RESOLVE).toBool();
     action->setEnabled(canResolve);
+    action->setCheckable(true);
     action->setChecked(canResolve && get_column_resolved(sectionIdx));
     connect(action, &QAction::triggered, this, &PacketListHeader::doResolveNames);
 
@@ -232,7 +229,7 @@ void PacketListHeader::contextMenuEvent(QContextMenuEvent *event)
             detail = col_format_desc(get_column_format(cnt));
         }
 
-        if (prefs.gui_qt_packet_header_column_definition)
+        if (prefs.gui_packet_header_column_definition)
             title.append(QString("\t%1").arg(detail));
 
         QAction *action = new QAction(title, this);
@@ -254,12 +251,6 @@ void PacketListHeader::contextMenuEvent(QContextMenuEvent *event)
     contextMenu->popup(viewport()->mapToGlobal(event->pos()));
 }
 
-void PacketListHeader::setSectionVisibility()
-{
-    for (int cnt = 0; cnt < prefs.num_cols; cnt++)
-        setSectionHidden(cnt, get_column_visible(cnt) ? false : true);
-}
-
 void PacketListHeader::columnVisibilityTriggered()
 {
     QAction *ha = qobject_cast<QAction*>(sender());
@@ -267,7 +258,7 @@ void PacketListHeader::columnVisibilityTriggered()
 
     int col = ha->data().toInt();
     set_column_visible(col, ha->isChecked());
-    setSectionVisibility();
+    setSectionHidden(col, ha->isChecked() ? false : true);
     if (ha->isChecked())
         emit resetColumnWidth(col);
 
@@ -321,14 +312,9 @@ void PacketListHeader::doResolveNames()
     if (!menu)
         return;
 
-    PacketListModel * plmModel = qobject_cast<PacketListModel *>(model());
-    if (!plmModel)
-        return;
-
     int section = menu->property("column").toInt();
 
     set_column_resolved(section, action->isChecked());
-    plmModel->resetColumns();
     prefs_main_write();
     emit updatePackets(true);
 }

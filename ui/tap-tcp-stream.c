@@ -36,7 +36,7 @@ typedef struct _tcp_scan_t {
 
 
 static tap_packet_status
-tapall_tcpip_packet(void *pct, packet_info *pinfo, epan_dissect_t *edt _U_, const void *vip)
+tapall_tcpip_packet(void *pct, packet_info *pinfo, epan_dissect_t *edt _U_, const void *vip, tap_flags_t flags _U_)
 {
     tcp_scan_t   *ts = (tcp_scan_t *)pct;
     struct tcp_graph *tg  = ts->tg;
@@ -209,7 +209,7 @@ typedef struct _th_t {
 } th_t;
 
 static tap_packet_status
-tap_tcpip_packet(void *pct, packet_info *pinfo _U_, epan_dissect_t *edt _U_, const void *vip)
+tap_tcpip_packet(void *pct, packet_info *pinfo _U_, epan_dissect_t *edt _U_, const void *vip, tap_flags_t flags _U_)
 {
     int       n;
     gboolean  is_unique = TRUE;
@@ -256,7 +256,7 @@ select_tcpip_session(capture_file *cf)
     epan_dissect_t  edt;
     dfilter_t      *sfcode;
     guint32         th_stream;
-    gchar          *err_msg;
+    df_error_t     *df_err;
     GString        *error_string;
     th_t th = {0, {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL}};
 
@@ -265,9 +265,9 @@ select_tcpip_session(capture_file *cf)
     }
 
     /* no real filter yet */
-    if (!dfilter_compile("tcp", &sfcode, &err_msg)) {
-        simple_dialog(ESD_TYPE_ERROR, ESD_BTN_OK, "%s", err_msg);
-        g_free(err_msg);
+    if (!dfilter_compile("tcp", &sfcode, &df_err)) {
+        simple_dialog(ESD_TYPE_ERROR, ESD_BTN_OK, "%s", df_err->msg);
+        df_error_free(&df_err);
         return G_MAXUINT32;
     }
 

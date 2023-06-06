@@ -675,7 +675,7 @@ static int dissect_fc_sbccs (tvbuff_t *tvb, packet_info *pinfo,
 
     /* Retrieve conversation state to determine expected payload */
     conversation = find_conversation (pinfo->num, &pinfo->src, &pinfo->dst,
-                                      ENDPOINT_SBCCS, ch_cu_id, dev_addr, 0);
+                                      CONVERSATION_SBCCS, ch_cu_id, dev_addr, 0);
 
     if (conversation) {
 #if 0
@@ -689,7 +689,7 @@ static int dissect_fc_sbccs (tvbuff_t *tvb, packet_info *pinfo,
         conversation =
 #endif
                        conversation_new (pinfo->num, &pinfo->src, &pinfo->dst,
-                                         ENDPOINT_SBCCS, ch_cu_id, dev_addr, 0);
+                                         CONVERSATION_SBCCS, ch_cu_id, dev_addr, 0);
 #if 0
         task_key.conv_id = conversation->index;
         task_key.task_id = ccw;
@@ -820,7 +820,7 @@ proto_register_fcsbccs (void)
 
         { &hf_sbccs_dib_residualcnt,
           { "Residual Count", "fcsb3.residualcnt",
-            FT_UINT8, BASE_DEC, NULL, 0x0,
+            FT_UINT16, BASE_DEC, NULL, 0x0,
             NULL, HFILL}},
 
         { &hf_sbccs_dib_iupacing,
@@ -835,7 +835,7 @@ proto_register_fcsbccs (void)
 
         { &hf_sbccs_dib_qtu,
           { "Queue-Time Unit", "fcsb3.qtu",
-            FT_UINT16, BASE_DEC, NULL, 0xFFF,
+            FT_UINT16, BASE_DEC, NULL, 0x0FFF,
             NULL, HFILL}},
 
         { &hf_sbccs_dib_dtuf,
@@ -845,7 +845,7 @@ proto_register_fcsbccs (void)
 
         { &hf_sbccs_dib_dtu,
           { "Defer-Time Unit", "fcsb3.dtu",
-            FT_UINT16, BASE_DEC, NULL, 0xFFF,
+            FT_UINT16, BASE_DEC, NULL, 0x0FFF,
             NULL, HFILL}},
 
         { &hf_sbccs_dib_ctlfn,
@@ -1065,17 +1065,17 @@ proto_register_fcsbccs (void)
 
         { &hf_sbccs_dib_ctlparam_rc,
           { "RC", "fcsb3.ctlparam.rc",
-            FT_BOOLEAN, 24, TFS(&tfs_set_notset), 0x80,
+            FT_BOOLEAN, 24, TFS(&tfs_set_notset), 0x000080,
             NULL, HFILL}},
 
         { &hf_sbccs_dib_ctlparam_ru,
           { "RU", "fcsb3.ctlparam.ru",
-            FT_BOOLEAN, 24, TFS(&tfs_set_notset), 0x10,
+            FT_BOOLEAN, 24, TFS(&tfs_set_notset), 0x000010,
             NULL, HFILL}},
 
         { &hf_sbccs_dib_ctlparam_ro,
           { "RO", "fcsb3.ctlparam.ro",
-            FT_BOOLEAN, 24, TFS(&tfs_set_notset), 0x08,
+            FT_BOOLEAN, 24, TFS(&tfs_set_notset), 0x000008,
             NULL, HFILL}},
 
         { &hf_sbccs_dib_linkctlinfo,
@@ -1085,12 +1085,12 @@ proto_register_fcsbccs (void)
 
         { &hf_sbccs_dib_linkctlinfo_ctcconn,
           { "CTC Conn", "fcsb3.linkctlinfo.ctc_conn",
-            FT_BOOLEAN, 16, TFS(&tfs_supported_not_supported), 0x80,
+            FT_BOOLEAN, 16, TFS(&tfs_supported_not_supported), 0x0080,
             NULL, HFILL}},
 
         { &hf_sbccs_dib_linkctlinfo_ecrcg,
           { "Enhanced CRC Generation", "fcsb3.linkctlinfo.ecrcg",
-            FT_BOOLEAN, 16, TFS(&tfs_supported_not_supported), 0x01,
+            FT_BOOLEAN, 16, TFS(&tfs_supported_not_supported), 0x0001,
             NULL, HFILL}},
 
         { &hf_sbccs_logical_path,

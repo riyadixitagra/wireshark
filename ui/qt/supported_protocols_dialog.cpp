@@ -11,10 +11,11 @@
 
 #include "supported_protocols_dialog.h"
 #include <ui_supported_protocols_dialog.h>
+#include <epan/prefs.h>
 
 #include <QElapsedTimer>
 
-#include "wireshark_application.h"
+#include "main_application.h"
 
 SupportedProtocolsDialog::SupportedProtocolsDialog(QWidget *parent) :
     GeometryStateDialog(parent),
@@ -34,7 +35,7 @@ SupportedProtocolsDialog::SupportedProtocolsDialog(QWidget *parent) :
         loadGeometry(parent->width() * 3 / 4, parent->height());
     setAttribute(Qt::WA_DeleteOnClose, true);
 
-    setWindowTitle(wsApp->windowTitleString(tr("Supported Protocols")));
+    setWindowTitle(mainApp->windowTitleString(tr("Supported Protocols")));
 
     // Some of our names are unreasonably long.
     int one_em = fontMetrics().height();
@@ -92,5 +93,6 @@ void SupportedProtocolsDialog::on_searchLineEdit_textChanged(const QString &sear
      * the countdown.
      */
     searchLineEditText = search_re;
-    searchLineEditTimer->start(200);
+    guint gui_debounce_timer = prefs_get_uint_value("gui", "debounce.timer");
+    searchLineEditTimer->start(gui_debounce_timer);
 }

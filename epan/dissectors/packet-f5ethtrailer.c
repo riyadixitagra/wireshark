@@ -329,14 +329,14 @@ static gboolean pref_walk_trailer = FALSE;
  * fields.*/
 static gboolean pref_pop_other_fields = FALSE;
 /** Wireshark preference to perform analysis */
-static gboolean pref_perform_analysis = TRUE;
+static gboolean pref_perform_analysis = FALSE;
 /** Wireshark preference to generate keylog entries from f5ethtrailer TLS data */
 static gboolean pref_generate_keylog = TRUE;
 /** Identifiers for taps (when enabled), only the address is important, the
  * values are unused. */
-static gint tap_ip_enabled;
-static gint tap_ipv6_enabled;
-static gint tap_tcp_enabled;
+static gboolean tap_ip_enabled;
+static gboolean tap_ipv6_enabled;
+static gboolean tap_tcp_enabled;
 
 /** Used "in" and "out" map for the true and false for ingress. (Not actually
  * used in field definition, but rather used to display via a format call
@@ -415,7 +415,7 @@ ptype_to_ipproto(const port_type ptype)
  * @return        True if it is valid IP/IPv6, false otherwise
  */
 static gboolean
-f5_ip_conv_valid(packet_info *pinfo)
+f5_ip_conv_valid(packet_info *pinfo, void *user_data _U_)
 {
     gboolean is_ip = FALSE;
     gboolean is_f5ethtrailer = FALSE;
@@ -436,7 +436,7 @@ f5_ip_conv_valid(packet_info *pinfo)
  * @return        True if it is valid IP/IPv6 + TCP, false otherwise
  */
 static gboolean
-f5_tcp_conv_valid(packet_info *pinfo)
+f5_tcp_conv_valid(packet_info *pinfo, void *user_data _U_)
 {
     gboolean is_ip  = FALSE;
     gboolean is_tcp = FALSE;
@@ -458,7 +458,7 @@ f5_tcp_conv_valid(packet_info *pinfo)
  * @return        True if it is valid IP/IPv6 + UDP, false otherwise
  */
 static gboolean
-f5_udp_conv_valid(packet_info *pinfo)
+f5_udp_conv_valid(packet_info *pinfo, void *user_data _U_)
 {
     gboolean is_ip  = FALSE;
     gboolean is_udp = FALSE;
@@ -485,7 +485,7 @@ f5_udp_conv_valid(packet_info *pinfo)
  *             (as of WS 1.12).
  */
 static gchar *
-f5_ip_conv_filter(packet_info *pinfo)
+f5_ip_conv_filter(packet_info *pinfo, void *user_data _U_)
 {
     gchar *buf = NULL;
     gchar src_addr[WS_INET6_ADDRSTRLEN];
@@ -540,7 +540,7 @@ f5_ip_conv_filter(packet_info *pinfo)
  *             (as of WS 1.12).
  */
 static gchar *
-f5_tcp_conv_filter(packet_info *pinfo)
+f5_tcp_conv_filter(packet_info *pinfo, void *user_data _U_)
 {
     gchar *buf = NULL;
     gchar src_addr[WS_INET6_ADDRSTRLEN];
@@ -600,7 +600,7 @@ f5_tcp_conv_filter(packet_info *pinfo)
  *             (as of WS 1.12).
  */
 static gchar *
-f5_udp_conv_filter(packet_info *pinfo)
+f5_udp_conv_filter(packet_info *pinfo, void *user_data _U_)
 {
     gchar *buf = NULL;
     gchar src_addr[WS_INET6_ADDRSTRLEN];
@@ -695,7 +695,7 @@ f5eth_tmmdist_stats_tree_init(stats_tree *st)
  */
 static tap_packet_status
 f5eth_tmmdist_stats_tree_packet(
-    stats_tree *st, packet_info *pinfo, epan_dissect_t *edt _U_, const void *data)
+    stats_tree *st, packet_info *pinfo, epan_dissect_t *edt _U_, const void *data, tap_flags_t flags _U_)
 {
     const f5eth_tap_data_t *tdata = (const f5eth_tap_data_t *)data;
     guint32 pkt_len;
@@ -813,7 +813,7 @@ f5eth_virtdist_stats_tree_init(stats_tree *st)
  */
 static tap_packet_status
 f5eth_virtdist_stats_tree_packet(
-    stats_tree *st, packet_info *pinfo, epan_dissect_t *edt _U_, const void *data)
+    stats_tree *st, packet_info *pinfo, epan_dissect_t *edt _U_, const void *data, tap_flags_t flags _U_)
 {
     const f5eth_tap_data_t *tdata = (const f5eth_tap_data_t *)data;
     guint32 pkt_len;
@@ -1392,7 +1392,7 @@ render_analysis(
  * @return tap_packet_status
  */
 static tap_packet_status
-ip_tap_pkt(void *tapdata _U_, packet_info *pinfo, epan_dissect_t *edt _U_, const void *data)
+ip_tap_pkt(void *tapdata _U_, packet_info *pinfo, epan_dissect_t *edt _U_, const void *data, tap_flags_t flags _U_)
 {
     struct f5eth_analysis_data_t *ad;
     const ws_ip4 *iph;
@@ -1436,7 +1436,7 @@ ip_tap_pkt(void *tapdata _U_, packet_info *pinfo, epan_dissect_t *edt _U_, const
  * @return tap_packet_status
  */
 static tap_packet_status
-ipv6_tap_pkt(void *tapdata _U_, packet_info *pinfo, epan_dissect_t *edt _U_, const void *data)
+ipv6_tap_pkt(void *tapdata _U_, packet_info *pinfo, epan_dissect_t *edt _U_, const void *data, tap_flags_t flags _U_)
 {
     struct f5eth_analysis_data_t *ad;
     const struct ws_ip6_hdr *ipv6h;
@@ -1483,7 +1483,7 @@ ipv6_tap_pkt(void *tapdata _U_, packet_info *pinfo, epan_dissect_t *edt _U_, con
  * @return tap_packet_status
  */
 static tap_packet_status
-tcp_tap_pkt(void *tapdata _U_, packet_info *pinfo, epan_dissect_t *edt _U_, const void *data)
+tcp_tap_pkt(void *tapdata _U_, packet_info *pinfo, epan_dissect_t *edt _U_, const void *data, tap_flags_t flags _U_)
 {
     struct f5eth_analysis_data_t *ad;
     const tcp_info_t *tcph;
@@ -2449,7 +2449,7 @@ dissect_dpt_trailer_noise_low(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tre
          * for backward compatability for users that are accustomed to using
          * "f5ethtrailer.ingress" but mark it as generated to indicate that that
          * field no longer really exists. */
-        PROTO_ITEM_SET_GENERATED(pi);
+        proto_item_set_generated(pi);
         proto_tree_add_bitmask(
             tree, tvb, offset, hf_flags, ett_f5ethtrailer_low_flags, hf_flags__fields,
             ENC_BIG_ENDIAN);
@@ -2751,69 +2751,73 @@ dissect_dpt_trailer(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *d
 static gint
 dissect_old_trailer(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *data)
 {
-    proto_tree *type_tree   = NULL;
-    proto_item *ti          = NULL;
     guint offset            = 0;
-    guint processed         = 0;
-    f5eth_tap_data_t *tdata = (f5eth_tap_data_t *)data;
-    guint8 type;
-    guint8 len;
-    guint8 ver;
 
     /* While we still have data in the trailer.  For old format trailers, this needs
      * type, length, version (3 bytes) and for new format trailers, the magic header (4 bytes).
      * All old format trailers are at least 4 bytes long, so just check for length of magic.
      */
-    while (tvb_reported_length_remaining(tvb, offset)) {
-        type = tvb_get_guint8(tvb, offset);
-        len = tvb_get_guint8(tvb, offset + F5_OFF_LENGTH) + F5_OFF_VERSION;
-        ver = tvb_get_guint8(tvb, offset + F5_OFF_VERSION);
+    while (tvb_reported_length_remaining(tvb, offset) >= F5_MIN_SANE) {
+        /* length field does not include the type and length bytes.  Add them back in */
+        guint8 len = tvb_get_guint8(tvb, offset + F5_OFF_LENGTH) + F5_OFF_VERSION;
+        if (len > tvb_reported_length_remaining(tvb, offset)
+            || len < F5_MIN_SANE || len > F5_MAX_SANE) {
+            /* Invalid length - either a malformed trailer, corrupt packet, or not f5ethtrailer */
+            return offset;
+        }
+        guint8 type = tvb_get_guint8(tvb, offset);
+        guint8 ver = tvb_get_guint8(tvb, offset + F5_OFF_VERSION);
 
-        if (len <= tvb_reported_length_remaining(tvb, offset) && type >= F5TYPE_LOW
-            && type <= F5TYPE_HIGH && len >= F5_MIN_SANE && len <= F5_MAX_SANE
-            && ver <= F5TRAILER_VER_MAX) {
-            /* Parse out the specified trailer. */
-            switch (type) {
-            case F5TYPE_LOW:
-                ti        = proto_tree_add_item(tree, hf_low_id, tvb, offset, len, ENC_NA);
-                type_tree = proto_item_add_subtree(ti, ett_f5ethtrailer_low);
+        /* Parse out the specified trailer. */
+        proto_tree *type_tree   = NULL;
+        proto_item *ti          = NULL;
+        f5eth_tap_data_t *tdata = (f5eth_tap_data_t *)data;
+        guint processed = 0;
 
-                processed = dissect_low_trailer(tvb, pinfo, type_tree, offset, len, ver, tdata);
-                if (processed > 0) {
-                    tdata->trailer_len += processed;
-                    tdata->noise_low = 1;
-                }
-                break;
-            case F5TYPE_MED:
-                ti        = proto_tree_add_item(tree, hf_med_id, tvb, offset, len, ENC_NA);
-                type_tree = proto_item_add_subtree(ti, ett_f5ethtrailer_med);
+        switch (type) {
+        case F5TYPE_LOW:
+            ti        = proto_tree_add_item(tree, hf_low_id, tvb, offset, len, ENC_NA);
+            type_tree = proto_item_add_subtree(ti, ett_f5ethtrailer_low);
 
-                processed = dissect_med_trailer(tvb, pinfo, type_tree, offset, len, ver, tdata);
-                if (processed > 0) {
-                    tdata->trailer_len += processed;
-                    tdata->noise_med = 1;
-                }
-                break;
-            case F5TYPE_HIGH:
-                ti        = proto_tree_add_item(tree, hf_high_id, tvb, offset, len, ENC_NA);
-                type_tree = proto_item_add_subtree(ti, ett_f5ethtrailer_high);
-
-                processed =
-                    dissect_high_trailer(tvb, pinfo, type_tree, offset, len, ver, tdata);
-                if (processed > 0) {
-                    tdata->trailer_len += processed;
-                    tdata->noise_high = 1;
-                }
-                break;
+            processed = dissect_low_trailer(tvb, pinfo, type_tree, offset, len, ver, tdata);
+            if (processed > 0) {
+                tdata->trailer_len += processed;
+                tdata->noise_low = 1;
             }
-            if (processed == 0) {
-                proto_item_set_len(ti, 1);
-                return offset;
+            break;
+        case F5TYPE_MED:
+            ti        = proto_tree_add_item(tree, hf_med_id, tvb, offset, len, ENC_NA);
+            type_tree = proto_item_add_subtree(ti, ett_f5ethtrailer_med);
+
+            processed = dissect_med_trailer(tvb, pinfo, type_tree, offset, len, ver, tdata);
+            if (processed > 0) {
+                tdata->trailer_len += processed;
+                tdata->noise_med = 1;
             }
+            break;
+        case F5TYPE_HIGH:
+            ti        = proto_tree_add_item(tree, hf_high_id, tvb, offset, len, ENC_NA);
+            type_tree = proto_item_add_subtree(ti, ett_f5ethtrailer_high);
+
+            processed =
+                dissect_high_trailer(tvb, pinfo, type_tree, offset, len, ver, tdata);
+            if (processed > 0) {
+                tdata->trailer_len += processed;
+                tdata->noise_high = 1;
+            }
+            break;
+        default:
+            /* Unknown type - malformed trailer, corrupt packet, or not f5ethtrailer - bali out*/
+            return offset;
+        }
+        if (processed == 0) {
+            /* couldn't process trailer - bali out */
+            proto_item_set_len(ti, 1);
+            return offset;
         }
         offset += processed;
     }
-return offset;
+    return offset;
 } /* dissect_old_trailer() */
 
 /*---------------------------------------------------------------------------*/
@@ -3038,6 +3042,7 @@ found_trailer:
 #define F5TLS_RANDOM_LEN      32
 #define F5TLS_HASH_LEN        64
 #define F5TLS_ZEROS_LEN      256
+#define F5TLS_T2V1_LEN       393
 
 typedef struct _F5TLS_ELEMENT {
     guchar *data; /* Pointer to a string of bytes wmem_file_scope allocated as needed. */
@@ -3216,7 +3221,7 @@ f5eth_add_tls_element(
 } /* f5eth_add_tls_element() */
 
 /*----------------------------------------------------------------------*/
-/** TLS <= 1.2 trailer
+/** TLS <= 1.2 trailer - Type 0
  *
  * @param tvb    The tvbuff containing the DPT TLV block (header and data).
  * @param pinfo  The pinfo structure for the frame.
@@ -3294,7 +3299,7 @@ dissect_dpt_trailer_tls_type0(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tre
 } /* dissect_dpt_trailer_tls_type0() */
 
 /*----------------------------------------------------------------------*/
-/** TLS 1.3 trailer
+/** TLS 1.3 trailer - Type 2
  *
  * @param tvb    The tvbuff containing the DPT TLV block (header and data).
  * @param pinfo  The pinfo structure for the frame.
@@ -3341,6 +3346,8 @@ dissect_dpt_trailer_tls_type2(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tre
             if (ver == 1) {
                 proto_tree_add_item(tree, hf_f5tls_early_traffic_sec, tvb, o, secret_len, ENC_NA);
                 o += F5TLS_HASH_LEN;
+            } else if (ver == 0 && len == F5TLS_T2V1_LEN) {
+                o += F5TLS_HASH_LEN;
             }
             proto_tree_add_item(tree, hf_f5tls_clnt_hs_sec, tvb, o, secret_len, ENC_NA);
             o += F5TLS_HASH_LEN;
@@ -3378,6 +3385,8 @@ dissect_dpt_trailer_tls_type2(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tre
             if (ver == 1) {
                 ets_changed =
                     f5eth_add_tls_element(&conv_data->erly_traf_sec, pinfo, tvb, o, secret_len);
+                o += F5TLS_HASH_LEN;
+            } else if (ver == 0 && len == F5TLS_T2V1_LEN) {
                 o += F5TLS_HASH_LEN;
             }
             chs_changed =
@@ -3449,7 +3458,7 @@ dissect_dpt_trailer_tls_type2(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tre
 } /* dissect_dpt_trailer_tls_type2() */
 
 /*----------------------------------------------------------------------*/
-/** TLS extended trailer
+/** TLS extended trailer - Types 1 and 3
  *
  *  Render as <DATA> - No dissection
  *
@@ -3565,18 +3574,24 @@ proto_init_f5ethtrailer(void)
         if (error_string) {
             ws_warning("Unable to register tap \"ip\" for f5ethtrailer: %s", error_string->str);
             g_string_free(error_string, TRUE);
+        } else {
+            tap_ip_enabled = TRUE;
         }
         error_string = register_tap_listener(
             "ipv6", &tap_ipv6_enabled, NULL, TL_REQUIRES_NOTHING, NULL, ipv6_tap_pkt, NULL, NULL);
         if (error_string) {
             ws_warning("Unable to register tap \"ipv6\" for f5ethtrailer: %s", error_string->str);
             g_string_free(error_string, TRUE);
+        } else {
+            tap_ipv6_enabled = TRUE;
         }
         error_string = register_tap_listener(
             "tcp", &tap_tcp_enabled, NULL, TL_REQUIRES_NOTHING, NULL, tcp_tap_pkt, NULL, NULL);
         if (error_string) {
             ws_warning("Unable to register tap \"tcp\" for f5ethtrailer: %s", error_string->str);
             g_string_free(error_string, TRUE);
+        } else {
+            tap_tcp_enabled = TRUE;
         }
     }
 }
@@ -3588,9 +3603,18 @@ proto_init_f5ethtrailer(void)
 static void
 f5ethtrailer_cleanup(void)
 {
-    remove_tap_listener(&tap_tcp_enabled);
-    remove_tap_listener(&tap_ipv6_enabled);
-    remove_tap_listener(&tap_ip_enabled);
+    if (tap_tcp_enabled) {
+        remove_tap_listener(&tap_tcp_enabled);
+        tap_tcp_enabled = FALSE;
+    }
+    if (tap_ipv6_enabled) {
+        remove_tap_listener(&tap_ipv6_enabled);
+        tap_ipv6_enabled = FALSE;
+    }
+    if (tap_ip_enabled) {
+        remove_tap_listener(&tap_ip_enabled);
+        tap_ip_enabled = FALSE;
+    }
 }
 
 /**
@@ -4090,9 +4114,9 @@ proto_register_f5ethtrailer(void)
         "F5 Ethernet Trailer TLS", proto_f5ethtrailer, FT_UINT32, BASE_DEC);
 
     /* Analyze Menu Items */
-    register_conversation_filter("f5ethtrailer", "F5 TCP", f5_tcp_conv_valid, f5_tcp_conv_filter);
-    register_conversation_filter("f5ethtrailer", "F5 UDP", f5_udp_conv_valid, f5_udp_conv_filter);
-    register_conversation_filter("f5ethtrailer", "F5 IP", f5_ip_conv_valid, f5_ip_conv_filter);
+    register_conversation_filter("f5ethtrailer", "F5 TCP", f5_tcp_conv_valid, f5_tcp_conv_filter, NULL);
+    register_conversation_filter("f5ethtrailer", "F5 UDP", f5_udp_conv_valid, f5_udp_conv_filter, NULL);
+    register_conversation_filter("f5ethtrailer", "F5 IP", f5_ip_conv_valid, f5_ip_conv_filter, NULL);
 
     /* Register the f5ethtrailer tap for statistics */
     tap_f5ethtrailer = register_tap("f5ethtrailer");
@@ -4174,11 +4198,50 @@ proto_reg_handoff_f5ethtrailer(void)
 
 /* Platform ID to platform name mapping
  *
- * https://support.f5.com/kb/en-us/products/big-ip_ltm/releasenotes/product/relnote-ltm-11-6-0.html
- * https://support.f5.com/csp/article/K9476
+ * https://my.f5.com/manage/s/article/K9476
+ * https://my.f5.com/manage/s/article/K86001294
  */
 
 static const string_string f5info_platform_strings[] = {
+    /* rSeries */
+    {"C128", "F5 r10000 Series (r10600, r10800, r10900)"},
+    {"C129", "F5 r5000 Series (r5600, r5800, r5900)"},
+    {"C130", "F5 r2000 Series (r2600, r2800)"},
+    {"C131", "F5 r4000 Series (r4600, r4800)"},
+
+    /* iSeries */
+    {"C115", "BIG-IP i4000 Series (i4600, i4800)"},
+    {"C116", "BIG-IP i10000 Series (i10600, i10800)"},
+    {"C117", "BIG-IP i2000 Series (i2600, i2800), BIG-IP i850)"},
+    {"C118", "BIG-IP i7000 Series (i7600, i7800)"},
+    {"C119", "BIG-IP i5000 Series (i5600, i5800)"},
+    {"C123", "BIG-IP i11600, i11800"},
+    {"C124", "BIG-IP i11400-DS, i11600-DS, i11800-DS"},
+    {"C125", "BIG-IP i5820-DF"},
+    {"C126", "BIG-IP i7820-DF"},
+    {"D116", "BIG-IP i15000 Series (i15600, i15800)"},
+    {"D120", "BIG-IP i15820-DF"},
+
+    /* Standard series */
+    {"C102", "BIG-IP 1600"},
+    {"C103", "BIG-IP 3600"},
+    {"C106", "BIG-IP 3900, Enterprise Manager 4000"},
+    {"C109", "BIG-IP 5000s, 5050s, 5200v, 5250v, 5250v-F"},
+    {"C112", "BIG-IP 2000 Series (2000s, 2200s)"},
+    {"C113", "BIG-IP 4000 Series (4000s, 4200v)"},
+    {"C114", "BIG-IP 800 (LTM only)"},
+    {"D104", "BIG-IP 6900 Series (6900, 6900S, 6900F, 6900N)"},
+    {"D106", "BIG-IP 8900"},
+    {"D107", "BIG-IP 8950"},
+    {"D110", "BIG-IP 7000 Series (7000s, 7050s, 7055s, 7200v, 7250v, 7255v), BIG-IQ 7000"},
+    {"D111", "BIG-IP 12000 Series (12250v)"},
+    {"D112", "BIG-IP 10050 Series (10150s-NEBS, 10350v (AC), 10350v-NEBS, 10350v-FIPS)"},
+    {"D113", "BIG-IP 10000 Series (10000s, 10050s, 10055, 10200v, 10250v, 10255)"},
+    {"E101", "BIG-IP 11000, BIG-IP 11000 FIPS"},
+    {"E102", "BIG-IP 11050, 11050 NEBS"},
+    {"E103", "BIG-IP 11050N"},
+
+    /* VIPRION */
     {"A100", "VIPRION B4100 Blade"},
     {"A105", "VIPRION B4100N Blade"},
     {"A107", "VIPRION B4200 Blade"},
@@ -4189,38 +4252,15 @@ static const string_string f5info_platform_strings[] = {
     {"A112", "VIPRION B2250 Blade"},
     {"A113", "VIPRION B2150 Blade"},
     {"A114", "VIPRION B4450 Blade"},
-    {"C102", "BIG-IP 1600"},
-    {"C103", "BIG-IP 3600"},
-    {"C106", "BIG-IP 3900, Enterprise Manager 4000"},
-    {"C109", "BIG-IP 5000s, 5050s, 5200v, 5250v, 5250v-F"},
-    {"C112", "BIG-IP 2000 Series (2000s, 2200s)"},
-    {"C113", "BIG-IP 4000 Series (4000s, 4200v)"},
-    {"C114", "BIG-IP 800 (LTM only)"},
-    {"C115", "BIG-IP i4000 Series (i4600, i4800)"},
-    {"C116", "BIG-IP i10000 Series (i10600, i10800)"},
-    {"C117", "BIG-IP i2000 Series (i2600, i2800), BIG-IP i850)"},
-    {"C118", "BIG-IP i7000 Series (i7600, i7800)"},
-    {"C119", "BIG-IP i5000 Series (i5600, i5800)"},
+
+    /* Herculon */
     {"C120", "Herculon i2800"},
     {"C121", "Herculon i5800"},
     {"C122", "Herculon i10800"},
-    {"C123", "BIG-IP i11600, i11800"},
-    {"C124", "BIG-IP i11400-DS, i11600-DS, i11800-DS"},
-    {"C125", "BIG-IP i5820-DF"},
-    {"C126", "BIG-IP i7820-DF"},
-    {"D104", "BIG-IP 6900 Series (6900, 6900S, 6900F, 6900N)"},
-    {"D106", "BIG-IP 8900"},
-    {"D107", "BIG-IP 8950"},
-    {"D110", "BIG-IP 7000 Series (7000s, 7050s, 7055s, 7200v, 7250v, 7255v), BIG-IQ 7000"},
-    {"D111", "BIG-IP 12000 Series (12250v)"},
-    {"D112", "BIG-IP 10050 Series (10150s-NEBS, 10350v (AC), 10350v-NEBS, 10350v-FIPS)"},
-    {"D113", "BIG-IP 10000 Series (10000s, 10050s, 10055, 10200v, 10250v, 10255)"},
-    {"D116", "BIG-IP i15000 Series (i15600, i15800)"},
-    {"E101", "BIG-IP 11000, BIG-IP 11000 FIPS"},
-    {"E102", "BIG-IP 11050, 11050 NEBS"},
-    {"E103", "BIG-IP 11050N"},
-    {"Z100", "Virtual Edition (VE)"},
-    {"Z101", "vCMP Guest"},
+
+    /* Virtualized platforms*/
+    {"Z100", "BIG-IP Virtual Edition (VE)"},
+    {"Z101", "BIG-IP vCMP Guest"},
     {NULL, NULL}
 };
     /* It currently looks like these do not apply. Kept for completeness only */
@@ -4231,6 +4271,7 @@ static const string_string f5info_platform_strings[] = {
     {"D101", "FirePass 4300"},
     {"D114", "VIPRION C2200 Chassis"},
     {"F100", "VIPRION C2400 Chassis"},
+    {"F101", "VELOS CX410 Chassis"},
     {"J100", "VIPRION C4400 Chassis"},
     {"J101", "VIPRION C4400N Chassis"},
     {"J102", "VIPRION C4480 Chassis"},
@@ -4263,6 +4304,7 @@ dissect_f5fileinfo(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *da
     guint offset = 0;
     const guint8 *object;
     const gchar *platform = NULL;
+    const gchar *platform_name = NULL;
     gint objlen;
     struct f5fileinfo_tap_data *tap_data;
 
@@ -4285,20 +4327,19 @@ dissect_f5fileinfo(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *da
     tap_data->magic = F5FILEINFO_TAP_MAGIC;
 
     while (tvb_captured_length_remaining(tvb, offset)) {
-        object = tvb_get_const_stringz(tvb, offset, &objlen);
+        object = tvb_get_stringz_enc(wmem_packet_scope(), tvb, offset, &objlen, ENC_ASCII);
 
         if (objlen <= 0 || object == NULL)
             break;
 
         if (strncmp(object, "CMD: ", 5) == 0) {
-            proto_tree_add_item(tree, hf_fi_command, tvb, offset + 5, objlen - 5, ENC_ASCII);
+            proto_tree_add_string(tree, hf_fi_command, tvb, offset + 5, objlen - 5, &object[5]);
             col_add_str(pinfo->cinfo, COL_INFO, &object[5]);
         } else if (strncmp(object, "VER: ", 5) == 0) {
             guint i;
             const guint8 *c;
 
-            proto_tree_add_item(
-                tree, hf_fi_version, tvb, offset + 5, objlen - 5, ENC_ASCII | ENC_NA);
+            proto_tree_add_string(tree, hf_fi_version, tvb, offset + 5, objlen - 5, &object[5]);
             for (c = object; *c && (*c < '0' || *c > '9'); c++);
             for (i = 0; i < 6 && *c; c++) {
                 if (*c < '0' || *c > '9') {
@@ -4308,19 +4349,15 @@ dissect_f5fileinfo(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *da
                 tap_data->ver[i] = (tap_data->ver[i] * 10) + (*c - '0');
             }
         } else if (strncmp(object, "HOST: ", 6) == 0)
-            proto_tree_add_item(
-                tree, hf_fi_hostname, tvb, offset + 6, objlen - 6, ENC_ASCII | ENC_NA);
+            proto_tree_add_string(tree, hf_fi_hostname, tvb, offset + 6, objlen - 6, &object[6]);
         else if (strncmp(object, "PLAT: ", 6) == 0) {
-            proto_tree_add_item(
-                tree, hf_fi_platform, tvb, offset + 6, objlen - 6, ENC_ASCII | ENC_NA);
-            platform =
-                tvb_get_string_enc(pinfo->pool, tvb, offset + 6, objlen - 6, ENC_ASCII);
-            proto_tree_add_string_format(tree, hf_fi_platformname, tvb, offset + 6, objlen - 6, "",
-                "%s: %s", platform,
-                str_to_str(platform, f5info_platform_strings, "Unknown, please report"));
+            proto_tree_add_string(tree, hf_fi_platform, tvb, offset + 6, objlen - 6, &object[6]);
+            platform = &object[6];
+            platform_name = str_to_str(platform, f5info_platform_strings, "Unknown, please report");
+            proto_tree_add_string_format(tree, hf_fi_platformname, tvb, offset + 6, objlen - 6, platform_name,
+                "%s: %s", platform, platform_name);
         } else if (strncmp(object, "PROD: ", 6) == 0)
-            proto_tree_add_item(
-                tree, hf_fi_product, tvb, offset + 6, objlen - 6, ENC_ASCII | ENC_NA);
+            proto_tree_add_string(tree, hf_fi_product, tvb, offset + 6, objlen - 6, &object[6]);
 
         offset += objlen;
     }

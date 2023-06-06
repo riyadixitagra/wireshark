@@ -444,18 +444,28 @@ sfloat_ieee_11073_cmp_lt(const fvalue_t *a, const fvalue_t *b)
     return FALSE;
 }
 
-static int
-sfloat_ieee_11073_cmp_order(const fvalue_t *a, const fvalue_t *b)
+static enum ft_result
+sfloat_ieee_11073_cmp_order(const fvalue_t *a, const fvalue_t *b, int *cmp)
 {
     if (sfloat_ieee_11073_cmp_lt(a, b))
-        return -1;
-    return sfloat_ieee_11073_cmp_eq(a, b) ? 0 : 1;
+        *cmp = -1;
+    else
+        *cmp = sfloat_ieee_11073_cmp_eq(a, b) ? 0 : 1;
+
+    return FT_OK;
 }
 
 static gboolean
 sfloat_ieee_11073_is_zero(const fvalue_t *a)
 {
     return a->value.sfloat_ieee_11073 == 0;
+}
+
+static guint
+sfloat_ieee_11073_hash(const fvalue_t *fv)
+{
+    gint64 value = fv->value.sfloat_ieee_11073;
+    return g_int64_hash(&value);
 }
 
 /*============================================================================*/
@@ -853,18 +863,28 @@ float_ieee_11073_cmp_lt(const fvalue_t *a, const fvalue_t *b)
     return FALSE;
 }
 
-static int
-float_ieee_11073_cmp_order(const fvalue_t *a, const fvalue_t *b)
+static enum ft_result
+float_ieee_11073_cmp_order(const fvalue_t *a, const fvalue_t *b, int *cmp)
 {
     if (float_ieee_11073_cmp_lt(a, b))
-        return -1;
-    return float_ieee_11073_cmp_eq(a, b) ? 0 : 1;
+        *cmp = -1;
+    else
+        *cmp = float_ieee_11073_cmp_eq(a, b) ? 0 : 1;
+
+    return FT_OK;
 }
 
 static gboolean
 float_ieee_11073_is_zero(const fvalue_t *a)
 {
     return a->value.float_ieee_11073 == 0;
+}
+
+static guint
+float_ieee_11073_hash(const fvalue_t *fv)
+{
+    gint64 value = fv->value.float_ieee_11073;
+    return g_int64_hash(&value);
 }
 
 /*============================================================================*/
@@ -900,15 +920,19 @@ Example: 114 is 0x0072
     static ftype_t sfloat_type = {
         FT_IEEE_11073_SFLOAT,                 /* ftype */
         "FT_IEEE_11073_SFLOAT",               /* name */
-        "IEEE-11073 Floating point (16-bit)", /* pretty_name */
+        "IEEE-11073 floating point (16-bit)", /* pretty_name */
         2,                                    /* wire_size */
 
         sfloat_ieee_11073_fvalue_new,         /* new_value */
+        NULL,                                 /* copy_value */
         NULL,                                 /* free_value */
         sfloat_ieee_11073_val_from_literal,   /* val_from_literal */
         NULL,                                 /* val_from_string */
         NULL,                                 /* val_from_charconst */
         sfloat_ieee_11073_val_to_repr,        /* val_to_string_repr */
+
+        NULL,                                 /* val_to_uinteger64 */
+        NULL,                                 /* val_to_sinteger64 */
 
         { .set_value_uinteger = sfloat_ieee_11073_value_set }, /* union set_value */
         { .get_value_uinteger = sfloat_ieee_11073_value_get }, /* union get_value */
@@ -917,10 +941,18 @@ Example: 114 is 0x0072
         NULL,                                 /* cmp_contains */
         NULL,                                 /* cmp_matches */
 
-        sfloat_ieee_11073_is_zero,           /* is_zero */
-        NULL,                                /* len */
-        NULL,                                /* slice */
-        NULL,                                /* bitwise_and */
+        sfloat_ieee_11073_hash,               /* hash */
+        sfloat_ieee_11073_is_zero,            /* is_zero */
+        NULL,                                 /* is_negative */
+        NULL,                                 /* len */
+        NULL,                                 /* slice */
+        NULL,                                 /* bitwise_and */
+        NULL,                                 /* unary_minus */
+        NULL,                                 /* add */
+        NULL,                                 /* subtract */
+        NULL,                                 /* multiply */
+        NULL,                                 /* divide */
+        NULL,                                 /* modulo */
     };
 
 /*
@@ -956,11 +988,15 @@ Example: 36.4 is 0xFF00016C
         4,                                    /* wire_size */
 
         float_ieee_11073_fvalue_new,         /* new_value */
+        NULL,                                /* copy_value */
         NULL,                                /* free_value */
         float_ieee_11073_val_from_literal,   /* val_from_literal */
         NULL,                                /* val_from_string */
         NULL,                                /* val_from_charconst */
         float_ieee_11073_val_to_repr,        /* val_to_string_repr */
+
+        NULL,                                 /* val_to_uinteger64 */
+        NULL,                                 /* val_to_sinteger64 */
 
         { .set_value_uinteger = float_ieee_11073_value_set }, /* union set_value */
         { .get_value_uinteger = float_ieee_11073_value_get }, /* union get_value */
@@ -969,14 +1005,44 @@ Example: 36.4 is 0xFF00016C
         NULL,                                /* cmp_contains */
         NULL,                                /* cmp_matches */
 
+        float_ieee_11073_hash,               /* hash */
         float_ieee_11073_is_zero,            /* is_zero */
+        NULL,                                /* is_negative */
         NULL,                                /* len */
         NULL,                                /* slice */
         NULL,                                /* bitwise_and */
+        NULL,                                /* unary_minus */
+        NULL,                                /* add */
+        NULL,                                /* subtract */
+        NULL,                                /* multiply */
+        NULL,                                /* divide */
+        NULL,                                /* modulo */
     };
 
     ftype_register(FT_IEEE_11073_SFLOAT, &sfloat_type);
     ftype_register(FT_IEEE_11073_FLOAT, &float_type);
+}
+
+void
+ftype_register_pseudofields_ieee_11073_float(int proto)
+{
+    static int hf_ft_ieee_11073_sfloat;
+    static int hf_ft_ieee_11073_float;
+
+    static hf_register_info hf_ftypes[] = {
+        { &hf_ft_ieee_11073_sfloat,
+            { "FT_IEEE_11073_SFLOAT", "_ws.ftypes.ieee_11073_sfloat",
+                FT_IEEE_11073_SFLOAT, BASE_NONE, NULL, 0x00,
+                NULL, HFILL }
+            },
+            { &hf_ft_ieee_11073_float,
+                { "FT_IEEE_11073_FLOAT", "_ws.ftypes.ieee_11073_float",
+                    FT_IEEE_11073_FLOAT, BASE_NONE, NULL, 0x00,
+                    NULL, HFILL }
+            },
+    };
+
+    proto_register_field_array(proto, hf_ftypes, array_length(hf_ftypes));
 }
 
 /*

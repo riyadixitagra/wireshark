@@ -12,6 +12,7 @@
 
 #include "module_preferences_scroll_area.h"
 
+#include <epan/prefs.h>
 #include <epan/prefs-int.h>
 #include <epan/decode_as.h>
 #include <ui/language.h>
@@ -24,7 +25,7 @@
 
 #include <ui/qt/utils/qt_ui_utils.h>
 
-#include "wireshark_application.h"
+#include "main_application.h"
 
 extern "C" {
 // Callbacks prefs routines
@@ -101,7 +102,7 @@ PreferencesDialog::PreferencesDialog(QWidget *parent) :
     pd_ui_->setupUi(this);
     loadGeometry();
 
-    setWindowTitle(wsApp->windowTitleString(tr("Preferences")));
+    setWindowTitle(mainApp->windowTitleString(tr("Preferences")));
 
     pd_ui_->advancedView->setModel(&advancedPrefsModel_);
     pd_ui_->advancedView->setItemDelegate(&advancedPrefsDelegate_);
@@ -224,7 +225,8 @@ void PreferencesDialog::on_advancedSearchLineEdit_textEdited(const QString &text
      * the countdown.
      */
     searchLineEditText = text;
-    searchLineEditTimer->start(200);
+    guint gui_debounce_timer = prefs_get_uint_value("gui", "debounce.timer");
+    searchLineEditTimer->start(gui_debounce_timer);
 }
 
 void PreferencesDialog::on_buttonBox_accepted()
@@ -252,7 +254,7 @@ void PreferencesDialog::on_buttonBox_accepted()
     //Filter expressions don't affect dissection, so there is no need to
     //send any events to that effect.  However, the app needs to know
     //about any button changes.
-    wsApp->emitAppSignal(WiresharkApplication::FilterExpressionsChanged);
+    mainApp->emitAppSignal(MainApplication::FilterExpressionsChanged);
 
     prefs_main_write();
     if (save_decode_as_entries(&err) < 0)
@@ -262,7 +264,7 @@ void PreferencesDialog::on_buttonBox_accepted()
     }
 
     write_language_prefs();
-    wsApp->loadLanguage(QString(language));
+    mainApp->loadLanguage(QString(language));
 
 #ifdef HAVE_AIRPCAP
   /*
@@ -287,24 +289,24 @@ void PreferencesDialog::on_buttonBox_accepted()
 //    prefs_airpcap_update();
 #endif
 
-    wsApp->setMonospaceFont(prefs.gui_qt_font_name);
+    mainApp->setMonospaceFont(prefs.gui_font_name);
 
     if (redissect_flags & PREF_EFFECT_FIELDS) {
-        wsApp->queueAppSignal(WiresharkApplication::FieldsChanged);
+        mainApp->queueAppSignal(MainApplication::FieldsChanged);
     }
 
     if (redissect_flags & PREF_EFFECT_DISSECTION) {
         /* Redissect all the packets, and re-evaluate the display filter. */
-        wsApp->queueAppSignal(WiresharkApplication::PacketDissectionChanged);
+        mainApp->queueAppSignal(MainApplication::PacketDissectionChanged);
     }
-    wsApp->queueAppSignal(WiresharkApplication::PreferencesChanged);
+    mainApp->queueAppSignal(MainApplication::PreferencesChanged);
 
     if (redissect_flags & PREF_EFFECT_GUI_LAYOUT) {
-        wsApp->queueAppSignal(WiresharkApplication::RecentPreferencesRead);
+        mainApp->queueAppSignal(MainApplication::RecentPreferencesRead);
     }
 
     if (prefs.capture_no_extcap != saved_capture_no_extcap_)
-        wsApp->refreshLocalInterfaces();
+        mainApp->refreshLocalInterfaces();
 }
 
 void PreferencesDialog::on_buttonBox_rejected()
@@ -319,5 +321,5 @@ void PreferencesDialog::on_buttonBox_rejected()
 
 void PreferencesDialog::on_buttonBox_helpRequested()
 {
-    wsApp->helpTopicAction(HELP_PREFERENCES_DIALOG);
+    mainApp->helpTopicAction(HELP_PREFERENCES_DIALOG);
 }

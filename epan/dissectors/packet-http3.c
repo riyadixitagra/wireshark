@@ -41,11 +41,13 @@ static int hf_http3_settings_qpack_max_table_capacity = -1;
 static int hf_http3_settings_max_field_section_size = -1;
 static int hf_http3_settings_qpack_blocked_streams = -1;
 static int hf_http3_settings_extended_connect = -1;
+static int hf_http3_settings_webtransport = -1;
+static int hf_http3_settings_h3_datagram = -1;
+static int hf_http3_settings_h3_datagram_draft04 = -1;
 static int hf_http3_priority_update_element_id = -1;
 static int hf_http3_priority_update_field_value = -1;
 
 static expert_field ei_http3_unknown_stream_type = EI_INIT;
-static expert_field ei_http3_data_not_decoded = EI_INIT;
 
 /* Initialize the subtree pointers */
 static gint ett_http3 = -1;
@@ -88,6 +90,8 @@ static const val64_string http3_stream_types[] = {
 #define HTTP3_PUSH_PROMISE                      0x5
 #define HTTP3_GOAWAY                            0x7
 #define HTTP3_MAX_PUSH_ID                       0xD
+#define HTTP3_WEBTRANSPORT_BISTREAM             0x41
+#define HTTP3_WEBTRANSPORT_UNISTREAM            0x54
 #define HTTP3_PRIORITY_UPDATE_REQUEST_STREAM    0xF0700
 #define HTTP3_PRIORITY_UPDATE_PUSH_STREAM       0xF0701
 
@@ -105,6 +109,8 @@ static const val64_string http3_frame_types[] = {
     { 0x09, "Reserved" },
     { HTTP3_MAX_PUSH_ID, "MAX_PUSH_ID" },
     { 0x0e, "Reserved" }, // "DUPLICATE_PUSH" in draft-26 and before
+    { HTTP3_WEBTRANSPORT_BISTREAM, "WEBTRANSPORT_BISTREAM" }, // draft-ietf-webtrans-http3-03
+    { HTTP3_WEBTRANSPORT_UNISTREAM, "WEBTRANSPORT_UNISTREAM" }, // draft-ietf-webtrans-http3-03
     { HTTP3_PRIORITY_UPDATE_REQUEST_STREAM, "PRIORITY_UPDATE" }, // draft-ietf-httpbis-priority-03
     { HTTP3_PRIORITY_UPDATE_PUSH_STREAM, "PRIORITY_UPDATE" }, // draft-ietf-httpbis-priority-03
     /* 0x40 - 0x3FFFFFFFFFFFFFFF Assigned via Specification Required policy */
@@ -120,12 +126,18 @@ static const val64_string http3_frame_types[] = {
 #define HTTP3_SETTINGS_MAX_FIELD_SECTION_SIZE   0x06
 #define HTTP3_QPACK_BLOCKED_STREAMS             0x07
 #define HTTP3_EXTENDED_CONNECT                  0x08 /* https://datatracker.ietf.org/doc/draft-ietf-httpbis-h3-websockets */
+#define HTTP3_H3_DATAGRAM                       0x33   // rfc9297
+#define HTTP3_H3_DATAGRAM_DRAFT04               0xffd277   // draft-ietf-masque-h3-datagram-04
+#define HTTP3_WEBTRANSPORT                      0x2b603742 // draft-ietf-webtrans-http3-03
 
 static const val64_string http3_settings_vals[] = {
     { HTTP3_QPACK_MAX_TABLE_CAPACITY, "Max Table Capacity" },
     { HTTP3_SETTINGS_MAX_FIELD_SECTION_SIZE, "Max Field Section Size" },
     { HTTP3_QPACK_BLOCKED_STREAMS, "Blocked Streams" },
-    { HTTP3_QPACK_BLOCKED_STREAMS, "Extended CONNECT" },
+    { HTTP3_EXTENDED_CONNECT, "Extended CONNECT" },
+    { HTTP3_WEBTRANSPORT, "Enable WebTransport" },
+    { HTTP3_H3_DATAGRAM, "Enable Datagram" },
+    { HTTP3_H3_DATAGRAM_DRAFT04, "Enable Datagram Draft04" },
     { 0, NULL }
 };
 
@@ -134,7 +146,6 @@ typedef struct _http3_stream_info {
     guint64 broken_from_offset;     /**< Unrecognized stream starting at offset (if non-zero). */
 } http3_stream_info;
 
-#ifdef HAVE_LIBGCRYPT_AEAD
 /**
  * Whether this is a reserved code point for Stream Type, Frame Type, Error
  * Code, etc.
@@ -144,7 +155,6 @@ http3_is_reserved_code(guint64 stream_type)
 {
     return (stream_type - 0x21) % 0x1f == 0;
 }
-#endif
 
 static gboolean
 try_get_quic_varint(tvbuff_t *tvb, int offset, guint64 *value, int *lenvar)
@@ -202,7 +212,6 @@ http3_check_frame_size(tvbuff_t *tvb, packet_info *pinfo, int offset)
     return FALSE;
 }
 
-#ifdef HAVE_LIBGCRYPT_AEAD
 /* Settings */
 static int
 dissect_http3_settings(tvbuff_t* tvb, packet_info* pinfo _U_, proto_tree* http3_tree, guint offset)
@@ -243,6 +252,18 @@ dissect_http3_settings(tvbuff_t* tvb, packet_info* pinfo _U_, proto_tree* http3_
             break;
             case HTTP3_EXTENDED_CONNECT:
                 proto_tree_add_item_ret_varint(settings_tree, hf_http3_settings_extended_connect, tvb, offset, -1, ENC_VARINT_QUIC, &value, &lenvar);
+                proto_item_append_text(ti_settings, ": %" PRIu64, value );
+            break;
+            case HTTP3_WEBTRANSPORT:
+                proto_tree_add_item_ret_varint(settings_tree, hf_http3_settings_webtransport, tvb, offset, -1, ENC_VARINT_QUIC, &value, &lenvar);
+                proto_item_append_text(ti_settings, ": %" PRIu64, value );
+            break;
+            case HTTP3_H3_DATAGRAM:
+                proto_tree_add_item_ret_varint(settings_tree, hf_http3_settings_h3_datagram, tvb, offset, -1, ENC_VARINT_QUIC, &value, &lenvar);
+                proto_item_append_text(ti_settings, ": %" PRIu64, value );
+            break;
+            case HTTP3_H3_DATAGRAM_DRAFT04:
+                proto_tree_add_item_ret_varint(settings_tree, hf_http3_settings_h3_datagram_draft04, tvb, offset, -1, ENC_VARINT_QUIC, &value, &lenvar);
                 proto_item_append_text(ti_settings, ": %" PRIu64, value );
             break;
             default:
@@ -378,7 +399,6 @@ dissect_http3_uni_stream(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, in
 
     return offset;
 }
-#endif /* HAVE_LIBGCRYPT_AEAD */
 
 static int
 dissect_http3(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *data)
@@ -387,9 +407,7 @@ dissect_http3(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *data)
     proto_item *ti;
     proto_tree *http3_tree;
     int offset = 0;
-#ifdef HAVE_LIBGCRYPT_AEAD
     http3_stream_info *h3_stream;
-#endif /* HAVE_LIBGCRYPT_AEAD */
 
     if (!stream_info) {
         return 0;
@@ -420,7 +438,6 @@ dissect_http3(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *data)
     ti = proto_tree_add_item(tree, proto_http3, tvb, 0, -1, ENC_NA);
     http3_tree = proto_item_add_subtree(ti, ett_http3);
 
-#ifdef HAVE_LIBGCRYPT_AEAD
     h3_stream = (http3_stream_info *)quic_stream_get_proto_data(pinfo, stream_info);
     if (!h3_stream) {
         h3_stream = wmem_new0(wmem_file_scope(), http3_stream_info);
@@ -456,10 +473,6 @@ dissect_http3(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *data)
         }
         offset = dissect_http3_frame(tvb, pinfo, http3_tree, offset);
     }
-#else
-    proto_tree_add_expert_format(http3_tree, pinfo, &ei_http3_data_not_decoded, tvb, offset, 0,
-                                 "Data not decoded, missing LIBGCRYPT AEAD support");
-#endif
 
     return tvb_captured_length(tvb);
 }
@@ -532,6 +545,21 @@ proto_register_http3(void)
               FT_UINT64, BASE_DEC, NULL, 0x0,
               NULL, HFILL }
         },
+        { &hf_http3_settings_webtransport,
+            { "WebTransport", "http3.settings.webtransport",
+              FT_UINT64, BASE_DEC, NULL, 0x0,
+              NULL, HFILL }
+        },
+        { &hf_http3_settings_h3_datagram,
+            { "H3 DATAGRAM", "http3.settings.h3_datagram",
+              FT_UINT64, BASE_DEC, NULL, 0x0,
+              NULL, HFILL }
+        },
+        { &hf_http3_settings_h3_datagram_draft04,
+            { "H3 DATAGRAM Draft04", "http3.settings.h3_datagram_draft04",
+              FT_UINT64, BASE_DEC, NULL, 0x0,
+              NULL, HFILL }
+        },
 
         /* Priority Update */
         { &hf_http3_priority_update_element_id,
@@ -556,10 +584,6 @@ proto_register_http3(void)
         { &ei_http3_unknown_stream_type,
           { "http3.unknown_stream_type", PI_UNDECODED, PI_WARN,
             "An unknown stream type was encountered", EXPFILL }
-        },
-        { &ei_http3_data_not_decoded,
-          { "http3.data_not_decoded", PI_UNDECODED, PI_WARN,
-            "Data not decoded", EXPFILL }
         },
     };
 

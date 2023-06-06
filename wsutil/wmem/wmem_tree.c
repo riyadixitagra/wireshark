@@ -499,9 +499,36 @@ wmem_tree_insert32(wmem_tree_t *tree, guint32 key, void *data)
     lookup_or_insert32(tree, key, NULL, data, FALSE, TRUE);
 }
 
+gboolean wmem_tree_contains32(wmem_tree_t *tree, guint32 key)
+{
+    if (!tree) {
+        return FALSE;
+    }
+
+    wmem_tree_node_t *node = tree->root;
+
+    while (node) {
+        if (key == GPOINTER_TO_UINT(node->key)) {
+            return TRUE;
+        }
+        else if (key < GPOINTER_TO_UINT(node->key)) {
+            node = node->left;
+        }
+        else if (key > GPOINTER_TO_UINT(node->key)) {
+            node = node->right;
+        }
+    }
+
+    return FALSE;
+}
+
 void *
 wmem_tree_lookup32(wmem_tree_t *tree, guint32 key)
 {
+    if (!tree) {
+        return NULL;
+    }
+
     wmem_tree_node_t *node = tree->root;
 
     while (node) {
@@ -522,6 +549,10 @@ wmem_tree_lookup32(wmem_tree_t *tree, guint32 key)
 void *
 wmem_tree_lookup32_le(wmem_tree_t *tree, guint32 key)
 {
+    if (!tree) {
+        return NULL;
+    }
+
     wmem_tree_node_t *node = tree->root;
 
     while (node) {
@@ -660,7 +691,7 @@ wmem_tree_insert32_array(wmem_tree_t *tree, wmem_tree_key_t *key, void *data)
         }
     }
 
-    ASSERT(insert_tree);
+    ws_assert(insert_tree);
 
     wmem_tree_insert32(insert_tree, insert_key32, data);
 }
@@ -695,7 +726,7 @@ wmem_tree_lookup32_array_helper(wmem_tree_t *tree, wmem_tree_key_t *key,
     }
 
     /* Assert if we didn't get any valid keys */
-    ASSERT(lookup_tree);
+    ws_assert(lookup_tree);
 
     return (*helper)(lookup_tree, lookup_key32);
 }

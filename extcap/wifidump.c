@@ -86,8 +86,8 @@ static const char * remote_capture_functions =
 "\n"
 "function iface_monitor {\n"
 "  local iface=$1\n"
-"  sudo iw dev $iface set monitor none > /dev/null 2>&1 ||\n"
-"  sudo iw dev $iface set type monitor > /dev/null 2>&1\n"
+"  sudo iw dev $iface set monitor control otherbss > /dev/null 2>&1 ||\n"
+"  sudo iw dev $iface set type monitor control otherbss > /dev/null 2>&1\n"
 "}\n"
 "\n"
 "function iface_scan {\n"
@@ -132,6 +132,8 @@ static const char * remote_capture_functions =
 "    iface_down    $iface &&\n"
 "    iface_monitor $iface &&\n"
 "    iface_up      $iface\n"
+"  else\n"
+"    iface_monitor $iface\n"
 "  fi\n"
 "  iface_config  $iface $freq $ch_width $center_freq &&\n"
 "  iface_start   $iface $count $filter\n"
@@ -539,7 +541,7 @@ int main(int argc, char *argv[])
 	 * Attempt to get the pathname of the directory containing the
 	 * executable file.
 	 */
-	err_msg = init_progfile_dir(argv[0]);
+	err_msg = configuration_init(argv[0], NULL);
 	if (err_msg != NULL) {
 		ws_warning("Can't get pathname of directory containing the extcap program: %s.",
 			err_msg);

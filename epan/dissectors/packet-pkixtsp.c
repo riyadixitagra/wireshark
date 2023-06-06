@@ -1,11 +1,8 @@
 /* Do not modify this file. Changes will be overwritten.                      */
 /* Generated automatically by the ASN.1 to Wireshark dissector compiler       */
 /* packet-pkixtsp.c                                                           */
-/* asn2wrs.py -b -p pkixtsp -c ./pkixtsp.cnf -s ./packet-pkixtsp-template -D . -O ../.. PKIXTSP.asn */
+/* asn2wrs.py -b -L -p pkixtsp -c ./pkixtsp.cnf -s ./packet-pkixtsp-template -D . -O ../.. PKIXTSP.asn */
 
-/* Input file: packet-pkixtsp-template.c */
-
-#line 1 "./asn1/pkixtsp/packet-pkixtsp-template.c"
 /* packet-pkixtsp.c
  * Routines for RFC2634 Extended Security Services packet dissection
  *   Ronnie Sahlberg 2004
@@ -35,11 +32,11 @@
 void proto_register_pkixtsp(void);
 void proto_reg_handoff_pkixtsp(void);
 
+static dissector_handle_t timestamp_reply_handle;
+static dissector_handle_t timestamp_query_handle;
+
 /* Initialize the protocol and registered fields */
 static int proto_pkixtsp = -1;
-
-/*--- Included file: packet-pkixtsp-hf.c ---*/
-#line 1 "./asn1/pkixtsp/packet-pkixtsp-hf.c"
 static int hf_pkixtsp_TimeStampReq_PDU = -1;      /* TimeStampReq */
 static int hf_pkixtsp_TimeStampResp_PDU = -1;     /* TimeStampResp */
 static int hf_pkixtsp_TSTInfo_PDU = -1;           /* TSTInfo */
@@ -94,14 +91,8 @@ static int hf_pkixtsp_PKIFailureInfo_spare_bit23 = -1;
 static int hf_pkixtsp_PKIFailureInfo_spare_bit24 = -1;
 static int hf_pkixtsp_PKIFailureInfo_systemFailure = -1;
 
-/*--- End of included file: packet-pkixtsp-hf.c ---*/
-#line 33 "./asn1/pkixtsp/packet-pkixtsp-template.c"
-
 /* Initialize the subtree pointers */
 static gint ett_pkixtsp = -1;
-
-/*--- Included file: packet-pkixtsp-ett.c ---*/
-#line 1 "./asn1/pkixtsp/packet-pkixtsp-ett.c"
 static gint ett_pkixtsp_TimeStampReq = -1;
 static gint ett_pkixtsp_MessageImprint = -1;
 static gint ett_pkixtsp_TimeStampResp = -1;
@@ -110,13 +101,7 @@ static gint ett_pkixtsp_PKIFailureInfo = -1;
 static gint ett_pkixtsp_TSTInfo = -1;
 static gint ett_pkixtsp_Accuracy = -1;
 
-/*--- End of included file: packet-pkixtsp-ett.c ---*/
-#line 37 "./asn1/pkixtsp/packet-pkixtsp-template.c"
 
-
-
-/*--- Included file: packet-pkixtsp-fn.c ---*/
-#line 1 "./asn1/pkixtsp/packet-pkixtsp-fn.c"
 
 static const value_string pkixtsp_T_version_vals[] = {
   {   1, "v1" },
@@ -417,9 +402,6 @@ static int dissect_SignatureTimeStampToken_PDU(tvbuff_t *tvb _U_, packet_info *p
 }
 
 
-/*--- End of included file: packet-pkixtsp-fn.c ---*/
-#line 40 "./asn1/pkixtsp/packet-pkixtsp-template.c"
-
 
 static int
 dissect_timestamp_reply(tvbuff_t *tvb, packet_info *pinfo, proto_tree *parent_tree, void *data _U_)
@@ -469,9 +451,6 @@ void proto_register_pkixtsp(void) {
 
   /* List of fields */
   static hf_register_info hf[] = {
-
-/*--- Included file: packet-pkixtsp-hfarr.c ---*/
-#line 1 "./asn1/pkixtsp/packet-pkixtsp-hfarr.c"
     { &hf_pkixtsp_TimeStampReq_PDU,
       { "TimeStampReq", "pkixtsp.TimeStampReq_element",
         FT_NONE, BASE_NONE, NULL, 0,
@@ -680,17 +659,11 @@ void proto_register_pkixtsp(void) {
       { "systemFailure", "pkixtsp.PKIFailureInfo.systemFailure",
         FT_BOOLEAN, 8, NULL, 0x40,
         NULL, HFILL }},
-
-/*--- End of included file: packet-pkixtsp-hfarr.c ---*/
-#line 91 "./asn1/pkixtsp/packet-pkixtsp-template.c"
   };
 
   /* List of subtrees */
   static gint *ett[] = {
 	&ett_pkixtsp,
-
-/*--- Included file: packet-pkixtsp-ettarr.c ---*/
-#line 1 "./asn1/pkixtsp/packet-pkixtsp-ettarr.c"
     &ett_pkixtsp_TimeStampReq,
     &ett_pkixtsp_MessageImprint,
     &ett_pkixtsp_TimeStampResp,
@@ -698,9 +671,6 @@ void proto_register_pkixtsp(void) {
     &ett_pkixtsp_PKIFailureInfo,
     &ett_pkixtsp_TSTInfo,
     &ett_pkixtsp_Accuracy,
-
-/*--- End of included file: packet-pkixtsp-ettarr.c ---*/
-#line 97 "./asn1/pkixtsp/packet-pkixtsp-template.c"
   };
 
   /* Register protocol */
@@ -709,6 +679,9 @@ void proto_register_pkixtsp(void) {
   /* Register fields and subtrees */
   proto_register_field_array(proto_pkixtsp, hf, array_length(hf));
   proto_register_subtree_array(ett, array_length(ett));
+
+  timestamp_reply_handle = register_dissector(PFNAME "_reply", dissect_timestamp_reply, proto_pkixtsp);
+  timestamp_query_handle = register_dissector(PFNAME "_query", dissect_timestamp_query, proto_pkixtsp);
 
   register_ber_syntax_dissector("TimeStampReq", proto_pkixtsp, dissect_TimeStampReq_PDU);
   register_ber_syntax_dissector("TimeStampResp", proto_pkixtsp, dissect_TimeStampResp_PDU);
@@ -720,23 +693,11 @@ void proto_register_pkixtsp(void) {
 
 /*--- proto_reg_handoff_pkixtsp -------------------------------------------*/
 void proto_reg_handoff_pkixtsp(void) {
-	dissector_handle_t timestamp_reply_handle;
-	dissector_handle_t timestamp_query_handle;
-
-	timestamp_reply_handle = create_dissector_handle(dissect_timestamp_reply, proto_pkixtsp);
 	dissector_add_string("media_type", "application/timestamp-reply", timestamp_reply_handle);
-
-	timestamp_query_handle = create_dissector_handle(dissect_timestamp_query, proto_pkixtsp);
 	dissector_add_string("media_type", "application/timestamp-query", timestamp_query_handle);
 
-
-/*--- Included file: packet-pkixtsp-dis-tab.c ---*/
-#line 1 "./asn1/pkixtsp/packet-pkixtsp-dis-tab.c"
   register_ber_oid_dissector("1.2.840.113549.1.9.16.2.14", dissect_SignatureTimeStampToken_PDU, proto_pkixtsp, "id-aa-timeStampToken");
   register_ber_oid_dissector("1.2.840.113549.1.9.16.1.4", dissect_TSTInfo_PDU, proto_pkixtsp, "id-ct-TSTInfo");
 
-
-/*--- End of included file: packet-pkixtsp-dis-tab.c ---*/
-#line 126 "./asn1/pkixtsp/packet-pkixtsp-template.c"
 }
 

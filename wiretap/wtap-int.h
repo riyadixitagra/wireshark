@@ -42,7 +42,7 @@ struct wtap {
     GArray                      *shb_hdrs;
     GArray                      *interface_data;        /**< An array holding the interface data from pcapng IDB:s or equivalent(?)*/
     guint                       next_interface_data;    /**< Next interface data that wtap_get_next_interface_description() will show */
-    GArray                      *nrb_hdrs;              /**< holds the Name Res Block's comment/custom_opts, or NULL */
+    GArray                      *nrbs;                  /**< holds the Name Res Blocks, or NULL */
     GArray                      *dsbs;                  /**< An array of DSBs (of type wtap_block_t), or NULL if not supported. */
 
     char                        *pathname;              /**< File pathname; might just be "-" */
@@ -95,7 +95,12 @@ struct wtap_dumper {
     WFILE_T                 fh;
     int                     file_type_subtype;
     int                     snaplen;
-    int                     encap;
+    int                     file_encap;      /* per-file, for those
+                                              * file formats that have
+                                              * per-file encapsulation
+                                              * types rather than per-packet
+                                              * encapsulation types
+                                              */
     wtap_compression_type   compression_type;
     gboolean                needs_reload;    /* TRUE if the file requires re-loading after saving with wtap */
     gint64                  bytes_dumped;
@@ -109,7 +114,6 @@ struct wtap_dumper {
 
     addrinfo_lists_t        *addrinfo_lists; /**< Struct containing lists of resolved addresses */
     GArray                  *shb_hdrs;
-    GArray                  *nrb_hdrs;       /**< name resolution comment/custom_opt, or NULL */
     GArray                  *interface_data; /**< An array holding the interface data from pcapng IDB:s or equivalent(?) NULL if not present.*/
     GArray                  *dsbs_initial;   /**< An array of initial DSBs (of type wtap_block_t) */
 
@@ -117,7 +121,9 @@ struct wtap_dumper {
      * Additional blocks that might grow as data is being collected.
      * Subtypes should write these blocks before writing new packet blocks.
      */
+    const GArray            *nrbs_growing;          /**< A reference to an array of NRBs (of type wtap_block_t) */
     const GArray            *dsbs_growing;          /**< A reference to an array of DSBs (of type wtap_block_t) */
+    guint                   nrbs_growing_written;   /**< Number of already processed NRBs in nrbs_growing. */
     guint                   dsbs_growing_written;   /**< Number of already processed DSBs in dsbs_growing. */
 };
 
@@ -341,6 +347,12 @@ void
 wtap_add_idb(wtap *wth, wtap_block_t idb);
 
 /**
+ * Invokes the callback with the given name resolution block.
+ */
+void
+wtapng_process_nrb(wtap *wth, wtap_block_t nrb);
+
+/**
  * Invokes the callback with the given decryption secrets block.
  */
 void
@@ -389,6 +401,33 @@ GArray* wtap_file_get_shb_for_new_file(wtap *wth);
  */
 WS_DLL_PUBLIC
 void wtap_add_generated_idb(wtap *wth);
+
+/**
+ * @brief Generate an IDB, given a set of dump parameters, using the
+ *      parameters' encapsulation type, snapshot length, and time stamp
+ *      resolution. For use when a dump file has a given encapsulation type,
+ *      and the source is not passing IDBs.
+ * @note This requires that the encapsulation type and time stamp
+ *      resolution not be per-packet; it will terminate the process
+ *      if either of them are.
+ *
+ * @param params The wtap dump parameters.
+ */
+
+wtap_block_t wtap_dump_params_generate_idb(const wtap_dump_params *params);
+
+/**
+ * @brief Generate an IDB, given a packet record, using the records's
+ *      encapsulation type and time stamp resolution, and the default
+ *      snap length for the encapsulation type. For use when a file has
+ *      per-packet encapsulation, and the source is not passing along IDBs.
+ * @note This requires that the record type be REC_TYPE_PACKET, and the
+ *      encapsulation type and time stamp resolution not be per-packet;
+ *      it will terminate the process if any of them are.
+ *
+ * @param rec The packet record.
+ */
+wtap_block_t wtap_rec_generate_idb(const wtap_rec *rec);
 
 /**
  * @brief Gets new name resolution info for new file, based on existing info.

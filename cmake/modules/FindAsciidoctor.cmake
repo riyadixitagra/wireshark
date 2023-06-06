@@ -8,7 +8,10 @@ INCLUDE(FindChocolatey)
 
 FIND_PROGRAM(ASCIIDOCTOR_EXECUTABLE
     NAMES
+        asciidoctorj.cmd
+        asciidoctorj.bat
         asciidoctorj
+        asciidoctor.cmd
         asciidoctor.bat
         asciidoctor
         asciidoctor.ruby2.1
@@ -42,7 +45,7 @@ if(ASCIIDOCTOR_EXECUTABLE)
         # --failure-level=WARN
         # --trace
         --quiet
-        --attribute build_dir=${CMAKE_CURRENT_BINARY_DIR}
+        --attribute build_dir=${CMAKE_BINARY_DIR}/docbook
         --require ${CMAKE_SOURCE_DIR}/docbook/asciidoctor-macros/ws_utils.rb
         --require ${CMAKE_SOURCE_DIR}/docbook/asciidoctor-macros/commaize-block.rb
         --require ${CMAKE_SOURCE_DIR}/docbook/asciidoctor-macros/cveidlink-inline-macro.rb
@@ -75,6 +78,7 @@ if(ASCIIDOCTOR_EXECUTABLE)
                 --out-file ${_output_xml}
                 ${CMAKE_CURRENT_SOURCE_DIR}/${_asciidocsource}
             DEPENDS
+                ${CMAKE_SOURCE_DIR}/docbook/attributes.adoc
                 ${CMAKE_CURRENT_SOURCE_DIR}/${_asciidocsource}
                 ${ARGN}
         )
@@ -106,6 +110,7 @@ if(ASCIIDOCTOR_EXECUTABLE)
                 --out-file ${_output_html}
                 ${CMAKE_CURRENT_SOURCE_DIR}/${_asciidocsource}
             DEPENDS
+                ${CMAKE_SOURCE_DIR}/docbook/attributes.adoc
                 ${CMAKE_CURRENT_SOURCE_DIR}/${_asciidocsource}
                 ${ARGN}
         )
@@ -122,10 +127,12 @@ if(ASCIIDOCTOR_EXECUTABLE)
         ADD_CUSTOM_COMMAND(
             OUTPUT
                 ${_output_txt}
-            COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/html2text.py
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/html2text.py
                 ${_output_html}
                 > ${_output_txt}
             DEPENDS
+                ${MAN_INCLUDES}
+                ${CMAKE_SOURCE_DIR}/docbook/attributes.adoc
                 ${CMAKE_CURRENT_SOURCE_DIR}/${_asciidocsource}
                 ${_output_html}
                 ${ARGN}
@@ -152,6 +159,8 @@ if(ASCIIDOCTOR_EXECUTABLE)
                 --destination-dir ${CMAKE_CURRENT_BINARY_DIR}
                 ${_input_adoc}
             DEPENDS
+                ${MAN_INCLUDES}
+                ${CMAKE_SOURCE_DIR}/docbook/attributes.adoc
                 ${_input_adoc}
         )
         unset(_src_file)
@@ -177,6 +186,8 @@ if(ASCIIDOCTOR_EXECUTABLE)
                 --destination-dir ${CMAKE_CURRENT_BINARY_DIR}
                 ${_input_adoc}
             DEPENDS
+                ${MAN_INCLUDES}
+                ${CMAKE_SOURCE_DIR}/docbook/attributes.adoc
                 ${_input_adoc}
         )
         unset(_src_file)
@@ -221,6 +232,7 @@ if(ASCIIDOCTOR_EXECUTABLE)
                     --out-file "${_output_pdf}"
                     ${CMAKE_CURRENT_SOURCE_DIR}/${_asciidocsource}
             DEPENDS
+                    ${CMAKE_SOURCE_DIR}/docbook/attributes.adoc
                     ${CMAKE_CURRENT_SOURCE_DIR}/${_asciidocsource}
                     ${ARGN}
             VERBATIM
@@ -271,6 +283,7 @@ if(ASCIIDOCTOR_EXECUTABLE)
                     --out-file "${_output_epub}"
                     ${CMAKE_CURRENT_SOURCE_DIR}/${_asciidocsource}
             DEPENDS
+                    ${CMAKE_SOURCE_DIR}/docbook/attributes.adoc
                     ${CMAKE_CURRENT_SOURCE_DIR}/${_asciidocsource}
                     ${ARGN}
             VERBATIM

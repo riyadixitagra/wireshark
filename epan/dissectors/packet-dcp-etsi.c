@@ -27,6 +27,11 @@ void proto_reg_handoff_dcp_etsi(void);
 static int dissect_af (tvbuff_t * tvb, packet_info * pinfo, proto_tree * tree, void* data);
 static int dissect_pft (tvbuff_t * tvb, packet_info * pinfo, proto_tree * tree, void* data);
 
+static dissector_handle_t dcp_etsi_handle;
+static dissector_handle_t af_handle;
+static dissector_handle_t pft_handle;
+static dissector_handle_t tpl_handle;
+
 static dissector_table_t dcp_dissector_table;
 static dissector_table_t af_dissector_table;
 static dissector_table_t tpl_dissector_table;
@@ -121,47 +126,14 @@ static const fragment_items dcp_frag_items = {
  *  \param[in,out] tree The structure containing the details which will be displayed, filtered, etc.
 static void
  */
-static gboolean
-dissect_dcp_etsi (tvbuff_t * tvb, packet_info * pinfo, proto_tree * tree, void * data _U_)
+static int
+dissect_dcp_etsi(tvbuff_t * tvb, packet_info * pinfo, proto_tree * tree, void * data _U_)
 {
   guint8 *sync;
   proto_tree *dcp_tree;
   proto_item *ti;
-  guint16 word;
 
-  /* 6.1 AF packet structure
-   *
-   * AF Header
-   * SYNC               LEN             SEQ             AR              PT
-   * 2 bytes    4 bytes 2 bytes 1 byte  1 byte
-   *
-   * SYNC: two-byte ASCII representation of "AF".
-   * LEN: length of the payload, in bytes.
-   * SEQ: sequence number
-   * AR: AF protocol Revision - a field combining the CF, MAJ and MIN fields
-   * CF: CRC Flag, 0 if the CRC field is not used
-   * MAJ: major revision of the AF protocol in use, see clause 6.2.
-   * MIN: minor revision of the AF protocol in use, see clause 6.2.
-   * Protocol Type (PT): single byte encoding the protocol of the data carried in the payload. For TAG Packets, the value
-   * shall be the ASCII representation of "T".
-   *
-   * 7.1 PFT fragment structure
-   * PFT Header
-   * 14, 16, 18 or 20 bytes (depending on options)                                                                              Optional present if FEC=1 Optional present if Addr = 1
-   * Psync              Pseq            Findex          Fcount          FEC             HCRC            Addr    Plen    | RSk           RSz                     | Source        Dest
-   * 16 bits    16 bits         24 bits         24 bits         1 bit   16 bits         1 bit   14 bits | 8 bits        8 bits          | 16 bits       16 bits
-   *
-   * Psync: the ASCII string "PF" is used as the synchronization word for the PFT Layer
-   *
-   * Don't accept this packet unless at least a full AF header present(10 bytes).
-   * It should be possible to strengthen the heuristic further if need be.
-   */
   if(tvb_captured_length(tvb) < 11)
-    return FALSE;
-
-  word = tvb_get_ntohs(tvb,0);
-  /* Check for 'AF or 'PF' */
-  if(word != 0x4146 && word != 0x5046)
     return FALSE;
 
   /* Clear out stuff in the info column */
@@ -174,6 +146,88 @@ dissect_dcp_etsi (tvbuff_t * tvb, packet_info * pinfo, proto_tree * tree, void *
 
   sync = tvb_get_string_enc(pinfo->pool, tvb, 0, 2, ENC_ASCII);
   dissector_try_string(dcp_dissector_table, (char*)sync, tvb, pinfo, dcp_tree, NULL);
+
+  return tvb_captured_length(tvb);
+}
+
+/** Heuristic dissector for a DCP packet.
+ *  \param[in,out] tvb The buffer containing the packet
+ *  \param[in,out] pinfo The packet info structure
+ *  \param[in,out] tree The structure containing the details which will be displayed, filtered, etc.
+static void
+ */
+static gboolean
+dissect_dcp_etsi_heur(tvbuff_t * tvb, packet_info * pinfo, proto_tree * tree, void * data _U_)
+{
+  /* 6.1 AF packet structure
+   *
+   * AF Header
+   * SYNC    LEN     SEQ     AR      PT
+   * 2 bytes 4 bytes 2 bytes 1 byte  1 byte
+   *
+   * SYNC: two-byte ASCII representation of "AF".
+   * LEN: length of the payload, in bytes.
+   * SEQ: sequence number
+   * AR: AF protocol Revision - a field combining the CF, MAJ and MIN fields
+   * CF: CRC Flag, 0 if the CRC field is not used
+   * MAJ: major revision of the AF protocol in use, see clause 6.2.
+   * MIN: minor revision of the AF protocol in use, see clause 6.2.
+   * Protocol Type (PT): single byte encoding the protocol of the data carried in the payload.
+   * For TAG Packets, the value shall be the ASCII representation of "T".
+   *
+   * 7.1 PFT fragment structure
+   * PFT Header
+   * 14, 16, 18 or 20 bytes (depending on options)                                                                              Optional present if FEC=1 Optional present if Addr = 1
+   * Psync              Pseq            Findex          Fcount          FEC             HCRC            Addr    Plen    | RSk           RSz                     | Source        Dest
+   * 16 bits    16 bits         24 bits         24 bits         1 bit   16 bits         1 bit   14 bits | 8 bits        8 bits          | 16 bits       16 bits
+   *
+   * Psync: the ASCII string "PF" is used as the synchronization word for the PFT Layer
+   *
+   * Don't accept this packet unless at least a full AF header present(10 bytes).
+   * It should be possible to strengthen the heuristic further if need be.
+   */
+  guint16 word;
+
+  if(tvb_captured_length(tvb) < 11)
+    return FALSE;
+
+  word = tvb_get_ntohs(tvb,0);
+  /* Check for 'AF or 'PF' */
+  if (word == 0x4146) {
+    /* AF - check the version, which is only major 1, minor 0 */
+    if ((tvb_get_guint8(tvb, 8) & 0x7F) != 0x10) {
+      return FALSE;
+    }
+    /* Tag packets are the only payload type */
+    if (tvb_get_guint8(tvb, 9) != 'T') {
+      return FALSE;
+    }
+  } else if (word == 0x5046) {
+    /* PFT - header length 14, 16, 18, or 20 depending on options.
+     * Always contains CRC. */
+    if (tvb_captured_length(tvb) < 14) {
+      return FALSE;
+    }
+    guint16 plen = tvb_get_ntohs(tvb, 10);
+    guint header_len = 14;
+    if (plen & 0x8000) {
+      header_len += 2;
+    }
+    if (plen & 0x4000) {
+      header_len += 4;
+    }
+    if (tvb_captured_length(tvb) < header_len) {
+      return FALSE;
+    }
+    if (crc16_x25_ccitt_tvb(tvb, header_len) != 0x1D0F) {
+      return FALSE;
+    }
+  } else {
+    return FALSE;
+  }
+
+  dissect_dcp_etsi(tvb, pinfo, tree, data);
+
   return TRUE;
 }
 
@@ -265,10 +319,12 @@ dissect_pft_fec_detailed(tvbuff_t * tvb, packet_info * pinfo, proto_tree * tree,
     got = (guint32 *)wmem_alloc(pinfo->pool, fcount*sizeof(guint32));
 
     /* make a list of the findex (offset) numbers of the fragments we have */
-    fd = fragment_get(&dcp_reassembly_table, pinfo, seq, NULL);
-    for (fd_head = fd; fd_head != NULL && fragments < fcount; fd_head = fd_head->next) {
-      if(fd_head->tvb_data) {
-        got[fragments++] = fd_head->offset; /* this is the findex of the fragment */
+    fd_head = fragment_get(&dcp_reassembly_table, pinfo, seq, NULL);
+    if (fd_head) {
+      for (fd = fd_head->next; fd != NULL && fragments < fcount; fd = fd->next) {
+        if(fd->tvb_data) {
+          got[fragments++] = fd->offset; /* this is the findex of the fragment */
+        }
       }
     }
     /* have we got enough for Reed Solomon to try to correct ? */
@@ -605,14 +661,8 @@ dissect_tpl(tvbuff_t * tvb, packet_info * pinfo, proto_tree * tree, void* data _
 void
 proto_reg_handoff_dcp_etsi (void)
 {
-  dissector_handle_t af_handle;
-  dissector_handle_t pft_handle;
-  dissector_handle_t tpl_handle;
-
-  af_handle = create_dissector_handle(dissect_af, proto_af);
-  pft_handle = create_dissector_handle(dissect_pft, proto_pft);
-  tpl_handle = create_dissector_handle(dissect_tpl, proto_tpl);
-  heur_dissector_add("udp", dissect_dcp_etsi, "DCP (ETSI) over UDP", "dcp_etsi_udp", proto_dcp_etsi, HEURISTIC_ENABLE);
+  heur_dissector_add("udp", dissect_dcp_etsi_heur, "DCP (ETSI) over UDP", "dcp_etsi_udp", proto_dcp_etsi, HEURISTIC_ENABLE);
+  dissector_add_for_decode_as("udp.port", dcp_etsi_handle);
   dissector_add_string("dcp-etsi.sync", "AF", af_handle);
   dissector_add_string("dcp-etsi.sync", "PF", pft_handle);
   /* if there are ever other payload types ...*/
@@ -851,15 +901,20 @@ proto_register_dcp_etsi (void)
 
   /* subdissector code */
   dcp_dissector_table = register_dissector_table("dcp-etsi.sync",
-            "DCP Sync", proto_dcp_etsi, FT_STRING, BASE_NONE);
+            "DCP Sync", proto_dcp_etsi, FT_STRING, STRING_CASE_SENSITIVE);
   af_dissector_table = register_dissector_table("dcp-af.pt",
             "DCP-AF Payload Type", proto_dcp_etsi, FT_UINT8, BASE_DEC);
 
   tpl_dissector_table = register_dissector_table("dcp-tpl.ptr",
-            "DCP-TPL Protocol Type & Revision", proto_dcp_etsi, FT_STRING, BASE_NONE);
+            "DCP-TPL Protocol Type & Revision", proto_dcp_etsi, FT_STRING, STRING_CASE_SENSITIVE);
 
   reassembly_table_register (&dcp_reassembly_table,
                          &addresses_reassembly_table_functions);
+
+  dcp_etsi_handle = register_dissector("dcp-etsi", dissect_dcp_etsi, proto_dcp_etsi);
+  af_handle = register_dissector("dcp-af", dissect_af, proto_af);
+  pft_handle = register_dissector("dcp-pft", dissect_pft, proto_pft);
+  tpl_handle = register_dissector("dcp-tpl", dissect_tpl, proto_tpl);
 }
 
 /*

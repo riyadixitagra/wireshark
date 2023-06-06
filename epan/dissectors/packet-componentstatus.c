@@ -25,6 +25,8 @@
 void proto_register_componentstatusprotocol(void);
 void proto_reg_handoff_componentstatusprotocol(void);
 
+static dissector_handle_t componentstatusprotocol_handle;
+
 /* Initialize the protocol and registered fields */
 static int proto_componentstatusprotocol = -1;
 static int tap_componentstatusprotocol   = -1;
@@ -328,6 +330,7 @@ static void componentstatusprotocol_stat_init(stat_tap_table_ui* new_stat)
   table = stat_tap_init_table(table_name, num_fields, 0, NULL);
   stat_tap_add_table(new_stat, table);
 
+  memset(items, 0x0, sizeof(items));
   /* Add a row for each value type */
   while (message_type_values[i].strptr) {
     items[MESSAGE_TYPE_COLUMN].type                = TABLE_ITEM_STRING;
@@ -356,7 +359,7 @@ static void componentstatusprotocol_stat_init(stat_tap_table_ui* new_stat)
 }
 
 static tap_packet_status
-componentstatusprotocol_stat_packet(void* tapdata, packet_info* pinfo _U_, epan_dissect_t* edt _U_, const void* data)
+componentstatusprotocol_stat_packet(void* tapdata, packet_info* pinfo _U_, epan_dissect_t* edt _U_, const void* data, tap_flags_t flags _U_)
 {
   stat_data_t*              stat_data = (stat_data_t*)tapdata;
   const tap_componentstatusprotocol_rec_t*      tap_rec   = (const tap_componentstatusprotocol_rec_t*)data;
@@ -545,15 +548,15 @@ proto_register_componentstatusprotocol(void)
   proto_register_subtree_array(ett, array_length(ett));
   tap_componentstatusprotocol = register_tap("componentstatusprotocol");
 
+  /* Register the dissector */
+  componentstatusprotocol_handle = register_dissector("componentstatusprotocol", dissect_componentstatusprotocol, proto_componentstatusprotocol);
+
   register_stat_tap_table_ui(&componentstatusprotocol_stat_table);
 }
 
 void
 proto_reg_handoff_componentstatusprotocol(void)
 {
-  dissector_handle_t componentstatusprotocol_handle;
-
-  componentstatusprotocol_handle = create_dissector_handle(dissect_componentstatusprotocol, proto_componentstatusprotocol);
   dissector_add_uint_with_preference("udp.port", COMPONENTSTATUSPROTOCOL_PORT, componentstatusprotocol_handle);
 }
 

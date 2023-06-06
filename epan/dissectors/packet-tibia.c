@@ -169,23 +169,23 @@ static uat_t *xteakeys_uat = NULL;
 static struct xteakeys_assoc *xteakeylist_uats = NULL;
 static guint nxteakeys = 0;
 
-#define COND_POISONED     0x1
-#define COND_BURNING      0x2
-#define COND_ELECTROCUTED 0x4
-#define COND_DRUNK        0x8
-#define COND_MANASHIELD   0x10
-#define COND_PARALYZED    0x20
-#define COND_HASTE        0x40
-#define COND_BATTLE       0x80
-#define COND_DROWNING     0x100
-#define COND_FREEZING     0x200
-#define COND_DAZZLED      0x400
-#define COND_CURSED       0x800
-#define COND_BUFF         0x1000
-#define COND_PZBLOCK      0x2000
-#define COND_PZ           0x4000
-#define COND_BLEEDING     0x8000
-#define COND_HUNGRY       0x10000
+#define COND_POISONED     0x00000001
+#define COND_BURNING      0x00000002
+#define COND_ELECTROCUTED 0x00000004
+#define COND_DRUNK        0x00000008
+#define COND_MANASHIELD   0x00000010
+#define COND_PARALYZED    0x00000020
+#define COND_HASTE        0x00000040
+#define COND_BATTLE       0x00000080
+#define COND_DROWNING     0x00000100
+#define COND_FREEZING     0x00000200
+#define COND_DAZZLED      0x00000400
+#define COND_CURSED       0x00000800
+#define COND_BUFF         0x00001000
+#define COND_PZBLOCK      0x00002000
+#define COND_PZ           0x00004000
+#define COND_BLEEDING     0x00008000
+#define COND_HUNGRY       0x00010000
 
 /* The login server has been traditionally on 7171,
  * For OTServ, the game server often listens on the same IP/port,
@@ -844,7 +844,7 @@ dissect_loginserv_packet(struct tibia_convo *convo, tvbuff_t *tvb, int offset, i
                                 proto_item *it = ptvcursor_add(ptvc, hf_tibia_worldlist_entry_id, 1, ENC_NA);
                                 ptvcursor_push_subtree(ptvc, it, ett_world);
 
-                                ptvcursor_add(ptvc, hf_tibia_worldlist_entry_name, 2, convo->has.string_enc | ENC_LITTLE_ENDIAN);
+                                ptvcursor_add(ptvc, hf_tibia_worldlist_entry_name, 2, ENC_LITTLE_ENDIAN | convo->has.string_enc);
                                 guint ipv4addr_len = tvb_get_letohs(tvb, ptvcursor_current_offset(ptvc));
                                 char *ipv4addr_str = (char*)tvb_get_string_enc(pinfo->pool, tvb, ptvcursor_current_offset(ptvc) + 2, ipv4addr_len, ENC_LITTLE_ENDIAN | convo->has.string_enc);
                                 guint32 ipv4addr = ipv4tonl(ipv4addr_str);
@@ -867,7 +867,7 @@ dissect_loginserv_packet(struct tibia_convo *convo, tvbuff_t *tvb, int offset, i
                             while (char_count--) {
                                 proto_item *it = ptvcursor_add(ptvc, hf_tibia_worldlist_entry_id, 1, ENC_NA);
                                 ptvcursor_push_subtree(ptvc, it, ett_char);
-                                ptvcursor_add(ptvc, hf_tibia_charlist_entry_name, 2, convo->has.string_enc | ENC_LITTLE_ENDIAN);
+                                ptvcursor_add(ptvc, hf_tibia_charlist_entry_name, 2, ENC_LITTLE_ENDIAN | convo->has.string_enc);
 
 
                                 ptvcursor_pop_subtree(ptvc);
@@ -881,7 +881,7 @@ dissect_loginserv_packet(struct tibia_convo *convo, tvbuff_t *tvb, int offset, i
                             ptvcursor_add_with_subtree(ptvc, hf_tibia_charlist, SUBTREE_UNDEFINED_LENGTH, ENC_NA, ett_charlist);
 
                             while (char_count--) {
-                                proto_item *it = ptvcursor_add(ptvc, hf_tibia_charlist_entry_name, 2, convo->has.string_enc | ENC_LITTLE_ENDIAN);
+                                proto_item *it = ptvcursor_add(ptvc, hf_tibia_charlist_entry_name, 2, ENC_LITTLE_ENDIAN | convo->has.string_enc);
                                 ptvcursor_push_subtree(ptvc, it, ett_char);
 
                                 ptvcursor_add(ptvc, hf_tibia_charlist_entry_world, 2, ENC_LITTLE_ENDIAN | convo->has.string_enc);
@@ -913,7 +913,7 @@ dissect_loginserv_packet(struct tibia_convo *convo, tvbuff_t *tvb, int offset, i
             ptvcursor_pop_subtree(ptvc);
 
             col_append_fstr(pinfo->cinfo, COL_INFO, " %s (0x%x)",
-                    val_to_str(cmd, from_loginserv_packet_types, "Unknown"), cmd);
+                    val_to_str_const(cmd, from_loginserv_packet_types, "Unknown"), cmd);
 
             if (ptvcursor_current_offset(ptvc) >= len)
                 break;
@@ -1151,7 +1151,7 @@ dissect_gameserv_packet(struct tibia_convo *convo, tvbuff_t *tvb, int offset, in
             ptvcursor_pop_subtree(ptvc);
 
             col_append_fstr(pinfo->cinfo, COL_INFO, " %s (0x%x)",
-                    val_to_str(cmd, from_gameserv_packet_types, "Unknown"), cmd);
+                    val_to_str_const(cmd, from_gameserv_packet_types, "Unknown"), cmd);
 
             if (ptvcursor_current_offset(ptvc) >= len)
                 break;
@@ -1201,7 +1201,7 @@ dissect_client_packet(struct tibia_convo *convo, tvbuff_t *tvb, int offset, int 
             ptvcursor_pop_subtree(ptvc);
 
             col_append_fstr(pinfo->cinfo, COL_INFO, " %s (0x%x)",
-                    val_to_str(cmd, from_client_packet_types, "Unknown"), cmd);
+                    val_to_str_const(cmd, from_client_packet_types, "Unknown"), cmd);
 
             if (ptvcursor_current_offset(ptvc) >= len)
                 break;
@@ -1566,7 +1566,7 @@ dissect_tibia(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *fragmen
         proto_tree_add_item(infotree, hf_tibia_unknown, tvb_decrypted, offset, 4, ENC_NA);
         offset += 4;
 
-        proto_tree_add_item(infotree, hf_tibia_client_gpu, tvb_decrypted, offset, 9, convo->has.string_enc|ENC_NA);
+        proto_tree_add_item(infotree, hf_tibia_client_gpu, tvb_decrypted, offset, 9, ENC_NA | convo->has.string_enc);
         offset += 9;
 
         proto_tree_add_item(infotree, hf_tibia_client_vram, tvb_decrypted, offset, 2, ENC_LITTLE_ENDIAN);
@@ -2187,13 +2187,13 @@ proto_register_tibia(void)
         },
         { &hf_tibia_client_clock,
             { "CPU clock", "tibia.client.cpu.clock",
-                FT_UINT8, BASE_DEC,
+                FT_UINT16, BASE_DEC,
                 NULL, 0x0,
                 NULL, HFILL }
         },
         { &hf_tibia_client_clock2,
             { "CPU clock2", "tibia.client.cpu.clock2",
-                FT_UINT8, BASE_DEC,
+                FT_UINT16, BASE_DEC,
                 NULL, 0x0,
                 NULL, HFILL }
         },
@@ -2205,7 +2205,7 @@ proto_register_tibia(void)
         },
         { &hf_tibia_client_vram,
             { "Video RAM", "tibia.client.vram",
-                FT_UINT8, BASE_DEC|BASE_UNIT_STRING,
+                FT_UINT16, BASE_DEC|BASE_UNIT_STRING,
                 &mb_unit, 0x0,
                 NULL, HFILL }
         },
@@ -2420,7 +2420,7 @@ proto_register_tibia(void)
         },
         { &hf_tibia_container_icon,
             { "Container icon", "tibia.container.icon",
-                FT_UINT8, BASE_DEC,
+                FT_UINT16, BASE_DEC,
                 NULL, 0x0,
                 NULL, HFILL }
         },
@@ -2432,7 +2432,7 @@ proto_register_tibia(void)
         },
         { &hf_tibia_container_slots,
             { "Container slots", "tibia.container.slots",
-                FT_UINT8, BASE_DEC,
+                FT_UINT16, BASE_DEC,
                 NULL, 0x0,
                 NULL, HFILL }
         },
@@ -2607,7 +2607,7 @@ proto_register_tibia(void)
     expert_module_t *expert_tibia = expert_register_protocol(proto_tibia);
     expert_register_field_array (expert_tibia, ei, array_length (ei));
 
-    module_t *tibia_module = prefs_register_protocol(proto_tibia, proto_reg_handoff_tibia);
+    module_t *tibia_module = prefs_register_protocol(proto_tibia, NULL);
 
     prefs_register_bool_preference(tibia_module, "try_otserv_key", "Try OTServ's RSA key",
         "Try the default RSA key in use by nearly all Open Tibia servers", &try_otserv_key);

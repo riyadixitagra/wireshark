@@ -38,7 +38,7 @@
 #endif
 
 #include <wsutil/strtoi.h>
-#include <ui/version_info.h>
+#include <wsutil/version_info.h>
 
 #include "sharkd.h"
 
@@ -130,7 +130,7 @@ socket_init(char *path)
             return INVALID_SOCKET;
 
         s_in.sin_family = AF_INET;
-        ws_inet_pton4(path, &(s_in.sin_addr.s_addr));
+        ws_inet_pton4(path, (ws_in4_addr *)&(s_in.sin_addr.s_addr));
         s_in.sin_port = g_htons(port);
         *port_sep = ':';
 
@@ -372,6 +372,8 @@ sharkd_loop(int argc _U_, char* argv[])
 #ifndef _WIN32
         pid_t pid;
 #else
+        size_t i_handles;
+        HANDLE handles[2];
         PROCESS_INFORMATION pi;
         STARTUPINFO si;
         char *exename;
@@ -415,7 +417,13 @@ sharkd_loop(int argc _U_, char* argv[])
         si.hStdOutput = (HANDLE) fd;
         si.hStdError = GetStdHandle(STD_ERROR_HANDLE);
 
-        exename = ws_strdup_printf("%s\\%s", get_progfile_dir(), "sharkd.exe");
+        i_handles = 0;
+        handles[i_handles++] = (HANDLE)fd;
+        if (si.hStdError != NULL) {
+            handles[i_handles++] = si.hStdError;
+        }
+
+        exename = get_executable_path("sharkd");
 
         // we need to pass in all of the command line parameters except the -a parameter
         // passing in -a at this point would could a loop, each iteration of which would generate a new session process
@@ -448,7 +456,7 @@ sharkd_loop(int argc _U_, char* argv[])
             }
         }
 
-        if (!win32_create_process(exename, command_line, NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi))
+        if (!win32_create_process(exename, command_line, NULL, NULL, i_handles, handles, 0, NULL, NULL, &si, &pi))
         {
             fprintf(stderr, "win32_create_process(%s) failed\n", exename);
         }

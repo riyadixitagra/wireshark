@@ -3966,6 +3966,7 @@ static gchar*
 get_usage_page_item_string(wmem_allocator_t *pool, guint32 usage_page, guint32 id)
 {
     const char *str = NULL;
+    const char *fmt_str = NULL;
 
     switch (usage_page)
     {
@@ -3996,7 +3997,7 @@ get_usage_page_item_string(wmem_allocator_t *pool, guint32 usage_page, guint32 i
     case BUTTON_PAGE:
         str = try_val_to_str(id, usb_hid_button_usage_page_vals);
         if (!str)
-            str = "Button %u";
+            fmt_str = "Button %u";
         break;
     case ORDINAL_PAGE:
         str = try_val_to_str(id, usb_hid_ordinal_usage_page_vals);
@@ -4007,7 +4008,7 @@ get_usage_page_item_string(wmem_allocator_t *pool, guint32 usage_page, guint32 i
     case CONSUMER_PAGE:
         str = try_val_to_str(id, usb_hid_consumer_usage_page_vals);
         if (!str)
-            str = "Instance %u";
+            fmt_str = "Instance %u";
         break;
     case DIGITIZER_PAGE:
         str = try_val_to_str(id, usb_hid_digitizers_usage_page_vals);
@@ -4021,7 +4022,7 @@ get_usage_page_item_string(wmem_allocator_t *pool, guint32 usage_page, guint32 i
         str = try_val_to_str(id, usb_hid_physical_input_device_usage_page_vals);
         break;
     case UNICODE_PAGE:
-        str = "Character U+%04X";
+        fmt_str = "Character U+%04X";
         break;
     case EYE_AND_HEAD_TRACKER_PAGE:
         str = try_val_to_str(id, usb_hid_eye_and_head_tracker_usage_page_vals);
@@ -4047,7 +4048,7 @@ get_usage_page_item_string(wmem_allocator_t *pool, guint32 usage_page, guint32 i
         str = try_val_to_str(id, usb_hid_monitor_usage_page_vals);
         break;
     case USB_ENUMERATED_VALUES_PAGE:
-        str = "ENUM_%u";
+        fmt_str = "ENUM_%u";
         break;
     case VESA_VIRTUAL_CONTROLS_PAGE:
         str = try_val_to_str(id, usb_hid_vesa_virtual_control_usage_page_vals);
@@ -4082,10 +4083,13 @@ get_usage_page_item_string(wmem_allocator_t *pool, guint32 usage_page, guint32 i
         break;
     }
 
-    if (!str)
+    if (fmt_str) {
+        return wmem_strdup_printf(pool, fmt_str, id);
+    }
+    if (!str) {
         str = "Reserved";
-
-    return wmem_strdup_printf(pool, str, id);
+    }
+    return wmem_strdup_printf(pool, "%s", str);
 }
 
 /* Dissector for the data in a HID main report. */
@@ -4144,7 +4148,7 @@ dissect_usb_hid_report_mainitem_data(packet_info *pinfo _U_, proto_tree *tree, t
             break;
         case USBHID_MAINITEM_TAG_COLLECTION:
             proto_tree_add_item_ret_uint(tree, hf_usb_hid_mainitem_colltype, tvb, offset, 1, ENC_LITTLE_ENDIAN, &val);
-            proto_item_append_text(ti, " (%s)", rval_to_str(val, usb_hid_mainitem_colltype_vals, "Unknown"));
+            proto_item_append_text(ti, " (%s)", rval_to_str_const(val, usb_hid_mainitem_colltype_vals, "Unknown"));
             break;
         case USBHID_MAINITEM_TAG_ENDCOLLECTION:
             /* No item data */
@@ -4700,7 +4704,7 @@ dissect_usb_hid_boot_keyboard_input_report(tvbuff_t *tvb, packet_info *pinfo, pr
 
     if (keycode) {
         if (shortcut_helper) col_append_str(pinfo->cinfo, COL_INFO, " + ");
-        col_append_str(pinfo->cinfo, COL_INFO, val_to_str_ext(keycode, &keycode_vals_ext, "Unknown"));
+        col_append_str(pinfo->cinfo, COL_INFO, val_to_str_ext_const(keycode, &keycode_vals_ext, "Unknown"));
         shortcut_helper = TRUE;
     }
 
@@ -4710,7 +4714,7 @@ dissect_usb_hid_boot_keyboard_input_report(tvbuff_t *tvb, packet_info *pinfo, pr
 
     if (keycode) {
         if (shortcut_helper) col_append_str(pinfo->cinfo, COL_INFO, " + ");
-        col_append_str(pinfo->cinfo, COL_INFO, val_to_str_ext(keycode, &keycode_vals_ext, "Unknown"));
+        col_append_str(pinfo->cinfo, COL_INFO, val_to_str_ext_const(keycode, &keycode_vals_ext, "Unknown"));
         shortcut_helper = TRUE;
     }
 
@@ -4720,7 +4724,7 @@ dissect_usb_hid_boot_keyboard_input_report(tvbuff_t *tvb, packet_info *pinfo, pr
 
     if (keycode) {
         if (shortcut_helper) col_append_str(pinfo->cinfo, COL_INFO, " + ");
-        col_append_str(pinfo->cinfo, COL_INFO, val_to_str_ext(keycode, &keycode_vals_ext, "Unknown"));
+        col_append_str(pinfo->cinfo, COL_INFO, val_to_str_ext_const(keycode, &keycode_vals_ext, "Unknown"));
         shortcut_helper = TRUE;
     }
 
@@ -4730,7 +4734,7 @@ dissect_usb_hid_boot_keyboard_input_report(tvbuff_t *tvb, packet_info *pinfo, pr
 
     if (keycode) {
         if (shortcut_helper) col_append_str(pinfo->cinfo, COL_INFO, " + ");
-        col_append_str(pinfo->cinfo, COL_INFO, val_to_str_ext(keycode, &keycode_vals_ext, "Unknown"));
+        col_append_str(pinfo->cinfo, COL_INFO, val_to_str_ext_const(keycode, &keycode_vals_ext, "Unknown"));
         shortcut_helper = TRUE;
     }
 
@@ -4740,7 +4744,7 @@ dissect_usb_hid_boot_keyboard_input_report(tvbuff_t *tvb, packet_info *pinfo, pr
 
     if (keycode) {
         if (shortcut_helper) col_append_str(pinfo->cinfo, COL_INFO, " + ");
-        col_append_str(pinfo->cinfo, COL_INFO, val_to_str_ext(keycode, &keycode_vals_ext, "Unknown"));
+        col_append_str(pinfo->cinfo, COL_INFO, val_to_str_ext_const(keycode, &keycode_vals_ext, "Unknown"));
         shortcut_helper = TRUE;
     }
 
@@ -4750,7 +4754,7 @@ dissect_usb_hid_boot_keyboard_input_report(tvbuff_t *tvb, packet_info *pinfo, pr
 
     if (keycode) {
         if (shortcut_helper) col_append_str(pinfo->cinfo, COL_INFO, " + ");
-        col_append_str(pinfo->cinfo, COL_INFO, val_to_str_ext(keycode, &keycode_vals_ext, "Unknown"));
+        col_append_str(pinfo->cinfo, COL_INFO, val_to_str_ext_const(keycode, &keycode_vals_ext, "Unknown"));
         shortcut_helper = TRUE;
     }
 
@@ -5130,7 +5134,7 @@ dissect_usb_hid_keyboard_page(tvbuff_t *tvb, packet_info _U_ *pinfo,
     usage = USAGE_ID(usage);
 
     proto_tree_add_boolean_bits_format_value(tree, hf_usbhid_key, tvb, bit_offset, field->report_size, val, ENC_LITTLE_ENDIAN,
-        "%s (0x%02x): %s", val_to_str_ext(usage, &keycode_vals_ext, "Unknown"), usage, val ? "DOWN" : "UP");
+        "%s (0x%02x): %s", val_to_str_ext_const(usage, &keycode_vals_ext, "Unknown"), usage, val ? "DOWN" : "UP");
     return 0;
 }
 
@@ -5463,7 +5467,7 @@ proto_register_usb_hid(void)
                 TFS(&tfs_mainitem_bit7), 1<<7, NULL, HFILL }},
 
         { &hf_usb_hid_mainitem_bit7_input,
-            { "[Reserved]", "usbhid.item.main.volatile", FT_BOOLEAN, 9,
+            { "[Reserved]", "usbhid.item.main.reserved", FT_BOOLEAN, 9,
                 NULL, 1<<7, NULL, HFILL }},
 
         { &hf_usb_hid_mainitem_bit8,
@@ -5823,7 +5827,7 @@ proto_register_usb_hid(void)
                 NULL, 0x00, NULL, HFILL }},
 
         { &hf_usbhid_axis_rx,
-            { "Rz Axis", "usbhid.data.axis.rx", FT_INT32, BASE_DEC,
+            { "Rx Axis", "usbhid.data.axis.rx", FT_INT32, BASE_DEC,
                 NULL, 0x00, NULL, HFILL }},
 
         { &hf_usbhid_axis_ry,
@@ -5839,7 +5843,7 @@ proto_register_usb_hid(void)
                 NULL, 0x00, NULL, HFILL }},
 
         { &hf_usbhid_axis_vx,
-            { "Vz Axis", "usbhid.data.axis.vx", FT_INT32, BASE_DEC,
+            { "Vx Axis", "usbhid.data.axis.vx", FT_INT32, BASE_DEC,
                 NULL, 0x00, NULL, HFILL }},
 
         { &hf_usbhid_axis_vy,
@@ -5851,7 +5855,7 @@ proto_register_usb_hid(void)
                 NULL, 0x00, NULL, HFILL }},
 
         { &hf_usbhid_axis_vbrx,
-            { "Vbrz Axis", "usbhid.data.axis.vbrx", FT_INT32, BASE_DEC,
+            { "Vbrx Axis", "usbhid.data.axis.vbrx", FT_INT32, BASE_DEC,
                 NULL, 0x00, NULL, HFILL }},
 
         { &hf_usbhid_axis_vbry,

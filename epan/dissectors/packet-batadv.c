@@ -1720,7 +1720,7 @@ static int dissect_batadv_iv_ogm_v15(tvbuff_t *tvb, int offset,
 	/* Set tree info */
 	ti = proto_tree_add_protocol_format(tree, proto_batadv_plugin,
 					    tvb, offset,
-					    IV_OGM_PACKET_V15_SIZE + iv_ogm_packeth->tvlv_len,
+					    IV_OGM_PACKET_V15_SIZE,
 					    "B.A.T.M.A.N. IV OGM, Orig: %s",
 					    tvb_address_with_resolution_to_str(pinfo->pool, tvb, AT_ETHER, offset + 8));
 	batadv_iv_ogm_tree = proto_item_add_subtree(ti, ett_batadv_iv_ogm);
@@ -1778,6 +1778,7 @@ static int dissect_batadv_iv_ogm_v15(tvbuff_t *tvb, int offset,
 	offset += 1;
 
 	iv_ogm_packeth->tvlv_len = tvb_get_ntohs(tvb, offset);
+	proto_item_set_len(ti, IV_OGM_PACKET_V15_SIZE + iv_ogm_packeth->tvlv_len);
 	proto_tree_add_item(batadv_iv_ogm_tree, hf_batadv_iv_ogm_tvlv_len, tvb,
 			    offset, 2, ENC_BIG_ENDIAN);
 	offset += 2;
@@ -2132,7 +2133,7 @@ static void dissect_batadv_icmp_v6(tvbuff_t *tvb, packet_info *pinfo, proto_tree
 }
 
 static void
-dissect_batadv_icmp_rr(proto_tree *batadv_icmp_tree, tvbuff_t *tvb, int offset)
+dissect_batadv_icmp_rr(packet_info *pinfo, proto_tree *batadv_icmp_tree, tvbuff_t *tvb, int offset)
 {
 	proto_tree *field_tree;
 	int ptr, i;
@@ -2149,7 +2150,7 @@ dissect_batadv_icmp_rr(proto_tree *batadv_icmp_tree, tvbuff_t *tvb, int offset)
 	offset++;
 	for (i = 0; i < BAT_RR_LEN; i++) {
 		proto_tree_add_ether_format(field_tree, hf_batadv_icmp_rr_ether, tvb, offset, 6, tvb_get_ptr(tvb, offset, 6),
-				    "%s%s", (i > ptr) ? "-" : tvb_ether_to_str(wmem_packet_scope(), tvb, offset),
+				    "%s%s", (i > ptr) ? "-" : tvb_ether_to_str(pinfo->pool, tvb, offset),
 				    (i == ptr) ? " <- (current)" : "");
 
 		offset += 6;
@@ -2157,7 +2158,7 @@ dissect_batadv_icmp_rr(proto_tree *batadv_icmp_tree, tvbuff_t *tvb, int offset)
 }
 
 static void
-dissect_batadv_icmp_rr_v15(proto_tree *batadv_icmp_tree, tvbuff_t *tvb,
+dissect_batadv_icmp_rr_v15(packet_info *pinfo, proto_tree *batadv_icmp_tree, tvbuff_t *tvb,
 			   int offset, int ptr)
 {
 	proto_tree *field_tree;
@@ -2174,7 +2175,7 @@ dissect_batadv_icmp_rr_v15(proto_tree *batadv_icmp_tree, tvbuff_t *tvb,
 					    tvb, offset, 6,
 					    tvb_get_ptr(tvb, offset, 6),
 					    "%s%s",
-					    (i > ptr) ? "-" : tvb_ether_to_str(wmem_packet_scope(), tvb, offset),
+					    (i > ptr) ? "-" : tvb_ether_to_str(pinfo->pool, tvb, offset),
 					    (i == ptr) ? " <- (current)" : "");
 
 		offset += 6;
@@ -2248,7 +2249,7 @@ static void dissect_batadv_icmp_v7(tvbuff_t *tvb, packet_info *pinfo, proto_tree
 	/* rr data available? */
 	length_remaining = tvb_reported_length_remaining(tvb, offset);
 	if (length_remaining >= 1 + BAT_RR_LEN * 6) {
-		dissect_batadv_icmp_rr(batadv_icmp_tree, tvb, offset);
+		dissect_batadv_icmp_rr(pinfo, batadv_icmp_tree, tvb, offset);
 		offset += 1 + BAT_RR_LEN * 6;
 	}
 
@@ -2332,7 +2333,7 @@ static void dissect_batadv_icmp_v14(tvbuff_t *tvb, packet_info *pinfo, proto_tre
 	/* rr data available? */
 	length_remaining = tvb_reported_length_remaining(tvb, offset);
 	if (length_remaining >= 1 + BAT_RR_LEN * 6) {
-		dissect_batadv_icmp_rr(batadv_icmp_tree, tvb, offset);
+		dissect_batadv_icmp_rr(pinfo, batadv_icmp_tree, tvb, offset);
 		offset += 1 + BAT_RR_LEN * 6;
 	}
 
@@ -2534,7 +2535,7 @@ static void dissect_batadv_icmp_simple_v15(tvbuff_t *tvb, packet_info *pinfo,
 	/* rr data available? */
 	length_remaining = tvb_reported_length_remaining(tvb, offset);
 	if (length_remaining >= BAT_RR_LEN * 6) {
-		dissect_batadv_icmp_rr_v15(batadv_icmp_tree, tvb, offset,
+		dissect_batadv_icmp_rr_v15(pinfo, batadv_icmp_tree, tvb, offset,
 					   icmp_packeth->rr_ptr);
 		offset += BAT_RR_LEN * 6;
 	}
@@ -5502,7 +5503,7 @@ void proto_register_batadv(void)
 				      "batadv"           /* abbrev */
 			      );
 
-	register_dissector("batadv",dissect_batadv_plugin,proto_batadv_plugin);
+	batman_handle = register_dissector("batadv",dissect_batadv_plugin,proto_batadv_plugin);
 
 	batadv_module = prefs_register_protocol(proto_batadv_plugin,
 						proto_reg_handoff_batadv);
@@ -5528,8 +5529,6 @@ void proto_reg_handoff_batadv(void)
 	static unsigned int old_batadv_ethertype;
 
 	if (!inited) {
-		batman_handle = create_dissector_handle(dissect_batadv_plugin, proto_batadv_plugin);
-
 		eth_handle = find_dissector_add_dependency("eth_withoutfcs", proto_batadv_plugin);
 
 		batadv_tap = register_tap("batman");

@@ -20,6 +20,9 @@ insert_final_newline = true
 # https://gitlab.kitware.com/cmake/cmake/-/blob/master/.editorconfig
 [{CMake*,*.cmake,*.cmake.in}]
 indent_style = tab
+[CMake*.json]
+indent_style = space
+indent_size = 2
 
 # Makefiles. Although we dropped Autotools we still have a few lying around.
 [Makefile*]
@@ -67,8 +70,8 @@ indent_size = 4
 indent_style = tab
 indent_size = 8
 
-# C/C++
-[*.{c,cpp,h}]
+# C/C++/Objective C
+[*.{c,cpp,h,m}]
 indent_style = space
 indent_size = 4
 

@@ -31,7 +31,9 @@
 void proto_register_beep(void);
 void proto_reg_handoff_beep(void);
 
-static guint global_beep_tcp_port = TCP_PORT_BEEP;
+static dissector_handle_t beep_handle;
+
+static range_t *global_beep_tcp_ports = NULL;
 static int global_beep_strict_term = TRUE;
 
 static int proto_beep = -1;
@@ -387,7 +389,7 @@ set_mime_hdr_flags(int more, struct beep_request_val *request_val,
 
   if (!request_val) return; /* Nothing to do ??? */
 
-  if (pinfo->destport == global_beep_tcp_port) { /* Going to the server ... client */
+  if (value_is_in_range(global_beep_tcp_ports, pinfo->destport)) { /* Going to the server ... client */
 
     if (request_val->c_mime_hdr) {
 
@@ -759,9 +761,7 @@ dissect_beep(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void* data _U_
         new_request_key = wmem_new(wmem_file_scope(), struct beep_request_key);
         new_request_key->conversation = conversation->conv_index;
 
-        request_val = wmem_new(wmem_file_scope(), struct beep_request_val);
-        request_val->processed = 0;
-        request_val->size = 0;
+        request_val = wmem_new0(wmem_file_scope(), struct beep_request_val);
 
         wmem_map_insert(beep_request_hash, new_request_key, request_val);
 
@@ -868,7 +868,7 @@ static void
 apply_beep_prefs(void)
 {
   /* Beep uses the port preference to determine client/server */
-  global_beep_tcp_port = prefs_get_uint_value("beep", "tcp.port");
+  global_beep_tcp_ports = prefs_get_range_value("beep", "tcp.port");
 }
 
 /* Register all the bits needed with the filtering engine */
@@ -978,16 +978,14 @@ proto_register_beep(void)
                                  "Specifies that BEEP requires CRLF as a "
                                  "terminator, and not just CR or LF",
                                  &global_beep_strict_term);
+
+  beep_handle = register_dissector("beep", dissect_beep, proto_beep);
 }
 
 /* The registration hand-off routine */
 void
 proto_reg_handoff_beep(void)
 {
-  dissector_handle_t beep_handle;
-
-  beep_handle = create_dissector_handle(dissect_beep, proto_beep);
-
   dissector_add_uint_with_preference("tcp.port", TCP_PORT_BEEP, beep_handle);
 
   apply_beep_prefs();

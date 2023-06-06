@@ -10,15 +10,17 @@
  */
 
 #include <config.h>
+#define WS_LOG_DOMAIN  LOG_DOMAIN_MAIN
 
 #include <glib.h>
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <ui/clopts_common.h>
+
+#include <ws_exit_codes.h>
+#include <wsutil/clopts_common.h>
 #include <ui/failure_message.h>
-#include <ui/cmdarg_err.h>
-#include <ui/exit_codes.h>
+#include <wsutil/cmdarg_err.h>
 #include <wsutil/file_util.h>
 #include <wsutil/filesystem.h>
 #include <wsutil/privileges.h>
@@ -38,6 +40,20 @@
 /* Additional exit codes */
 #define INVALID_TYPE 2
 #define CLOSE_ERROR  2
+
+static void
+list_capture_types(void) {
+    GArray *writable_type_subtypes;
+
+    cmdarg_err("The available capture file types for the \"-F\" flag are:\n");
+    writable_type_subtypes = wtap_get_writable_file_types_subtypes(FT_SORT_BY_NAME);
+    for (guint i = 0; i < writable_type_subtypes->len; i++) {
+        int ft = g_array_index(writable_type_subtypes, int, i);
+        fprintf(stderr, "    %s - %s\n", wtap_file_type_subtype_name(ft),
+            wtap_file_type_subtype_description(ft));
+    }
+    g_array_free(writable_type_subtypes, TRUE);
+}
 
 /*
  * Report an error in command-line arguments.
@@ -76,9 +92,10 @@ usage(gboolean is_error)
         output = stderr;
     }
 
-    fprintf(output, "Usage: randpkt [-b maxbytes] [-c count] [-t type] [-r] filename\n");
+    fprintf(output, "Usage: randpkt [-b maxbytes] [-c count] [-t type] [-r] [-F output file type] filename\n");
     fprintf(output, "Default max bytes (per packet) is 5000\n");
     fprintf(output, "Default count is 1000.\n");
+    fprintf(output, "Default output file type is pcapng.\n");
     fprintf(output, "-r: random packet type selection\n");
     fprintf(output, "\n");
     fprintf(output, "Types:\n");
@@ -99,7 +116,7 @@ usage(gboolean is_error)
 int
 main(int argc, char *argv[])
 {
-    char *init_progfile_dir_error;
+    char *configuration_init_error;
     static const struct report_message_routines randpkt_report_routines = {
         failure_message,
         failure_message,
@@ -117,6 +134,7 @@ main(int argc, char *argv[])
     char *produce_filename = NULL;
     int produce_max_bytes = 5000;
     int produce_count = 1000;
+    int file_type_subtype = WTAP_FILE_TYPE_SUBTYPE_UNKNOWN;
     randpkt_example *example;
     guint8* type = NULL;
     int allrandom = FALSE;
@@ -133,7 +151,9 @@ main(int argc, char *argv[])
     ws_log_init("randpkt", vcmdarg_err);
 
     /* Early logging command-line initialization. */
-    ws_log_parse_args(&argc, argv, vcmdarg_err, INVALID_OPTION);
+    ws_log_parse_args(&argc, argv, vcmdarg_err, WS_EXIT_INVALID_OPTION);
+
+    ws_noisy("Finished log init and parsing command line log arguments");
 
     /*
      * Get credential information for later use.
@@ -144,12 +164,12 @@ main(int argc, char *argv[])
      * Attempt to get the pathname of the directory containing the
      * executable file.
      */
-    init_progfile_dir_error = init_progfile_dir(argv[0]);
-    if (init_progfile_dir_error != NULL) {
+    configuration_init_error = configuration_init(argv[0], NULL);
+    if (configuration_init_error != NULL) {
         fprintf(stderr,
-                "capinfos: Can't get pathname of directory containing the capinfos program: %s.\n",
-                init_progfile_dir_error);
-        g_free(init_progfile_dir_error);
+            "capinfos: Can't get pathname of directory containing the capinfos program: %s.\n",
+            configuration_init_error);
+        g_free(configuration_init_error);
     }
 
     init_report_message("randpkt", &randpkt_report_routines);
@@ -160,19 +180,28 @@ main(int argc, char *argv[])
     create_app_running_mutex();
 #endif /* _WIN32 */
 
-    while ((opt = ws_getopt_long(argc, argv, "b:c:ht:r", long_options, NULL)) != -1) {
+    while ((opt = ws_getopt_long(argc, argv, "b:c:F:ht:r", long_options, NULL)) != -1) {
         switch (opt) {
             case 'b':	/* max bytes */
                 produce_max_bytes = get_positive_int(ws_optarg, "max bytes");
                 if (produce_max_bytes > 65536) {
                     cmdarg_err("max bytes is > 65536");
-                    ret = INVALID_OPTION;
+                    ret = WS_EXIT_INVALID_OPTION;
                     goto clean_exit;
                 }
                 break;
 
             case 'c':	/* count */
                 produce_count = get_positive_int(ws_optarg, "count");
+                break;
+
+            case 'F':
+                file_type_subtype = wtap_name_to_file_type_subtype(ws_optarg);
+                if (file_type_subtype < 0) {
+                    cmdarg_err("\"%s\" isn't a valid capture file type", ws_optarg);
+                    list_capture_types();
+                    return WS_EXIT_INVALID_OPTION;
+                }
                 break;
 
             case 't':	/* type of packet to produce */
@@ -188,9 +217,18 @@ main(int argc, char *argv[])
                 allrandom = TRUE;
                 break;
 
+            case '?':
+                switch(ws_optopt) {
+                    case 'F':
+                        list_capture_types();
+                        return WS_EXIT_INVALID_OPTION;
+                        break;
+                }
+                /* FALLTHROUGH */
+
             default:
                 usage(TRUE);
-                ret = INVALID_OPTION;
+                ret = WS_EXIT_INVALID_OPTION;
                 goto clean_exit;
                 break;
         }
@@ -201,8 +239,12 @@ main(int argc, char *argv[])
         produce_filename = argv[ws_optind];
     } else {
         usage(TRUE);
-        ret = INVALID_OPTION;
+        ret = WS_EXIT_INVALID_OPTION;
         goto clean_exit;
+    }
+
+    if (file_type_subtype == WTAP_FILE_TYPE_SUBTYPE_UNKNOWN) {
+        file_type_subtype = wtap_pcapng_file_type_subtype();
     }
 
     if (!allrandom) {
@@ -211,11 +253,11 @@ main(int argc, char *argv[])
 
         example = randpkt_find_example(produce_type);
         if (!example) {
-            ret = INVALID_OPTION;
+            ret = WS_EXIT_INVALID_OPTION;
             goto clean_exit;
         }
 
-        ret = randpkt_example_init(example, produce_filename, produce_max_bytes);
+        ret = randpkt_example_init(example, produce_filename, produce_max_bytes, file_type_subtype);
         if (ret != EXIT_SUCCESS)
             goto clean_exit;
         randpkt_loop(example, produce_count, 0);
@@ -229,10 +271,10 @@ main(int argc, char *argv[])
         produce_type = randpkt_parse_type(NULL);
         example = randpkt_find_example(produce_type);
         if (!example) {
-            ret = INVALID_OPTION;
+            ret = WS_EXIT_INVALID_OPTION;
             goto clean_exit;
         }
-        ret = randpkt_example_init(example, produce_filename, produce_max_bytes);
+        ret = randpkt_example_init(example, produce_filename, produce_max_bytes, file_type_subtype);
         if (ret != EXIT_SUCCESS)
             goto clean_exit;
 
@@ -244,7 +286,7 @@ main(int argc, char *argv[])
 
             example = randpkt_find_example(produce_type);
             if (!example) {
-                ret = INVALID_OPTION;
+                ret = WS_EXIT_INVALID_OPTION;
                 goto clean_exit;
             }
             example->dump = savedump;

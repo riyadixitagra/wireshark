@@ -170,7 +170,7 @@ dissect_msrcp(tvbuff_t* tvb, packet_info* pinfo, proto_tree* tree, void* data _U
                 }
                 else if ((!(type == MSRCP_RESPONSE)) && (msrcp_trans->req_frame != pinfo->num))
                 {
-                    msrcp_transaction_t* retrans_msrcp = wmem_new(wmem_packet_scope(), msrcp_transaction_t);
+                    msrcp_transaction_t* retrans_msrcp = wmem_new(pinfo->pool, msrcp_transaction_t);
                     retrans_msrcp->req_frame = msrcp_trans->req_frame;
                     retrans_msrcp->rep_frame = 0;
                     retrans_msrcp->req_time = pinfo->abs_ts;
@@ -180,7 +180,7 @@ dissect_msrcp(tvbuff_t* tvb, packet_info* pinfo, proto_tree* tree, void* data _U
         }
         if (!msrcp_trans)
         {
-            msrcp_trans = wmem_new(wmem_packet_scope(), msrcp_transaction_t);
+            msrcp_trans = wmem_new(pinfo->pool, msrcp_transaction_t);
             msrcp_trans->req_frame = 0;
             msrcp_trans->rep_frame = 0;
             msrcp_trans->req_time = pinfo->abs_ts;
@@ -192,12 +192,12 @@ dissect_msrcp(tvbuff_t* tvb, packet_info* pinfo, proto_tree* tree, void* data _U
     col_set_str(pinfo->cinfo, COL_PROTOCOL, "MSRCP");
     col_clear(pinfo->cinfo, COL_INFO);
     col_add_fstr(pinfo->cinfo, COL_INFO, "%s ID %d (0x%X)",
-        val_to_str(type, packettypenames, "MSRCP"), seq, seq);
+        val_to_str_const(type, packettypenames, "MSRCP"), seq, seq);
 
 
     ti = proto_tree_add_item(tree, proto_msrcp, tvb, 0, -1, ENC_BIG_ENDIAN);
     proto_item_append_text(ti, "Type %s",
-        val_to_str(type, packettypenames, "MSRCP"));
+        val_to_str_const(type, packettypenames, "MSRCP"));
     msrcp_tree = proto_item_add_subtree(ti, ett_msrcp);
 
     if (type == MSRCP_REQUEST || type == MSRCP_RESPONSE)

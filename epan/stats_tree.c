@@ -293,7 +293,7 @@ stats_tree_register_with_group(const char *tapname, const char *abbr, const char
     g_hash_table_insert(registry,cfg->abbr,cfg);
 }
 
-/* register a new stats_tree with default group REGISTER_STAT_GROUP_UNSORTED */
+/* register a new stats_tree with default group REGISTER_PACKET_STAT_GROUP_UNSORTED */
 extern void
 stats_tree_register(const char *tapname, const char *abbr, const char *name,
             guint flags,
@@ -303,10 +303,10 @@ stats_tree_register(const char *tapname, const char *abbr, const char *name,
     stats_tree_register_with_group(tapname, abbr, name,
             flags,
             packet, init,
-            cleanup, REGISTER_STAT_GROUP_UNSORTED);
+            cleanup, REGISTER_PACKET_STAT_GROUP_UNSORTED);
 }
 
-/* register a new stat_tree with default group REGISTER_STAT_GROUP_UNSORTED from a plugin */
+/* register a new stat_tree with default group REGISTER_PACKET_STAT_GROUP_UNSORTED from a plugin */
 extern void
 stats_tree_register_plugin(const char *tapname, const char *abbr, const char *name,
             guint flags,
@@ -376,7 +376,7 @@ stats_tree_new(stats_tree_cfg *cfg, tree_pres *pr, const char *filter)
 
 /* will be the tap packet cb */
 extern tap_packet_status
-stats_tree_packet(void *p, packet_info *pinfo, epan_dissect_t *edt, const void *pri)
+stats_tree_packet(void *p, packet_info *pinfo, epan_dissect_t *edt, const void *pri, tap_flags_t flags)
 {
     stats_tree *st = (stats_tree *)p;
 
@@ -386,7 +386,7 @@ stats_tree_packet(void *p, packet_info *pinfo, epan_dissect_t *edt, const void *
     st->elapsed = st->now - st->start;
 
     if (st->cfg->packet)
-        return st->cfg->packet(st,pinfo,edt,pri);
+        return st->cfg->packet(st,pinfo,edt,pri, flags);
     else
         return TAP_PACKET_DONT_REDRAW;
 }

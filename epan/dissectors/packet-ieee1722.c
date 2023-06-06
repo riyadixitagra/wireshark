@@ -144,45 +144,37 @@ typedef struct _ieee1722_seq_data_t {
 /* Bit Field Masks */
 #define IEEE_1722_MR_MASK                               0x08
 #define IEEE_1722_TV_MASK                               0x01
-#define IEEE_1722_SEQ_NUM_MASK                          0x00
+#define IEEE_1722_SEQ_NUM_MASK                          0x0
 #define IEEE_1722_TU_MASK                               0x01
-#define IEEE_1722_STREAM_ID_MASK                        0x00
-#define IEEE_1722_TIMESTAMP_MASK                        0x00
-#define IEEE_1722_FORMAT_MASK                           0x00
+#define IEEE_1722_STREAM_ID_MASK                        0x0
+#define IEEE_1722_TIMESTAMP_MASK                        0x0
+#define IEEE_1722_FORMAT_MASK                           0x0
 #define IEEE_1722_NOM_SAMPLE_RATE_MASK                  0xf000
 #define IEEE_1722_CHANNEL_PER_FRAME_MASK                0x03ff
-#define IEEE_1722_BIT_DEPTH_MASK                        0x00
-#define IEEE_1722_AES3_DATA_TYPE_H_MASK                 0x00
-#define IEEE_1722_STREAM_DATA_LENGTH_MASK               0x00
+#define IEEE_1722_BIT_DEPTH_MASK                        0x0
+#define IEEE_1722_AES3_DATA_TYPE_H_MASK                 0x0
+#define IEEE_1722_STREAM_DATA_LENGTH_MASK               0x0
 #define IEEE_1722_AES3_DATA_TYPE_REFERENCE_MASK         0xe0
 #define IEEE_1722_SP_MASK                               0x10
 #define IEEE_1722_EVT_MASK                              0x0f
-#define IEEE_1722_AES3_DATA_TYPE_L_MASK                 0x00
-#define IEEE_1722_DATA_MASK                             0x00
-#define IEEE_1722_SAMPLE_MASK                           0x00
+#define IEEE_1722_AES3_DATA_TYPE_L_MASK                 0x0
+#define IEEE_1722_DATA_MASK                             0x0
+#define IEEE_1722_SAMPLE_MASK                           0x0
 
 /**************************************************************************************************/
 /* subtype CVF                                                                                    */
 /*                                                                                                */
 /**************************************************************************************************/
 #define IEEE_1722_CVF_FORMAT_RFC                        0x02
-#define IEEE_1722_CVF_FORMAT_SUBTYPE_MJPEG              0x00
+#define IEEE_1722_CVF_FORMAT_SUBTYPE_MJPEG              0x0
 #define IEEE_1722_CVF_FORMAT_SUBTYPE_H264               0x01
 #define IEEE_1722_CVF_FORMAT_SUBTYPE_JPEG2000           0x02
 
-/* Bit Field Masks */
-#define IEEE_1722_MR_MASK                               0x08
-#define IEEE_1722_TV_MASK                               0x01
-#define IEEE_1722_SEQ_NUM_MASK                          0x00
-#define IEEE_1722_TU_MASK                               0x01
-#define IEEE_1722_STREAM_ID_MASK                        0x00
-#define IEEE_1722_TIMESTAMP_MASK                        0x00
-#define IEEE_1722_FORMAT_MASK                           0x00
-#define IEEE_1722_FORMAT_SUBTYPE_MASK                   0x00
-#define IEEE_1722_CVF_H264_TIMESTAMP_MASK               0x00
+/* More bit Field Masks */
+#define IEEE_1722_FORMAT_SUBTYPE_MASK                   0x0
+#define IEEE_1722_CVF_H264_TIMESTAMP_MASK               0x0
 #define IEEE_1722_H264_PTV_MASK                         0x20
 #define IEEE_1722_MARKER_BIT_MASK                       0x10
-#define IEEE_1722_EVT_MASK                              0x0f
 
 /**************************************************************************************************/
 /* subtype CRF                                                                                    */
@@ -204,8 +196,8 @@ typedef struct _ieee1722_seq_data_t {
 #define IEEE_1722_NTSCF_HEADER_SIZE                     12      /* including common header */
 
 /* Bit Field Masks */
-#define IEEE_1722_NTSCF_R_MASK                          0x800
-#define IEEE_1722_NTSCF_DATA_LENGTH_MASK                0x7ff
+#define IEEE_1722_NTSCF_R_MASK                          0x0800
+#define IEEE_1722_NTSCF_DATA_LENGTH_MASK                0x07ff
 #define IEEE_1722_NTSCF_SEQ_NUM_MASK                    0xff
 #define IEEE_1722_NTSCF_STREAM_ID_MASK                  0x00
 
@@ -219,14 +211,14 @@ typedef struct _ieee1722_seq_data_t {
 #define IEEE_1722_TSCF_MR_MASK                          0x08
 #define IEEE_1722_TSCF_RSV1_MASK                        0x06
 #define IEEE_1722_TSCF_TV_MASK                          0x01
-#define IEEE_1722_TSCF_SEQNUM_MASK                      0x00
+#define IEEE_1722_TSCF_SEQNUM_MASK                      0x0
 #define IEEE_1722_TSCF_RSV2_MASK                        0xFE
 #define IEEE_1722_TSCF_TU_MASK                          0x01
-#define IEEE_1722_TSCF_STREAM_ID_MASK                   0x00
-#define IEEE_1722_TSCF_AVTP_TIMESTAMP_MASK              0x00
-#define IEEE_1722_TSCF_RSV3_MASK                        0x00
-#define IEEE_1722_TSCF_DATA_LENGTH_MASK                 0x00
-#define IEEE_1722_TSCF_RSV4_MASK                        0x00
+#define IEEE_1722_TSCF_STREAM_ID_MASK                   0x0
+#define IEEE_1722_TSCF_AVTP_TIMESTAMP_MASK              0x0
+#define IEEE_1722_TSCF_RSV3_MASK                        0x0
+#define IEEE_1722_TSCF_DATA_LENGTH_MASK                 0x0
+#define IEEE_1722_TSCF_RSV4_MASK                        0x0
 
 /**************************************************************************************************/
 /* AVTP Control Format (ACF) Message Header                                                       */
@@ -304,8 +296,8 @@ typedef struct _ieee1722_seq_data_t {
 #define IEEE_1722_ACF_LIN_PAD_MASK                      0xC0
 #define IEEE_1722_ACF_LIN_MTV_MASK                      0x20
 #define IEEE_1722_ACF_LIN_BUS_ID_MASK                   0x1F
-#define IEEE_1722_ACF_LIN_IDENTIFIER_MASK               0x00
-#define IEEE_1722_ACF_LIN_MSG_TIMESTAMP_MASK            0x00
+#define IEEE_1722_ACF_LIN_IDENTIFIER_MASK               0x0
+#define IEEE_1722_ACF_LIN_MSG_TIMESTAMP_MASK            0x0
 
 /**************************************************************************************************/
 /* 1722                                                                                           */
@@ -924,12 +916,12 @@ void proto_register_1722(void)
     static hf_register_info hf[] = {
         { &hf_1722_encap_seqnum,
             { "Encapsulation Sequence Number", "ieee1722.encapsulation_sequence_num",
-              FT_UINT32, BASE_HEX, NULL, 0x00,
+              FT_UINT32, BASE_HEX, NULL, 0x0,
               "Sequence number incremented for each AVTPDU on a 5-tuple", HFILL }
         },
         { &hf_1722_subtype,
             { "AVTP Subtype", "ieee1722.subtype",
-              FT_UINT8, BASE_HEX | BASE_RANGE_STRING, RVALS(subtype_range_rvals), 0x00, NULL, HFILL }
+              FT_UINT8, BASE_HEX | BASE_RANGE_STRING, RVALS(subtype_range_rvals), 0x0, NULL, HFILL }
         },
         { &hf_1722_svfield,
             { "AVTP Stream ID Valid", "ieee1722.svfield",
@@ -1162,7 +1154,7 @@ static int dissect_1722_61883(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tre
         else
         {
             ti_cip_fdf = proto_tree_add_item(ti_61883_tree, hf_1722_61883_cip_fdf_no_syt, tvb, offset, 3, ENC_BIG_ENDIAN);
-            if (((tvb_get_guint8(tvb, offset) & 0x007fffff) != 0))
+            if (((tvb_get_ntoh24(tvb, offset) & 0x7fffff) != 0))
             {
                 expert_add_info(pinfo, ti_cip_fdf, &ei_1722_61883_incorrect_cip_fdf);
             }
@@ -1276,7 +1268,7 @@ void proto_register_1722_61883(void)
             },
         { &hf_1722_61883_seqnum,
             { "Sequence Number", "iec61883.seqnum",
-              FT_UINT8, BASE_HEX, NULL, 0x00, NULL, HFILL }
+              FT_UINT8, BASE_HEX, NULL, 0x0, NULL, HFILL }
         },
         { &hf_1722_61883_tufield,
             { "Timestamp Uncertain", "iec61883.tufield",
@@ -1284,19 +1276,19 @@ void proto_register_1722_61883(void)
         },
         { &hf_1722_61883_stream_id,
             { "Stream ID", "iec61883.stream_id",
-              FT_UINT64, BASE_HEX, NULL, 0x00, NULL, HFILL }
+              FT_UINT64, BASE_HEX, NULL, 0x0, NULL, HFILL }
         },
         { &hf_1722_61883_avtp_timestamp,
             { "AVTP Timestamp", "iec61883.avtp_timestamp",
-              FT_UINT32, BASE_HEX, NULL, 0x00, NULL, HFILL }
+              FT_UINT32, BASE_HEX, NULL, 0x0, NULL, HFILL }
         },
         { &hf_1722_61883_gateway_info,
             { "Gateway Info", "iec61883.gateway_info",
-              FT_UINT32, BASE_HEX, NULL, 0x00, NULL, HFILL }
+              FT_UINT32, BASE_HEX, NULL, 0x0, NULL, HFILL }
         },
         { &hf_1722_61883_stream_data_length,
             { "1394 Stream Data Length", "iec61883.stream_data_len",
-              FT_UINT16, BASE_DEC|BASE_UNIT_STRING, &units_byte_bytes, 0x00, NULL, HFILL }
+              FT_UINT16, BASE_DEC|BASE_UNIT_STRING, &units_byte_bytes, 0x0, NULL, HFILL }
         },
         { &hf_1722_61883_tag,
             { "1394 Packet Format Tag", "iec61883.tag",
@@ -1324,7 +1316,7 @@ void proto_register_1722_61883(void)
         },
         { &hf_1722_61883_cip_dbs,
             { "CIP Data Block Size", "iec61883.dbs",
-              FT_UINT8, BASE_HEX, NULL, 0x00, NULL, HFILL }
+              FT_UINT8, BASE_HEX, NULL, 0x0, NULL, HFILL }
         },
         { &hf_1722_61883_cip_fn,
             { "CIP Fraction Number", "iec61883.fn",
@@ -1340,7 +1332,7 @@ void proto_register_1722_61883(void)
         },
         { &hf_1722_61883_cip_dbc,
             { "CIP Data Block Continuity", "iec61883.dbc",
-              FT_UINT8, BASE_HEX, NULL, 0x00, NULL, HFILL }
+              FT_UINT8, BASE_HEX, NULL, 0x0, NULL, HFILL }
         },
         { &hf_1722_61883_cip_qi2,
             { "CIP Quadlet Indicator 2", "iec61883.qi2",
@@ -1352,7 +1344,7 @@ void proto_register_1722_61883(void)
         },
         { &hf_1722_61883_cip_fdf_no_syt,
             { "CIP Format Dependent Field", "iec61883.fdf_no_syt",
-              FT_UINT8, BASE_HEX, NULL, 0x00, NULL, HFILL }
+              FT_UINT24, BASE_HEX, NULL, 0x0, NULL, HFILL }
         },
         { &hf_1722_61883_cip_fdf_tsf,
             { "Time shift flag", "iec61883.fdf_tsf",
@@ -1364,27 +1356,27 @@ void proto_register_1722_61883(void)
         },
         { &hf_1722_61883_cip_syt,
             { "CIP SYT", "iec61883.syt",
-              FT_UINT16, BASE_HEX | BASE_RANGE_STRING, RVALS(syt_rvals), 0x00, NULL, HFILL }
+              FT_UINT16, BASE_HEX | BASE_RANGE_STRING, RVALS(syt_rvals), 0x0, NULL, HFILL }
         },
         { &hf_1722_61883_audio_data,
             { "Audio Data", "iec61883.audiodata",
-              FT_BYTES, BASE_NONE, NULL, 0x00, NULL, HFILL }
+              FT_BYTES, BASE_NONE, NULL, 0x0, NULL, HFILL }
         },
         { &hf_1722_61883_label,
             { "Label", "iec61883.audiodata.sample.label",
-              FT_UINT8, BASE_HEX, NULL, 0x00, NULL, HFILL }
+              FT_UINT8, BASE_HEX, NULL, 0x0, NULL, HFILL }
         },
         { &hf_1722_61883_sample,
             { "Sample", "iec61883.audiodata.sample.sampledata",
-              FT_BYTES, BASE_NONE, NULL, 0x00, NULL, HFILL }
+              FT_BYTES, BASE_NONE, NULL, 0x0, NULL, HFILL }
         },
         { &hf_1722_61883_video_data,
             { "Video Data", "iec61883.videodata",
-              FT_BYTES, BASE_NONE, NULL, 0x00, NULL, HFILL }
+              FT_BYTES, BASE_NONE, NULL, 0x0, NULL, HFILL }
         },
         { &hf_1722_61883_source_packet_header_timestamp,
             { "Source Packet Header Timestamp", "iec61883.spht",
-              FT_UINT32, BASE_HEX, NULL, 0x00, NULL, HFILL }
+              FT_UINT32, BASE_HEX, NULL, 0x0, NULL, HFILL }
         }
     };
 
@@ -1962,15 +1954,15 @@ void proto_register_1722_crf(void)
         },
         { &hf_1722_crf_seqnum,
             { "Sequence Number", "crf.seqnum",
-              FT_UINT8, BASE_DEC, NULL, 0x00, NULL, HFILL }
+              FT_UINT8, BASE_DEC, NULL, 0x0, NULL, HFILL }
         },
         { &hf_1722_crf_type,
             { "Type", "crf.type",
-              FT_UINT8, BASE_HEX | BASE_RANGE_STRING, RVALS(crf_type_range_rvals), 0x00, NULL, HFILL }
+              FT_UINT8, BASE_HEX | BASE_RANGE_STRING, RVALS(crf_type_range_rvals), 0x0, NULL, HFILL }
         },
         { &hf_1722_crf_stream_id,
             { "Stream ID", "crf.stream_id",
-              FT_UINT64, BASE_HEX, NULL, 0x00, NULL, HFILL }
+              FT_UINT64, BASE_HEX, NULL, 0x0, NULL, HFILL }
         },
         { &hf_1722_crf_pull,
             { "Pull", "crf.pull",
@@ -1982,19 +1974,19 @@ void proto_register_1722_crf(void)
         },
         { &hf_1722_crf_data_length,
             { "Data Length", "crf.data_len",
-              FT_UINT16, BASE_DEC|BASE_UNIT_STRING, &units_byte_bytes, 0x00, NULL, HFILL }
+              FT_UINT16, BASE_DEC|BASE_UNIT_STRING, &units_byte_bytes, 0x0, NULL, HFILL }
         },
         { &hf_1722_crf_timestamp_interval,
             { "Timestamp Interval", "crf.timestamp_interval",
-              FT_UINT16, BASE_DEC, NULL, 0x00, NULL, HFILL }
+              FT_UINT16, BASE_DEC, NULL, 0x0, NULL, HFILL }
         },
         { &hf_1722_crf_timestamp_data,
             { "Timestamp Data", "crf.timestamp_data",
-              FT_BYTES, BASE_NONE, NULL, 0x00, NULL, HFILL }
+              FT_BYTES, BASE_NONE, NULL, 0x0, NULL, HFILL }
         },
         { &hf_1722_crf_timestamp,
             { "Data", "crf.timestamp",
-              FT_UINT64, BASE_HEX, NULL, 0x00, NULL, HFILL }
+              FT_UINT64, BASE_HEX, NULL, 0x0, NULL, HFILL }
         }
     };
 
@@ -2116,11 +2108,11 @@ void proto_register_1722_ntscf(void)
         },
         { &hf_1722_ntscf_seqnum,
             { "Sequence Number", "ntscf.seqnum",
-              FT_UINT8, BASE_DEC, NULL, 0x00, NULL, HFILL }
+              FT_UINT8, BASE_DEC, NULL, 0x0, NULL, HFILL }
         },
         { &hf_1722_ntscf_stream_id,
             { "Stream ID", "ntscf.stream_id",
-              FT_UINT64, BASE_HEX, NULL, 0x00, NULL, HFILL }
+              FT_UINT64, BASE_HEX, NULL, 0x0, NULL, HFILL }
         }
     };
 
@@ -2386,7 +2378,7 @@ static int dissect_1722_acf (tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree
 
     set_actual_length(tvb, msg_length);
     proto_item_set_len(ti_acf, msg_length);
-    msg_type_str = rval_to_str(msg_type, acf_msg_type_range_rvals, "%s");
+    msg_type_str = rval_to_str_const(msg_type, acf_msg_type_range_rvals, "Unknown");
     proto_item_append_text(ti_header, ": %s (0x%02X), %d bytes with header",
                            msg_type_str, msg_type, msg_length);
     proto_item_append_text(ti_acf, ": %s (0x%02X)", msg_type_str, msg_type);

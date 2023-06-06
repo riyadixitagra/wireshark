@@ -22,7 +22,7 @@
 #include <epan/export_object.h>
 
 #include "packet-ber.h"
-#include "packet-http.h"
+#include "packet-media-type.h"
 #include "packet-imf.h"
 #include "packet-ess.h"
 #include "packet-p1.h"
@@ -156,7 +156,7 @@ typedef struct _imf_eo_t {
 } imf_eo_t;
 
 static tap_packet_status
-imf_eo_packet(void *tapdata, packet_info *pinfo, epan_dissect_t *edt _U_, const void *data)
+imf_eo_packet(void *tapdata, packet_info *pinfo, epan_dissect_t *edt _U_, const void *data, tap_flags_t flags _U_)
 {
   export_object_list_t *object_list = (export_object_list_t *)tapdata;
   const imf_eo_t *eo_info = (const imf_eo_t *)data;
@@ -882,7 +882,7 @@ dissect_imf(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void* data _U_)
   /* now dissect the MIME based upon the content type */
 
   if(content_type_str && media_type_dissector_table) {
-    http_message_info_t message_info;
+    media_content_info_t content_info;
 
     col_set_fence(pinfo->cinfo, COL_INFO);
 
@@ -894,10 +894,10 @@ dissect_imf(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void* data _U_)
       next_tvb = tvb_new_subset_remaining(tvb, end_offset);
     }
 
-    message_info.type = HTTP_OTHERS;
-    message_info.media_str = parameters;
-    message_info.data = NULL;
-    dissector_try_string(media_type_dissector_table, content_type_str, next_tvb, pinfo, tree, (void*)&message_info);
+    content_info.type = MEDIA_CONTAINER_OTHER;
+    content_info.media_str = parameters;
+    content_info.data = NULL;
+    dissector_try_string(media_type_dissector_table, content_type_str, next_tvb, pinfo, tree, (void*)&content_info);
   } else {
 
     /* just show the lines or highlight the rest of the buffer as message text */

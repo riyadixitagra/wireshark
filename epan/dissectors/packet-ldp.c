@@ -1064,11 +1064,11 @@ static const true_false_string tlv_upstr_sbit_vals = {
     "LSR is withdrawing the capability to distribute and receive upstream-assigned label bindings"
 };
 
-#define PW_NOT_FORWARDING               0x1
-#define PW_LAC_INGRESS_RECV_FAULT       0x2
-#define PW_LAC_EGRESS_TRANS_FAULT       0x4
-#define PW_PSN_PW_INGRESS_RECV_FAULT    0x8
-#define PW_PSN_PW_EGRESS_TRANS_FAULT    0x10
+#define PW_NOT_FORWARDING               0x00000001
+#define PW_LAC_INGRESS_RECV_FAULT       0x00000002
+#define PW_LAC_EGRESS_TRANS_FAULT       0x00000004
+#define PW_PSN_PW_INGRESS_RECV_FAULT    0x00000008
+#define PW_PSN_PW_EGRESS_TRANS_FAULT    0x00000010
 
 static void
 dissect_subtlv_interface_parameters(tvbuff_t *tvb, guint offset, proto_tree *tree, int rem, int *interface_parameters_hf[]);
@@ -1919,11 +1919,10 @@ static void
 dissect_tlv_mac(tvbuff_t *tvb, packet_info *pinfo, guint offset, proto_tree *tree, int rem)
 {
     proto_tree   *val_tree;
-    guint8        ix;
 
     val_tree=proto_tree_add_subtree(tree, tvb, offset, rem, ett_ldp_tlv_val, NULL, "MAC addresses");
 
-    for(ix=1; rem >= 6; ix++, offset += 6, rem -= 6) {
+    for(; rem >= 6; offset += 6, rem -= 6) {
         proto_tree_add_item(val_tree, hf_ldp_tlv_mac, tvb, offset, 6, ENC_NA);
     }
     if (rem)

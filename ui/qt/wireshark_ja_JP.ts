@@ -28,8 +28,8 @@
         <translation>バージョン情報をクリップボードにコピーします</translation>
     </message>
     <message>
-        <source>Copy To Clipboard</source>
-        <translation>クリップボードにコピー</translation>
+        <source>Copy to Clipboard</source>
+        <translation>クリップボードへコピー</translation>
     </message>
     <message>
         <source>Authors</source>
@@ -729,6 +729,14 @@
         <translation>16進数でバイト列を表示</translation>
     </message>
     <message>
+        <source>…as decimal</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>…as octal</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>…as bits</source>
         <translation>ビット列として…</translation>
     </message>
@@ -974,7 +982,7 @@
     </message>
     <message>
         <source>Hash (RIPEMD160)</source>
-        <translation>ハッシュ (RIPEMD160)</translation>
+        <translation type="vanished">ハッシュ (RIPEMD160)</translation>
     </message>
     <message>
         <source>Hash (SHA1)</source>
@@ -1561,6 +1569,18 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation>実時間でパケット一覧を更新</translation>
     </message>
     <message>
+        <source>Interval between updates (ms)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;How often the capture notifies the GUI of new packets. Affects how often the GUI updates and the granularity of timers.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The interval between new packet updates. Affects how often the GUI updates and the granularity of timers.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Keep the packet list scrolled to the bottom while capturing.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;キャプチャ中にパケット一覧を一番下にスクロールし続けます&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
@@ -1676,11 +1696,11 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     </message>
     <message>
         <source>Your coloring rules file contains unknown rules</source>
-        <translation>あなたの色付けルールのファイルは未知のルールを含んでいます。</translation>
+        <translation type="vanished">あなたの色付けルールのファイルは未知のルールを含んでいます。</translation>
     </message>
     <message>
         <source>Wireshark doesn&apos;t recognize one or more of your coloring rules. They have been disabled.</source>
-        <translation>Wiresharkは１つかそれ以上の色分けルールを認識しません。それらは無効とされました。</translation>
+        <translation type="vanished">Wiresharkは１つかそれ以上の色分けルールを認識しません。それらは無効とされました。</translation>
     </message>
 </context>
 <context>
@@ -1729,6 +1749,14 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation>出現位置:</translation>
     </message>
     <message>
+        <source>Resolve Names:</source>
+        <translation>名前解決:</translation>
+    </message>
+    <message>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;p&gt;Show human-readable strings instead of raw values for fields. Only applicable to custom columns with fields that have value strings.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;p&gt;raw(無加工)のフィールド値の代わりに人が読むことのできる文字列を表示します。有効な文字列を含むフィールドを持つカスタム列へ適用する場合にのみ適用できます。&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+    </message>
+    <message>
         <source>Missing fields.</source>
         <translation>見つからないフィールド</translation>
     </message>
@@ -1762,6 +1790,14 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     <message>
         <source>Field Occurrence</source>
         <translation>フィールド出現位置</translation>
+    </message>
+    <message>
+        <source>Resolved</source>
+        <translation>解決済</translation>
+    </message>
+    <message>
+        <source>&lt;html&gt;Show human-readable strings instead of raw values for fields. Only applicable to custom columns with fields that have value strings.&lt;/html&gt;</source>
+        <translation>&lt;html&gt;123raw(無加工)のフィールド値の代わりに人が読むことのできる文字列を表示します。有効な文字列を含むフィールドを持つカスタム列へ適用する場合にのみ適用できます。&lt;/html&gt;</translation>
     </message>
     <message>
         <source>New Column</source>
@@ -1804,6 +1840,81 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     <message>
         <source>Copy filter text to the clipboard.</source>
         <translation>フィルタテキストをクリップボードにコピーします</translation>
+    </message>
+</context>
+<context>
+    <name>ConversationDataModel</name>
+    <message>
+        <source>Address A</source>
+        <translation>アドレス A</translation>
+    </message>
+    <message>
+        <source>Port A</source>
+        <translation>ポート A</translation>
+    </message>
+    <message>
+        <source>Address B</source>
+        <translation>アドレス B</translation>
+    </message>
+    <message>
+        <source>Port B</source>
+        <translation>ポート B</translation>
+    </message>
+    <message>
+        <source>Packets</source>
+        <translation>パケット</translation>
+    </message>
+    <message>
+        <source>Bytes</source>
+        <translation>バイト</translation>
+    </message>
+    <message>
+        <source>Stream ID</source>
+        <translation>ストリームID</translation>
+    </message>
+    <message>
+        <source>Packets A </source>
+        <translation>パケット A</translation>
+    </message>
+    <message>
+        <source>Bytes A </source>
+        <translation>バイト A</translation>
+    </message>
+    <message>
+        <source>Packets B </source>
+        <translation>パケット B </translation>
+    </message>
+    <message>
+        <source>Bytes B </source>
+        <translation>バイト B</translation>
+    </message>
+    <message>
+        <source>Abs Start</source>
+        <translation>絶対的な開始</translation>
+    </message>
+    <message>
+        <source>Rel Start</source>
+        <translation>相対的な開始</translation>
+    </message>
+    <message>
+        <source>Duration</source>
+        <translation>時間</translation>
+    </message>
+    <message>
+        <source>Bits/s A </source>
+        <translation>ビット毎秒 A</translation>
+    </message>
+    <message>
+        <source>Bits/s B </source>
+        <translation>ビット毎秒 B</translation>
+    </message>
+    <message>
+        <source>Total Packets</source>
+        <translation>全パケット</translation>
+    </message>
+    <message>
+        <source>Percent Filtered</source>
+        <translation>フィルタされた割合</translation>
     </message>
 </context>
 <context>
@@ -1926,6 +2037,14 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     <message>
         <source>Copy packet bytes as a stream of hex.</source>
         <translation>16進数ストリームとしてパケットバイト列をコピー</translation>
+    </message>
+    <message>
+        <source>…as a Base64 String</source>
+        <translation>BASE64文字列として...</translation>
+    </message>
+    <message>
+        <source>Copy packet bytes as a base64 encoded string.</source>
+        <translation>BASE64エンコードされた文字列としてパケットバイト列をコピー</translation>
     </message>
     <message>
         <source>…as Raw Binary</source>
@@ -2089,7 +2208,7 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     </message>
     <message>
         <source>Invalid filter: </source>
-        <translation>無効なフィルタ</translation>
+        <translation>無効なフィルタ:</translation>
     </message>
     <message>
         <source>Save this filter</source>
@@ -2143,6 +2262,22 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation>リレーション</translation>
     </message>
     <message>
+        <source>By default order comparisons and contains/matches/in relations are true if any value matches. The quantifier &quot;all&quot; can be used to apply the test to all values in a frame.</source>
+        <translation>デフォルトでは比較演算子と contains/matches/in 関係演算子はいずれかの値が一致した場合に真になります。数量詞 &quot;all&quot; はフレーム内の全ての値に適用するテストに使えます。</translation>
+    </message>
+    <message>
+        <source>Quantifier</source>
+        <translation>数量</translation>
+    </message>
+    <message>
+        <source>Any</source>
+        <translation>いずれかの</translation>
+    </message>
+    <message>
+        <source>All</source>
+        <translation>すべて</translation>
+    </message>
+    <message>
         <source>Match against this value.</source>
         <translation>この値に合致します</translation>
     </message>
@@ -2188,6 +2323,17 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     </message>
 </context>
 <context>
+    <name>DissectorSyntaxLineEdit</name>
+    <message>
+        <source>Dissector entry</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enter a dissector %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>DissectorTablesDialog</name>
     <message>
         <source>Dialog</source>
@@ -2213,8 +2359,8 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation>文字列</translation>
     </message>
     <message>
-        <source>Dissector</source>
-        <translation>ダイセクタ</translation>
+        <source>Dissector Description</source>
+        <translation>ダイセクタの説明</translation>
     </message>
     <message>
         <source>Integer</source>
@@ -2316,6 +2462,73 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     </message>
 </context>
 <context>
+    <name>EndpointDataModel</name>
+    <message>
+        <source>Address</source>
+        <translation>アドレス</translation>
+    </message>
+    <message>
+        <source>Port</source>
+        <translation>ポート</translation>
+    </message>
+    <message>
+        <source>Packets</source>
+        <translation>パケット</translation>
+    </message>
+    <message>
+        <source>Bytes</source>
+        <translation>バイト</translation>
+    </message>
+    <message>
+        <source>Tx Packets</source>
+        <translation>送信パケット</translation>
+    </message>
+    <message>
+        <source>Tx Bytes</source>
+        <translation>送信バイト</translation>
+    </message>
+    <message>
+        <source>Rx Packets</source>
+        <translation>受信パケット</translation>
+    </message>
+    <message>
+        <source>Rx Bytes</source>
+        <translation>受信バイト</translation>
+    </message>
+    <message>
+        <source>Country</source>
+        <translation>国</translation>
+    </message>
+    <message>
+        <source>City</source>
+        <translation>都市</translation>
+    </message>
+    <message>
+        <source>Latitude</source>
+        <translation>経度</translation>
+    </message>
+    <message>
+        <source>Longitude</source>
+        <translation>緯度</translation>
+    </message>
+    <message>
+        <source>AS Number</source>
+        <translation>AS番号</translation>
+    </message>
+    <message>
+        <source>AS Organization</source>
+        <translation>AS 組織</translation>
+    </message>
+    <message>
+        <source>Total Packets</source>
+        <translation>全パケット</translation>
+    </message>
+    <message>
+        <source>Percent Filtered</source>
+        <translation>フィルタされた割合</translation>
+    </message>
+</context>
+<context>
     <name>EndpointDialog</name>
     <message>
         <source>Map</source>
@@ -2336,14 +2549,6 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     <message>
         <source>Map file error</source>
         <translation>地図ファイルエラー</translation>
-    </message>
-    <message>
-        <source>No endpoints available to map</source>
-        <translation>地図に利用できる終端がありません</translation>
-    </message>
-    <message>
-        <source>Unable to create temporary file</source>
-        <translation>一時ファイルを作成できません</translation>
     </message>
     <message>
         <source>Save Endpoints Map</source>
@@ -3056,20 +3261,20 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation>個人Luaプラグイン</translation>
     </message>
     <message>
-        <source>lua scripts</source>
-        <translation>luaスクリプト</translation>
-    </message>
-    <message>
         <source>Global Lua Plugins</source>
         <translation>グローバルLuaプラグイン</translation>
     </message>
     <message>
-        <source>Extcap Plugins search path</source>
-        <translation>Extcapプラグイン検索パス</translation>
+        <source>Lua scripts</source>
+        <translation>Luaスクリプト</translation>
     </message>
     <message>
         <source>Personal Extcap path</source>
         <translation>個人Extcapパス</translation>
+    </message>
+    <message>
+        <source>external capture (extcap) plugins</source>
+        <translation>外部キャプチャ(extcap)プラグイン</translation>
     </message>
     <message>
         <source>Global Extcap path</source>
@@ -3110,6 +3315,13 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     <message>
         <source>Typical Files</source>
         <translation>典型的なファイル</translation>
+    </message>
+</context>
+<context>
+    <name>FollowStreamAction</name>
+    <message>
+        <source>%1 Stream</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -3222,30 +3434,8 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation>パケット %1 を選択したか確認してください</translation>
     </message>
     <message>
-        <source>QUIC streams not found on the selected packet.</source>
-        <translation>選択したパケットにQUICストリームは見つかりませんでした</translation>
-    </message>
-    <message numerus="yes">
-        <source>%Ln total sub stream(s).</source>
-        <translation>
-            <numerusform>%Ln 全サブストリーム</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>Total number of QUIC connections: %Ln</source>
-        <translation>
-            <numerusform>QUIC接続の総数: %Ln</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>Max QUIC Stream ID for the selected connection: %Ln</source>
-        <translation>
-            <numerusform>選択した接続の最大のQUICストリームID: %Ln</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>No streams</source>
-        <translation>ストリームなし</translation>
+        <source>%1 stream not found on the selected packet.</source>
+        <translation>選択したパケットに %1 ストリームは見つかりませんでした</translation>
     </message>
     <message>
         <source>Entire conversation (%1)</source>
@@ -3267,14 +3457,16 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <source>[Stream output truncated]</source>
         <translation>[ストリーム出力が切り詰められました]</translation>
     </message>
-    <message>
-        <source>A transport or network layer header is needed.</source>
-        <translation>トランスポート層かネットワーク層のヘッダーが必要です。</translation>
-    </message>
     <message numerus="yes">
         <source>%Ln total stream(s).</source>
         <translation>
             <numerusform>%Ln 全ストリーム</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Max sub stream ID for the selected stream: %Ln</source>
+        <translation>
+            <numerusform>選択したストリーム: %Ln の最大のサブストリームID</numerusform>
         </translation>
     </message>
     <message>
@@ -3641,6 +3833,14 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation>すべてのグラフをクリア</translation>
     </message>
     <message>
+        <source>Move this graph upwards.</source>
+        <translation>このグラフを上に移動します</translation>
+    </message>
+    <message>
+        <source>Move this graph downwards.</source>
+        <translation>このグラフを下に移動します</translation>
+    </message>
+    <message>
         <source>Mouse</source>
         <translation>マウス</translation>
     </message>
@@ -3674,7 +3874,15 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     </message>
     <message>
         <source>Automatic Update</source>
-        <translation>自動アップデート</translation>
+        <translation type="vanished">自動アップデート</translation>
+    </message>
+    <message>
+        <source>Automatic update</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enable legend</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Reset</source>
@@ -4703,6 +4911,10 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <source>Start capture</source>
         <translation>キャプチャ開始</translation>
     </message>
+    <message>
+        <source>Hide Interface</source>
+        <translation>インターフェースを隠す</translation>
+    </message>
 </context>
 <context>
     <name>InterfaceSortFilterModel</name>
@@ -5678,7 +5890,15 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     </message>
     <message>
         <source>Allow the list to be sorted</source>
-        <translation type="unfinished"></translation>
+        <translation>ソートされるリストを許可</translation>
+    </message>
+    <message>
+        <source>Maximum number of cached rows (affects sorting)</source>
+        <translation>キャッシュされた行の最大数(ソートに影響します)</translation>
+    </message>
+    <message>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If more than this many rows are displayed, then sorting by columns that require packet dissection will be disabled. Increasing this number increases memory consumption by caching column values.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;もしこれ以上の行が表示されたらパケット解析に必要な列でソートは不可能になります。この数値を増やすことで、列の値をキャッシュするためのメモリ消費量が増加します。&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <source>Enable mouse-over colorization</source>
@@ -6171,14 +6391,6 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation>インポート</translation>
     </message>
     <message>
-        <source>from zip file</source>
-        <translation>zipファイルより</translation>
-    </message>
-    <message>
-        <source>from directory</source>
-        <translation>ディレクトリより</translation>
-    </message>
-    <message>
         <source>Export</source>
         <translation>エクスポート</translation>
     </message>
@@ -6270,12 +6482,20 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation>パケットなし</translation>
     </message>
     <message>
-        <source>selected personal profile</source>
-        <translation>選択された個人プロファイル</translation>
+        <source>From Zip File...</source>
+        <translation>Zipファイルより...</translation>
     </message>
     <message>
-        <source>all personal profiles</source>
-        <translation>すべての個人プロファイル</translation>
+        <source>From Directory...</source>
+        <translation>ディレクトリより...</translation>
+    </message>
+    <message>
+        <source>Selected Personal Profile...</source>
+        <translation>選択された個人プロファイル...</translation>
+    </message>
+    <message>
+        <source>All Personal Profiles...</source>
+        <translation>すべての個人プロファイル...</translation>
     </message>
     <message>
         <source>Packets: %1</source>
@@ -6290,2146 +6510,6 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation type="obsolete">
             <numerusform>%n interface shown, %1 hidden</numerusform>
         </translation>
-    </message>
-</context>
-<context>
-    <name>MainWindow</name>
-    <message>
-        <source>Wireshark</source>
-        <translation>Wireshark</translation>
-    </message>
-    <message>
-        <source>Go to packet</source>
-        <translation>パケットに移動</translation>
-    </message>
-    <message>
-        <source>Cancel</source>
-        <translation>キャンセル</translation>
-    </message>
-    <message>
-        <source>File Set</source>
-        <translation>ファイルセット</translation>
-    </message>
-    <message>
-        <source>Export Packet Dissections</source>
-        <translation>エキスパートパケット解析</translation>
-    </message>
-    <message>
-        <source>Export Objects</source>
-        <translation>オブジェクトをエクスポート</translation>
-    </message>
-    <message>
-        <source>&amp;Zoom</source>
-        <translation>&amp;ズーム</translation>
-    </message>
-    <message>
-        <source>&amp;Time Display Format</source>
-        <translation>&amp;時刻表示形式</translation>
-    </message>
-    <message>
-        <source>Copy</source>
-        <translation>コピー</translation>
-    </message>
-    <message>
-        <source>Manual pages</source>
-        <translation>マニュアルページ</translation>
-    </message>
-    <message>
-        <source>Apply as Filter</source>
-        <translation>フィルタとして適用</translation>
-    </message>
-    <message>
-        <source>Prepare as Filter</source>
-        <translation>フィルタとして準備</translation>
-    </message>
-    <message>
-        <source>SCTP</source>
-        <translation>SCTP</translation>
-    </message>
-    <message>
-        <source>TCP Stream Graphs</source>
-        <translation>TCPストリームグラフ</translation>
-    </message>
-    <message>
-        <source>BACnet</source>
-        <translation>BACnet</translation>
-    </message>
-    <message>
-        <source>HTTP</source>
-        <translation>HTTP</translation>
-    </message>
-    <message>
-        <source>&amp;File</source>
-        <translation>ファイル(&amp;F)</translation>
-    </message>
-    <message>
-        <source>&amp;Capture</source>
-        <translation>キャプチャ(&amp;C)</translation>
-    </message>
-    <message>
-        <source>&amp;Help</source>
-        <translation>ヘルプ(&amp;H)</translation>
-    </message>
-    <message>
-        <source>&amp;Go</source>
-        <translation>移動(&amp;G)</translation>
-    </message>
-    <message>
-        <source>&amp;View</source>
-        <translation>表示(&amp;V)</translation>
-    </message>
-    <message>
-        <source>&amp;Analyze</source>
-        <translation>分析(&amp;A)</translation>
-    </message>
-    <message>
-        <source>Follow</source>
-        <translation>追跡</translation>
-    </message>
-    <message>
-        <source>&amp;Statistics</source>
-        <translation>統計(&amp;S)</translation>
-    </message>
-    <message>
-        <source>29West</source>
-        <translation>29West</translation>
-    </message>
-    <message>
-        <source>Topics</source>
-        <translation>トピック</translation>
-    </message>
-    <message>
-        <source>Queues</source>
-        <translation>キュー</translation>
-    </message>
-    <message>
-        <source>UIM</source>
-        <translation>UIM</translation>
-    </message>
-    <message>
-        <source>Telephon&amp;y</source>
-        <translation>電話(&amp;y)</translation>
-    </message>
-    <message>
-        <source>RTSP</source>
-        <translation>RTSP</translation>
-    </message>
-    <message>
-        <source>&amp;Edit</source>
-        <translation>編集(&amp;E)</translation>
-    </message>
-    <message>
-        <source>Packet Comments</source>
-        <translation>パケットコメント</translation>
-    </message>
-    <message>
-        <source>Main Toolbar</source>
-        <translation>メインツールバー</translation>
-    </message>
-    <message>
-        <source>Display Filter Toolbar</source>
-        <translation>表示フィルタツールバー</translation>
-    </message>
-    <message>
-        <source>Open a capture file</source>
-        <translation>キャプチャファイルを開きます</translation>
-    </message>
-    <message>
-        <source>Quit Wireshark</source>
-        <translation>Wiresharkを終了します</translation>
-    </message>
-    <message>
-        <source>&amp;Start</source>
-        <translation>開始(&amp;S)</translation>
-    </message>
-    <message>
-        <source>Start capturing packets</source>
-        <translation>パケットキャプチャを開始します</translation>
-    </message>
-    <message>
-        <source>S&amp;top</source>
-        <translation>停止(&amp;t)</translation>
-    </message>
-    <message>
-        <source>Stop capturing packets</source>
-        <translation>パケットキャプチャを停止します</translation>
-    </message>
-    <message>
-        <source>No files found</source>
-        <translation>ファイルが見つかりませんでした</translation>
-    </message>
-    <message>
-        <source>&amp;Contents</source>
-        <translation>目次(&amp;C)</translation>
-    </message>
-    <message>
-        <source>Wireshark Filter</source>
-        <translation>Wiresharkフィルタ</translation>
-    </message>
-    <message>
-        <source>TShark</source>
-        <translation>Tshark</translation>
-    </message>
-    <message>
-        <source>Rawshark</source>
-        <translation>RawShark</translation>
-    </message>
-    <message>
-        <source>Dumpcap</source>
-        <translation>Dumpcap</translation>
-    </message>
-    <message>
-        <source>Mergecap</source>
-        <translation>Mergecap</translation>
-    </message>
-    <message>
-        <source>Editcap</source>
-        <translation>Mergecap</translation>
-    </message>
-    <message>
-        <source>Text2pcap</source>
-        <translation>Text2cap</translation>
-    </message>
-    <message>
-        <source>Website</source>
-        <translation>ウェブサイト</translation>
-    </message>
-    <message>
-        <source>Downloads</source>
-        <translation>ダウンロード</translation>
-    </message>
-    <message>
-        <source>Wiki</source>
-        <translation>Wiki</translation>
-    </message>
-    <message>
-        <source>Sample Captures</source>
-        <translation>サンプルキャプチャ</translation>
-    </message>
-    <message>
-        <source>&amp;About Wireshark</source>
-        <translation>wiresharkについて</translation>
-    </message>
-    <message>
-        <source>Ask (Q&amp;&amp;A)</source>
-        <translation>問い合わせ (Q&amp;&amp;A)</translation>
-    </message>
-    <message>
-        <source>Next Packet</source>
-        <translation>次のパケット</translation>
-    </message>
-    <message>
-        <source>Go to the next packet</source>
-        <translation>次のパケットに移動します</translation>
-    </message>
-    <message>
-        <source>Previous Packet</source>
-        <translation>前のパケット</translation>
-    </message>
-    <message>
-        <source>Go to the previous packet</source>
-        <translation>前のパケットに移動します</translation>
-    </message>
-    <message>
-        <source>First Packet</source>
-        <translation>最初のパケット</translation>
-    </message>
-    <message>
-        <source>Go to the first packet</source>
-        <translation>最初のパケットに移動します</translation>
-    </message>
-    <message>
-        <source>Last Packet</source>
-        <translation>最後のパケット</translation>
-    </message>
-    <message>
-        <source>Go to the last packet</source>
-        <translation>最後のパケットに移動します</translation>
-    </message>
-    <message>
-        <source>E&amp;xpand Subtrees</source>
-        <translation>サブツリーを展開(&amp;x)</translation>
-    </message>
-    <message>
-        <source>Expand the current packet detail</source>
-        <translation>現在のパケット詳細を展開します</translation>
-    </message>
-    <message>
-        <source>&amp;Expand All</source>
-        <translation>すべて展開(&amp;E)</translation>
-    </message>
-    <message>
-        <source>Expand packet details</source>
-        <translation>パケット詳細を展開</translation>
-    </message>
-    <message>
-        <source>Collapse &amp;All</source>
-        <translation>すべて閉じる(&amp;A)</translation>
-    </message>
-    <message>
-        <source>Collapse all packet details</source>
-        <translation>すべてのパケット詳細を閉じます</translation>
-    </message>
-    <message>
-        <source>Go to specified packet</source>
-        <translation>指定したパケットへ移動します</translation>
-    </message>
-    <message>
-        <source>Merge one or more files</source>
-        <translation>１つそれ以上のファイルを結合します</translation>
-    </message>
-    <message>
-        <source>Import a file</source>
-        <translation>ファイルをインポート</translation>
-    </message>
-    <message>
-        <source>&amp;Save</source>
-        <translation>保存(&amp;S)</translation>
-    </message>
-    <message>
-        <source>Save as a different file</source>
-        <translation>異なるファイルとして保存</translation>
-    </message>
-    <message>
-        <source>Export specified packets</source>
-        <translation>指定したパケットを出力</translation>
-    </message>
-    <message>
-        <source>Export TLS Session Keys…</source>
-        <translation>TLSセッション鍵をエクスポート…</translation>
-    </message>
-    <message>
-        <source>List Files</source>
-        <translation>ファイル一覧</translation>
-    </message>
-    <message>
-        <source>Next File</source>
-        <translation>次のファイル</translation>
-    </message>
-    <message>
-        <source>Previous File</source>
-        <translation>前のファイル</translation>
-    </message>
-    <message>
-        <source>&amp;Reload</source>
-        <translation>再読込(&amp;R)</translation>
-    </message>
-    <message>
-        <source>Options</source>
-        <translation>オプション</translation>
-    </message>
-    <message>
-        <source>Capture options</source>
-        <translation>キャプチャオプション</translation>
-    </message>
-    <message>
-        <source>Capture filters</source>
-        <translation>キャプチャフィルタ</translation>
-    </message>
-    <message>
-        <source>Refresh Interfaces</source>
-        <translation>インターフェースを更新</translation>
-    </message>
-    <message>
-        <source>Refresh interfaces</source>
-        <translation>インターフェースを更新</translation>
-    </message>
-    <message>
-        <source>&amp;Restart</source>
-        <translation>再キャプチャ(&amp;R)</translation>
-    </message>
-    <message>
-        <source>Restart current capture</source>
-        <translation>現在のキャプチャを再スタートします</translation>
-    </message>
-    <message>
-        <source>As &amp;CSV…</source>
-        <translation>CSVとして(&amp;C)</translation>
-    </message>
-    <message>
-        <source>As &quot;C&quot; &amp;Arrays…</source>
-        <translation>C言語配列として(&amp;A)</translation>
-    </message>
-    <message>
-        <source>As P&amp;SML XML…</source>
-        <translation>PSML XMLとして(&amp;S)</translation>
-    </message>
-    <message>
-        <source>As P&amp;DML XML…</source>
-        <translation>PSML XMLとして(&amp;D)</translation>
-    </message>
-    <message>
-        <source>As &amp;JSON…</source>
-        <translation>JSONとして(&amp;J)</translation>
-    </message>
-    <message>
-        <source>Description</source>
-        <translation>記述</translation>
-    </message>
-    <message>
-        <source>Field Name</source>
-        <translation>フィールド名</translation>
-    </message>
-    <message>
-        <source>Value</source>
-        <translation>値</translation>
-    </message>
-    <message>
-        <source>As Filter</source>
-        <translation>フィルタとして</translation>
-    </message>
-    <message>
-        <source>Close this capture file</source>
-        <translation>このキャプチャファイルを閉じます</translation>
-    </message>
-    <message>
-        <source>Packet:</source>
-        <translation>パケット:</translation>
-    </message>
-    <message>
-        <source>Interface Toolbars</source>
-        <translation>インターフェースツールバー</translation>
-    </message>
-    <message>
-        <source>Colorize Conversation</source>
-        <translation>対話に色をつける</translation>
-    </message>
-    <message>
-        <source>Internals</source>
-        <translation>内部</translation>
-    </message>
-    <message>
-        <source>Additional Toolbars</source>
-        <translation>追加のツールバー</translation>
-    </message>
-    <message>
-        <source>Conversation Filter</source>
-        <translation>対話フィルタ</translation>
-    </message>
-    <message>
-        <source>Reliable Server Pooling (RSerPool)</source>
-        <translation>信頼できるサーバープール (RSerPool)</translation>
-    </message>
-    <message>
-        <source>SOME/IP</source>
-        <translation>SOME/IP</translation>
-    </message>
-    <message>
-        <source>Osmux</source>
-        <translation>Osmux</translation>
-    </message>
-    <message>
-        <source>&amp;Tools</source>
-        <oldsource>Tools</oldsource>
-        <translation>ツール(&amp;T)</translation>
-    </message>
-    <message>
-        <source>Wireless Toolbar</source>
-        <translation>無線ツールバー</translation>
-    </message>
-    <message>
-        <source>Help contents</source>
-        <translation>ヘルプ目次</translation>
-    </message>
-    <message>
-        <source>FAQs</source>
-        <translation>FAQ&apos;s</translation>
-    </message>
-    <message>
-        <source>Next Packet in Conversation</source>
-        <translation>対話の次のパケット</translation>
-    </message>
-    <message>
-        <source>Go to the next packet in this conversation</source>
-        <translation>この対話の次のパケットに移動します</translation>
-    </message>
-    <message>
-        <source>Previous Packet in Conversation</source>
-        <translation>対話の前のパケット</translation>
-    </message>
-    <message>
-        <source>Go to the previous packet in this conversation</source>
-        <translation>この対話の前のパケットに移動します</translation>
-    </message>
-    <message>
-        <source>Next Packet In History</source>
-        <translation>ヒストリの次のパケット</translation>
-    </message>
-    <message>
-        <source>Go to the next packet in your selection history</source>
-        <translation>選択ヒストリの次のパケットへ移動します</translation>
-    </message>
-    <message>
-        <source>Previous Packet In History</source>
-        <translation>ヒストリの前のパケット</translation>
-    </message>
-    <message>
-        <source>Go to the previous packet in your selection history</source>
-        <translation>選択したヒストリの前のパケットへ移動します</translation>
-    </message>
-    <message>
-        <source>Collapse Subtrees</source>
-        <translation>サブツリーを閉じる</translation>
-    </message>
-    <message>
-        <source>Collapse the current packet detail</source>
-        <translation>現在のパケット詳細を閉じます</translation>
-    </message>
-    <message>
-        <source>Go to Packet…</source>
-        <translation>パケットに移動…</translation>
-    </message>
-    <message>
-        <source>&amp;Merge…</source>
-        <translation>結合…(&amp;M)</translation>
-    </message>
-    <message>
-        <source>&amp;Import from Hex Dump…</source>
-        <translation>16進数ダンプからインポート…(&amp;I)</translation>
-    </message>
-    <message>
-        <source>Save this capture file</source>
-        <translation>このキャプチャファイルを保存します</translation>
-    </message>
-    <message>
-        <source>Save &amp;As…</source>
-        <translation>…として保存(&amp;A)</translation>
-    </message>
-    <message>
-        <source>Export Specified Packets…</source>
-        <translation>指定したパケットをエクスポート…</translation>
-    </message>
-    <message>
-        <source>Export Packet &amp;Bytes…</source>
-        <translation>パケットバイト列をエクスポート…(&amp;B)</translation>
-    </message>
-    <message>
-        <source>&amp;Print…</source>
-        <translation>印刷(&amp;P)…</translation>
-    </message>
-    <message>
-        <source>Reload this file</source>
-        <translation>このファイルを再読み込み</translation>
-    </message>
-    <message>
-        <source>Reload as File Format/Capture</source>
-        <translation>ファイルフォーマット/キャプチャとして再読み込みします</translation>
-    </message>
-    <message>
-        <source>Copy this item&apos;s description</source>
-        <translation>この項目の記述をコピーします</translation>
-    </message>
-    <message>
-        <source>Copy this item&apos;s field name</source>
-        <translation>この項目のフィールド名をコピーします</translation>
-    </message>
-    <message>
-        <source>Copy this item&apos;s value</source>
-        <translation>この項目の値をコピーします</translation>
-    </message>
-    <message>
-        <source>Copy this item as a display filter</source>
-        <translation>この項目を表示フィルタとしてコピーします</translation>
-    </message>
-    <message>
-        <source>Apply as Column</source>
-        <translation>列として適用</translation>
-    </message>
-    <message>
-        <source>Create a packet list column from the selected field.</source>
-        <translation>選択したフィールドからパケット一覧の列を作成します</translation>
-    </message>
-    <message>
-        <source>Find a packet</source>
-        <translation>パケットを検索します</translation>
-    </message>
-    <message>
-        <source>Find the next packet</source>
-        <translation>次のパケットを検索します</translation>
-    </message>
-    <message>
-        <source>Find the previous packet</source>
-        <translation>前のパケットを検索します</translation>
-    </message>
-    <message>
-        <source>&amp;Mark/Unmark Packet(s)</source>
-        <oldsource>&amp;Mark/Unmark Packet</oldsource>
-        <translation>パケットをマーク/マーク解除(&amp;M)</translation>
-    </message>
-    <message>
-        <source>Mark All Displayed</source>
-        <translation>表示されているものをすべてマークします</translation>
-    </message>
-    <message>
-        <source>Mark all displayed packets</source>
-        <translation>すべての表示されているパケットをマークします</translation>
-    </message>
-    <message>
-        <source>Unmark all displayed packets</source>
-        <translation>すべての表示されているパケットをマーク解除します</translation>
-    </message>
-    <message>
-        <source>Next Mark</source>
-        <translation>次のマーク</translation>
-    </message>
-    <message>
-        <source>Go to the next marked packet</source>
-        <translation>次にマークされたパケットに移動します</translation>
-    </message>
-    <message>
-        <source>Previous Mark</source>
-        <translation>前のマーク</translation>
-    </message>
-    <message>
-        <source>Go to the previous marked packet</source>
-        <translation>前にマークされたパケットに移動します</translation>
-    </message>
-    <message>
-        <source>&amp;Ignore/Unignore Packet(s)</source>
-        <oldsource>&amp;Ignore/Unignore Packet</oldsource>
-        <translation>パケットを無視/無視を解除(&amp;I)</translation>
-    </message>
-    <message>
-        <source>Ignore All Displayed</source>
-        <translation>表示されているものすべてを無視します</translation>
-    </message>
-    <message>
-        <source>Ignore all displayed packets</source>
-        <translation>すべての表示されたパケットを無視します</translation>
-    </message>
-    <message>
-        <source>Set/Unset Time Reference</source>
-        <translation>時間参照を設定/設定解除します</translation>
-    </message>
-    <message>
-        <source>Set or unset a time reference for this packet</source>
-        <translation>このパケットの時間参照を設定または設定解除します</translation>
-    </message>
-    <message>
-        <source>Unset All Time References</source>
-        <translation>すべての時間参照を設定解除</translation>
-    </message>
-    <message>
-        <source>Remove all time references</source>
-        <translation>すべての時間参照を削除</translation>
-    </message>
-    <message>
-        <source>Next Time Reference</source>
-        <translation>次の時間参照</translation>
-    </message>
-    <message>
-        <source>Go to the next time reference</source>
-        <translation>次の時間参照へ移動します</translation>
-    </message>
-    <message>
-        <source>Previous Time Reference</source>
-        <translation>前の時間参照</translation>
-    </message>
-    <message>
-        <source>Go to the previous time reference</source>
-        <translation>前の時間参照へ移動</translation>
-    </message>
-    <message>
-        <source>Shift or change packet timestamps</source>
-        <translation>パケットのタイムスタンプをずらすもしくは変更します</translation>
-    </message>
-    <message>
-        <source>Delete All Packet Comments</source>
-        <translation>すべてのパケットコメントを削除</translation>
-    </message>
-    <message>
-        <source>Remove all packet comments in the capture file</source>
-        <translation>キャプチャファイルにあるすべてのパケットを削除します</translation>
-    </message>
-    <message>
-        <source>&amp;Configuration Profiles…</source>
-        <translation>設定プロファイル(&amp;C)…</translation>
-    </message>
-    <message>
-        <source>Configuration profiles</source>
-        <translation>設定プロファイル</translation>
-    </message>
-    <message>
-        <source>Manage your configuration profiles</source>
-        <translation>設定プロファイルを管理します</translation>
-    </message>
-    <message>
-        <source>Manage Wireshark&apos;s preferences</source>
-        <translation>Wiresharkの設定を管理します</translation>
-    </message>
-    <message>
-        <source>Capture File Properties</source>
-        <translation>キャプチャファイルプロパティ</translation>
-    </message>
-    <message>
-        <source>Capture file properties</source>
-        <translation>キャプチャファイルプロパティ</translation>
-    </message>
-    <message>
-        <source>&amp;Protocol Hierarchy</source>
-        <translation>プロトコル階層(&amp;P)</translation>
-    </message>
-    <message>
-        <source>Show a summary of protocols present in the capture file.</source>
-        <translation>キャプチャファイルの現在のプロトコル概要を表示します</translation>
-    </message>
-    <message>
-        <source>Capinfos</source>
-        <translation>Capinfos</translation>
-    </message>
-    <message>
-        <source>Reordercap</source>
-        <translation>Reordercap</translation>
-    </message>
-    <message>
-        <source>Time Sequence (Stevens)</source>
-        <translation>タイムシーケンス (Stevens)</translation>
-    </message>
-    <message>
-        <source>TCP time sequence graph (Stevens)</source>
-        <translation>TCP タイムシーケンスグラフ (Stevens)</translation>
-    </message>
-    <message>
-        <source>Throughput</source>
-        <translation>スループット</translation>
-    </message>
-    <message>
-        <source>Round Trip Time</source>
-        <translation>往復遅延時間</translation>
-    </message>
-    <message>
-        <source>TCP round trip time</source>
-        <translation>TCP往復遅延時間</translation>
-    </message>
-    <message>
-        <source>Window Scaling</source>
-        <translation>ウインドウスケーリング</translation>
-    </message>
-    <message>
-        <source>TCP window scaling</source>
-        <translation>TCPウインドウスケーリング</translation>
-    </message>
-    <message>
-        <source>DCCP Stream</source>
-        <translation>DCCPストリーム</translation>
-    </message>
-    <message>
-        <source>TLS Stream</source>
-        <translation>TLS ストリーム</translation>
-    </message>
-    <message>
-        <source>HTTP Stream</source>
-        <translation>HTTPストリーム</translation>
-    </message>
-    <message>
-        <source>HTTP/2 Stream</source>
-        <translation>HTTP/2 ストリーム</translation>
-    </message>
-    <message>
-        <source>QUIC Stream</source>
-        <translation>QUIC ストリーム</translation>
-    </message>
-    <message>
-        <source>SIP Call</source>
-        <translation>SIP通話</translation>
-    </message>
-    <message>
-        <source>Time Sequence (tcptrace)</source>
-        <translation>タイムシーケンス(tcptrace)</translation>
-    </message>
-    <message>
-        <source>TCP time sequence graph (tcptrace)</source>
-        <translation>TCPタイムシーケンスグラフ(tcptrace)</translation>
-    </message>
-    <message>
-        <source>Analyse this Association</source>
-        <translation>このアソシエーションを分析</translation>
-    </message>
-    <message>
-        <source>Show All Associations</source>
-        <translation>すべてのアソシエーションを表示</translation>
-    </message>
-    <message>
-        <source>Flow Graph</source>
-        <translation>フローグラフ</translation>
-    </message>
-    <message>
-        <source>Flow sequence diagram</source>
-        <translation>フローシーケンス図</translation>
-    </message>
-    <message>
-        <source>ANCP</source>
-        <translation>ANCP</translation>
-    </message>
-    <message>
-        <source>ANCP statistics</source>
-        <translation>ANCP統計</translation>
-    </message>
-    <message>
-        <source>Packets sorted by Instance ID</source>
-        <translation>インスタンスID順パケット</translation>
-    </message>
-    <message>
-        <source>BACapp statistics sorted by instance ID</source>
-        <translation>インスタンスID順に並べたBACapp統計</translation>
-    </message>
-    <message>
-        <source>Packets sorted by IP</source>
-        <translation>IP順パケット</translation>
-    </message>
-    <message>
-        <source>BACapp statistics sorted by IP</source>
-        <translation>IP順に並べたBACapp統計</translation>
-    </message>
-    <message>
-        <source>Packets sorted by object type</source>
-        <translation>オブジェクト種別順パケット</translation>
-    </message>
-    <message>
-        <source>BACapp statistics sorted by object type</source>
-        <translation>オブジェクト種別順に並べたBACapp統計</translation>
-    </message>
-    <message>
-        <source>Packets sorted by service</source>
-        <translation>サービス順パケット</translation>
-    </message>
-    <message>
-        <source>BACapp statistics sorted by service</source>
-        <translation>サービス順に並べたBACapp統計</translation>
-    </message>
-    <message>
-        <source>Collectd</source>
-        <translation>収集</translation>
-    </message>
-    <message>
-        <source>Collectd statistics</source>
-        <translation>収集統計</translation>
-    </message>
-    <message>
-        <source>DNS</source>
-        <translation>DNS</translation>
-    </message>
-    <message>
-        <source>DNS statistics</source>
-        <translation>DNS統計</translation>
-    </message>
-    <message>
-        <source>HART-IP</source>
-        <translation>HART-IP</translation>
-    </message>
-    <message>
-        <source>HART-IP statistics</source>
-        <translation>HART-IP統計</translation>
-    </message>
-    <message>
-        <source>HPFEEDS</source>
-        <translation>HPFEEDS</translation>
-    </message>
-    <message>
-        <source>hpfeeds statistics</source>
-        <translation>hpfeeds統計</translation>
-    </message>
-    <message>
-        <source>HTTP2</source>
-        <translation>HTTP2</translation>
-    </message>
-    <message>
-        <source>HTTP2 statistics</source>
-        <translation>HTTP2統計</translation>
-    </message>
-    <message>
-        <source>Packet Counter</source>
-        <translation>パケットカウンタ</translation>
-    </message>
-    <message>
-        <source>HTTP packet counter</source>
-        <translation>HTTPパケットカウンタ</translation>
-    </message>
-    <message>
-        <source>Requests</source>
-        <translation>要求</translation>
-    </message>
-    <message>
-        <source>HTTP requests</source>
-        <translation>HTTP要求</translation>
-    </message>
-    <message>
-        <source>Load Distribution</source>
-        <translation>負荷分散</translation>
-    </message>
-    <message>
-        <source>HTTP load distribution</source>
-        <translation>HTTP負荷分散</translation>
-    </message>
-    <message>
-        <source>Packet Lengths</source>
-        <translation>パケット長</translation>
-    </message>
-    <message>
-        <source>Packet length statistics</source>
-        <translation>パケット長統計</translation>
-    </message>
-    <message>
-        <source>Sametime</source>
-        <translation>Sametime</translation>
-    </message>
-    <message>
-        <source>Sametime statistics</source>
-        <translation>Sametime統計</translation>
-    </message>
-    <message>
-        <source>SOME/IP Messages</source>
-        <translation>SOME/IP メッセージ</translation>
-    </message>
-    <message>
-        <source>SOME/IP Message statistics</source>
-        <translation>SOME/IP メッセージ統計</translation>
-    </message>
-    <message>
-        <source>SOME/IP-SD Entries</source>
-        <translation>SOME/IP-SD エントリ</translation>
-    </message>
-    <message>
-        <source>SOME/IP-SD Entries statistics</source>
-        <translation>SOME/IP-SD エントリ統計</translation>
-    </message>
-    <message>
-        <source>&amp;ISUP Messages</source>
-        <translation>ISUPメッセージ(&amp;I)</translation>
-    </message>
-    <message>
-        <source>ISUP message statistics</source>
-        <translation>ISUPメッセージ統計</translation>
-    </message>
-    <message>
-        <source>Osmux packet counts</source>
-        <translation>Osmux パケット数</translation>
-    </message>
-    <message>
-        <source>RTSP packet counts</source>
-        <translation>RTSPパケット数</translation>
-    </message>
-    <message>
-        <source>SM&amp;PP Operations</source>
-        <translation>SMPP操作(&amp;P)</translation>
-    </message>
-    <message>
-        <source>SMPP operation statistics</source>
-        <translation>SMPP操作統計</translation>
-    </message>
-    <message>
-        <source>&amp;UCP Messages</source>
-        <translation>UCPメッセージ(&amp;U)</translation>
-    </message>
-    <message>
-        <source>UCP message statistics</source>
-        <translation>UCPメッセージ統計</translation>
-    </message>
-    <message>
-        <source>F1AP</source>
-        <translation>F1AP</translation>
-    </message>
-    <message>
-        <source>F1AP Messages</source>
-        <translation>F1AP メッセージ</translation>
-    </message>
-    <message>
-        <source>NGAP</source>
-        <translation>NGAP</translation>
-    </message>
-    <message>
-        <source>NGAP Messages</source>
-        <translation>NGAP メッセージ</translation>
-    </message>
-    <message>
-        <source>Change the way packets are dissected</source>
-        <translation>パケットが解析される方法を変更します</translation>
-    </message>
-    <message>
-        <source>Reload Lua Plugins</source>
-        <translation>Luaプラグイン再読込</translation>
-    </message>
-    <message>
-        <source>Reload Lua plugins</source>
-        <translation>Luaプラグインを再読込します</translation>
-    </message>
-    <message>
-        <source>Advertisements by Topic</source>
-        <translation>トピック毎の通知</translation>
-    </message>
-    <message>
-        <source>Advertisements by Source</source>
-        <translation>送信元毎の通知</translation>
-    </message>
-    <message>
-        <source>Advertisements by Transport</source>
-        <translation>トランスポート毎の通知</translation>
-    </message>
-    <message>
-        <source>Queries by Topic</source>
-        <translation>トピック毎のクエリ</translation>
-    </message>
-    <message>
-        <source>Queries by Receiver</source>
-        <translation>受信者毎のクエリ</translation>
-    </message>
-    <message>
-        <source>Wildcard Queries by Pattern</source>
-        <translation>パターン毎のワイルドカードクエリ</translation>
-    </message>
-    <message>
-        <source>Wildcard Queries by Receiver</source>
-        <translation>受信者毎のワイルドカードクエリ</translation>
-    </message>
-    <message>
-        <source>Advertisements by Queue</source>
-        <translation>キュー毎の通知</translation>
-    </message>
-    <message>
-        <source>Queries by Queue</source>
-        <translation>キュー毎のクエリ</translation>
-    </message>
-    <message>
-        <source>Streams</source>
-        <translation>ストリーム</translation>
-    </message>
-    <message>
-        <source>LBT-RM</source>
-        <translation>LBT-RM</translation>
-    </message>
-    <message>
-        <source>LBT-RU</source>
-        <translation>LBT-RU</translation>
-    </message>
-    <message>
-        <source>Filter this Association</source>
-        <translation>このアソシエーションをフィルタします</translation>
-    </message>
-    <message>
-        <source>Strip Headers…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Strip headers and export higher level encapsulations to file</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>&amp;I/O Graphs</source>
-        <translation>入出力グラフ(&amp;I)</translation>
-    </message>
-    <message>
-        <source>&amp;Conversations</source>
-        <translation>対話(&amp;C)</translation>
-    </message>
-    <message>
-        <source>&amp;Endpoints</source>
-        <translation>終端(&amp;E)</translation>
-    </message>
-    <message>
-        <source>Shrink the main window text</source>
-        <translation>メインウインドウのテキストを縮小します</translation>
-    </message>
-    <message>
-        <source>Return the main window text to its normal size</source>
-        <translation>メインウインドウのテキストを標準サイズに戻します</translation>
-    </message>
-    <message>
-        <source>Reset Layout</source>
-        <translation>レイアウトをリセット</translation>
-    </message>
-    <message>
-        <source>Reset appearance layout to default size</source>
-        <translation>外観のレイアウトをデフォルトのサイズにリセットします</translation>
-    </message>
-    <message>
-        <source>Packet &amp;Diagram</source>
-        <translation>パケット &amp;ダイアグラム</translation>
-    </message>
-    <message>
-        <source>Show or hide the packet diagram</source>
-        <translation>パケットダイアグラムを表示または非表示にします</translation>
-    </message>
-    <message>
-        <source>Show each conversation hash table</source>
-        <translation>各々の会話ハッシュ表を表示します</translation>
-    </message>
-    <message>
-        <source>Show each dissector table and its entries</source>
-        <translation>各々のダイセクター表とそのエントリを表示します</translation>
-    </message>
-    <message>
-        <source>Show the currently supported protocols and display filter fields</source>
-        <translation>サポートされているプロトコルと表示フィルタフィールドを表示します</translation>
-    </message>
-    <message>
-        <source>MAC Statistics</source>
-        <translation>MAC統計</translation>
-    </message>
-    <message>
-        <source>LTE MAC statistics</source>
-        <translation>LTE MAC統計</translation>
-    </message>
-    <message>
-        <source>RLC Statistics</source>
-        <translation>RLC統計</translation>
-    </message>
-    <message>
-        <source>LTE RLC statistics</source>
-        <translation>LTE RLC統計</translation>
-    </message>
-    <message>
-        <source>LTE RLC graph</source>
-        <translation>LTE RLCグラフ</translation>
-    </message>
-    <message>
-        <source>MTP3 Summary</source>
-        <translation>MTP3概要</translation>
-    </message>
-    <message>
-        <source>MTP3 summary statistics</source>
-        <translation>MTP3概要統計</translation>
-    </message>
-    <message>
-        <source>Bluetooth Devices</source>
-        <translation>Bluetoothデバイス</translation>
-    </message>
-    <message>
-        <source>Bluetooth HCI Summary</source>
-        <translation>Bluetooth HCI概要</translation>
-    </message>
-    <message>
-        <source>Display Filter &amp;Expression…</source>
-        <translation>表示フィルタ式(&amp;E)</translation>
-    </message>
-    <message>
-        <source>Display Filter Expression…</source>
-        <translation>表示フィルタ式...</translation>
-    </message>
-    <message>
-        <source>REGISTER_STAT_GROUP_RSERPOOL</source>
-        <translation>REGISTER_STAT_GROUP_RSERPOOL</translation>
-    </message>
-    <message>
-        <source>Start of &quot;REGISTER_STAT_GROUP_RSERPOOL&quot;</source>
-        <translation>&quot;REGISTER_STAT_GROUP_RSERPOOL&quot;の開始</translation>
-    </message>
-    <message>
-        <source>No GSM statistics registered</source>
-        <translation>GSM統計が登録されていません</translation>
-    </message>
-    <message>
-        <source>No LTE statistics registered</source>
-        <translation>LTE統計が登録されていません</translation>
-    </message>
-    <message>
-        <source>No MTP3 statistics registered</source>
-        <translation>MTP3統計が登録されていません</translation>
-    </message>
-    <message>
-        <source>IAX2 Stream Analysis</source>
-        <translation>IAX2ストリーム分析</translation>
-    </message>
-    <message>
-        <source>Show Packet Bytes…</source>
-        <translation>パケットバイト列を表示…</translation>
-    </message>
-    <message>
-        <source>Go to &amp;Linked Packet</source>
-        <translation>リンクされたパケットへ移動(&amp;L)</translation>
-    </message>
-    <message>
-        <source>UDP Multicast Streams</source>
-        <translation>UDPマルチキャストストリーム</translation>
-    </message>
-    <message>
-        <source>Show UTP multicast stream statistics.</source>
-        <translation>UTPマルチキャストストリーム統計を表示します</translation>
-    </message>
-    <message>
-        <source>WLAN Traffic</source>
-        <translation>無線LANトラフィック</translation>
-    </message>
-    <message>
-        <source>Show IEEE 802.11 wireless LAN statistics.</source>
-        <translation>IEEE802.11無線LAN統計を表示します</translation>
-    </message>
-    <message>
-        <source>Add a display filter button.</source>
-        <translation>表示フィルタボタンを追加します</translation>
-    </message>
-    <message>
-        <source>Firewall ACL Rules</source>
-        <translation>ファイアウォール ACL ルール</translation>
-    </message>
-    <message>
-        <source>Create firewall ACL rules</source>
-        <translation>ファイアウォール ACL ルールを作成します</translation>
-    </message>
-    <message>
-        <source>&amp;Full Screen</source>
-        <translation>フルスクリーン(&amp;F)</translation>
-    </message>
-    <message>
-        <source>Credentials</source>
-        <translation>証明書</translation>
-    </message>
-    <message>
-        <source>&amp;Options…</source>
-        <translation>オプション…(&amp;O)</translation>
-    </message>
-    <message>
-        <source>&amp;Wireless</source>
-        <translation>無線(&amp;W)</translation>
-    </message>
-    <message>
-        <source>Capture &amp;Filters…</source>
-        <translation>キャプチャフィルタ…(&amp;F)</translation>
-    </message>
-    <message>
-        <source>As Plain &amp;Text…</source>
-        <translation>プレインテキストとして…(&amp;T)</translation>
-    </message>
-    <message>
-        <source>As Plain &amp;Text</source>
-        <translation>プレインテキストとして(&amp;T)</translation>
-    </message>
-    <message>
-        <source>As &amp;CSV</source>
-        <translation>CSVとして(&amp;C)</translation>
-    </message>
-    <message>
-        <source>As &amp;YAML</source>
-        <translation>YAMLとして(&amp;Y)</translation>
-    </message>
-    <message>
-        <source>All Visible Items</source>
-        <translation>すべての見えている項目</translation>
-    </message>
-    <message>
-        <source>All Visible Selected Tree Items</source>
-        <translation>すべての見えている選択されたツリー項目</translation>
-    </message>
-    <message>
-        <source>Display Filter &amp;Macros…</source>
-        <translation>表示フィルタマクロ…(&amp;M)</translation>
-    </message>
-    <message>
-        <source>&amp;Find Packet…</source>
-        <translation>パケットの検索…(&amp;F)</translation>
-    </message>
-    <message>
-        <source>Find Ne&amp;xt</source>
-        <translation>次を検索(&amp;x)</translation>
-    </message>
-    <message>
-        <source>Find Pre&amp;vious</source>
-        <translation>前を検索(&amp;v)</translation>
-    </message>
-    <message>
-        <source>Mark or unmark each selected packet</source>
-        <translation>各々の選択されたパケットをマーク/マーク解除します</translation>
-    </message>
-    <message>
-        <source>Ignore or unignore each selected packet</source>
-        <translation>各々の選択されたパケットを無視/無視を解除します</translation>
-    </message>
-    <message>
-        <source>U&amp;nignore All Displayed</source>
-        <translation>すべての表示されているものの無視を解除します(&amp;U)</translation>
-    </message>
-    <message>
-        <source>Unignore all displayed packets</source>
-        <translation>すべての表示されたパケットの無視を解除します</translation>
-    </message>
-    <message>
-        <source>Time Shift…</source>
-        <translation>時間調整…</translation>
-    </message>
-    <message>
-        <source>&amp;Preferences…</source>
-        <translation>設定…(&amp;P)</translation>
-    </message>
-    <message>
-        <source>TCP throughput</source>
-        <translation>TCP スループット</translation>
-    </message>
-    <message>
-        <source>TCP Stream</source>
-        <translation>TCPストリーム</translation>
-    </message>
-    <message>
-        <source>UDP Stream</source>
-        <translation>UDPストリーム</translation>
-    </message>
-    <message>
-        <source>Request Sequences</source>
-        <translation>リクエストシーケンス</translation>
-    </message>
-    <message>
-        <source>HTTP Request Sequences</source>
-        <translation>HTTPリクエストシーケンス</translation>
-    </message>
-    <message>
-        <source>Decode &amp;As…</source>
-        <translation>…としてデコード(&amp;A)</translation>
-    </message>
-    <message>
-        <source>Export PDUs to File…</source>
-        <translation>PDUをファイルにエクスポート…</translation>
-    </message>
-    <message>
-        <source>Create graphs based on display filter fields</source>
-        <translation>表示フィルタのフィールドに基づいてグラフを作成します</translation>
-    </message>
-    <message>
-        <source>&amp;Main Toolbar</source>
-        <translation>メインツールバー(&amp;M)</translation>
-    </message>
-    <message>
-        <source>Show or hide the main toolbar</source>
-        <translation>メインツールバーを表示もしくは非表示にします</translation>
-    </message>
-    <message>
-        <source>&amp;Filter Toolbar</source>
-        <translation>フィルタツールバー(&amp;F)</translation>
-    </message>
-    <message>
-        <source>Show or hide the display filter toolbar</source>
-        <translation>表示フィルタツールバーを表示もしくは非表示にします</translation>
-    </message>
-    <message>
-        <source>Conversations at different protocol levels</source>
-        <translation>異なるプロトコルレベルの対話</translation>
-    </message>
-    <message>
-        <source>Endpoints at different protocol levels</source>
-        <translation>異なるプロトコルレベルの終端</translation>
-    </message>
-    <message>
-        <source>Colorize Packet List</source>
-        <translation>パケット一覧を色付けする</translation>
-    </message>
-    <message>
-        <source>Draw packets using your coloring rules</source>
-        <translation>色付けルールを用いてパケットを描画します</translation>
-    </message>
-    <message>
-        <source>&amp;Zoom In</source>
-        <translation>拡大(&amp;Z)</translation>
-    </message>
-    <message>
-        <source>Enlarge the main window text</source>
-        <translation>メインウインドウのテキストを拡大します</translation>
-    </message>
-    <message>
-        <source>Zoom Out</source>
-        <translation>縮小</translation>
-    </message>
-    <message>
-        <source>Normal Size</source>
-        <translation>標準サイズ</translation>
-    </message>
-    <message>
-        <source>Resize Columns</source>
-        <translation>列幅を再調整</translation>
-    </message>
-    <message>
-        <source>Resize packet list columns to fit contents</source>
-        <translation>列の内容に合わせてパケット一覧の列幅を調整します</translation>
-    </message>
-    <message>
-        <source>Date and Time of Day (1970-01-01 01:02:03.123456)</source>
-        <translation>日時 (1973-06-14 01:02:03.123456)</translation>
-    </message>
-    <message>
-        <source>Show packet times as the date and time of day.</source>
-        <translation>パケット時間を日付と時刻で表示します。</translation>
-    </message>
-    <message>
-        <source>Year, Day of Year, and Time of Day (1970/001 01:02:03.123456)</source>
-        <translation>年、通年日、時刻 (1970/001 01:02:03.123456)</translation>
-    </message>
-    <message>
-        <source>Show packet times as the year, day of the year and time of day.</source>
-        <translation>パケット時間を年、通年日、時刻で表示します</translation>
-    </message>
-    <message>
-        <source>Time of Day (01:02:03.123456)</source>
-        <translation>時刻 (01:02:03.123456)</translation>
-    </message>
-    <message>
-        <source>Seconds Since 1970-01-01</source>
-        <translation>1970年1月1日からの秒数</translation>
-    </message>
-    <message>
-        <source>Show packet times as the seconds since the UNIX / POSIX epoch (1970-01-01).</source>
-        <translation>パケットの時間をUNIX/POSIX起源(1970-01-01)以来の秒数で表示します</translation>
-    </message>
-    <message>
-        <source>Seconds Since Beginning of Capture</source>
-        <translation>キャプチャ開始からの秒数</translation>
-    </message>
-    <message>
-        <source>Seconds Since Previous Captured Packet</source>
-        <translation>前にキャプチャされたパケットからの秒数</translation>
-    </message>
-    <message>
-        <source>Show packet times as the seconds since the previous captured packet.</source>
-        <translation>パケット時間を前にキャプチャされたパケットからの秒数で表示します</translation>
-    </message>
-    <message>
-        <source>Seconds Since Previous Displayed Packet</source>
-        <translation>前に表示されたパケットからの秒数</translation>
-    </message>
-    <message>
-        <source>Show packet times as the seconds since the previous displayed packet.</source>
-        <translation>パケット時間を前に表示されたパケットからの秒数で表示します</translation>
-    </message>
-    <message>
-        <source>UTC Date and Time of Day (1970-01-01 01:02:03.123456)</source>
-        <translation>UTC日時 (1973-06-14 01:02:03.123456)</translation>
-    </message>
-    <message>
-        <source>Show packet times as the UTC date and time of day.</source>
-        <translation>パケット時間をUTC日付および時刻で表示します</translation>
-    </message>
-    <message>
-        <source>UTC Year, Day of Year, and Time of Day (1970/001 01:02:03.123456)</source>
-        <translation>UTC年、通年日、時刻 (1970/001 01:02:03.123456)</translation>
-    </message>
-    <message>
-        <source>Show packet times as the UTC year, day of the year and time of day.</source>
-        <translation>パケット時間をUTC年、通年日、時刻で表示します</translation>
-    </message>
-    <message>
-        <source>UTC Time of Day (01:02:03.123456)</source>
-        <translation>UTC時刻 (01:02:03.123456)</translation>
-    </message>
-    <message>
-        <source>Show packet times as the UTC time of day.</source>
-        <translation>パケット時間をUTC時刻として表示します</translation>
-    </message>
-    <message>
-        <source>Automatic (from capture file)</source>
-        <translation>自動(キャプチャファイルから)</translation>
-    </message>
-    <message>
-        <source>Use the time precision indicated in the capture file.</source>
-        <translation>キャプチャファイルに記述された時間精度を利用します</translation>
-    </message>
-    <message>
-        <source>Seconds</source>
-        <translation>秒</translation>
-    </message>
-    <message>
-        <source>Tenths of a second</source>
-        <translation>×10秒</translation>
-    </message>
-    <message>
-        <source>Hundredths of a second</source>
-        <translation>×100秒</translation>
-    </message>
-    <message>
-        <source>Milliseconds</source>
-        <translation>ミリ秒</translation>
-    </message>
-    <message>
-        <source>Microseconds</source>
-        <translation>マイクロ秒</translation>
-    </message>
-    <message>
-        <source>Nanoseconds</source>
-        <translation>ナノ秒</translation>
-    </message>
-    <message>
-        <source>Display Seconds With Hours and Minutes</source>
-        <translation>時分秒表示</translation>
-    </message>
-    <message>
-        <source>Display seconds with hours and minutes</source>
-        <translation>時分秒で表示します</translation>
-    </message>
-    <message>
-        <source>Resolve &amp;Physical Addresses</source>
-        <translation>物理アドレスを解決(&amp;P)</translation>
-    </message>
-    <message>
-        <source>Show names for known MAC addresses. Lookups use a local database.</source>
-        <translation>既知のMACアドレスの名前を表示します ローカルデータベースを参照します</translation>
-    </message>
-    <message>
-        <source>Resolve &amp;Network Addresses</source>
-        <translation>ネットワークアドレスを解決(&amp;N)</translation>
-    </message>
-    <message>
-        <source>Show names for known IPv4, IPv6, and IPX addresses. Lookups can generate network traffic.</source>
-        <translation>既知のIPv4、IPv6およびIPXアドレスの名前を表示します 解決にはネットワークトラフィックを生成します</translation>
-    </message>
-    <message>
-        <source>Resolve &amp;Transport Addresses</source>
-        <translation>トランスポート層アドレスを解決(&amp;T)</translation>
-    </message>
-    <message>
-        <source>Show names for known TCP, UDP, and SCTP services. Lookups can generate traffic on some systems.</source>
-        <translation>既知のTCP UDPおよびSCTPサービスの名前を表示します システムによっては解決にトラフィックを生成します</translation>
-    </message>
-    <message>
-        <source>Wire&amp;less Toolbar</source>
-        <translation>無線ツールバー(&amp;l)</translation>
-    </message>
-    <message>
-        <source>Show or hide the wireless toolbar</source>
-        <translation>無線ツールバーを表示または非表示にします</translation>
-    </message>
-    <message>
-        <source>&amp;Status Bar</source>
-        <translation>ステータスバー(&amp;S)</translation>
-    </message>
-    <message>
-        <source>Show or hide the status bar</source>
-        <translation>ステータスバーを表示または非表示にします</translation>
-    </message>
-    <message>
-        <source>Packet &amp;List</source>
-        <translation>パケット一覧(&amp;L)</translation>
-    </message>
-    <message>
-        <source>Show or hide the packet list</source>
-        <translation>パケット一覧を表示または非表示にします</translation>
-    </message>
-    <message>
-        <source>Packet &amp;Details</source>
-        <translation>パケット詳細(&amp;D)</translation>
-    </message>
-    <message>
-        <source>Show or hide the packet details</source>
-        <translation>パケット詳細を表示または非表示にします</translation>
-    </message>
-    <message>
-        <source>Packet &amp;Bytes</source>
-        <translation>パケットバイト列(&amp;B)</translation>
-    </message>
-    <message>
-        <source>Show or hide the packet bytes</source>
-        <translation>パケットバイト列を表示または非表示にします</translation>
-    </message>
-    <message>
-        <source>&amp;Conversation Hash Tables</source>
-        <translation>対話ハッシュ表(&amp;C)</translation>
-    </message>
-    <message>
-        <source>&amp;Dissector Tables</source>
-        <translation>ダイセクター表(&amp;D)</translation>
-    </message>
-    <message>
-        <source>&amp;Supported Protocols</source>
-        <translation>サポートされているプロトコル(&amp;S)</translation>
-    </message>
-    <message>
-        <source>MAP Summary</source>
-        <translation>MAP概要</translation>
-    </message>
-    <message>
-        <source>GSM MAP summary statistics</source>
-        <translation>GSM MAP 概要統計</translation>
-    </message>
-    <message>
-        <source>RLC &amp;Graph</source>
-        <translation>RLCグラフ(&amp;G)</translation>
-    </message>
-    <message>
-        <source>&amp;Coloring Rules…</source>
-        <translation>色付けルール…(&amp;C)</translation>
-    </message>
-    <message>
-        <source>Show Linked Packet in New Window</source>
-        <translation>新規ウインドウでリンクされたパケットを表示</translation>
-    </message>
-    <message>
-        <source>New Coloring Rule…</source>
-        <oldsource>New Conversation Rule…</oldsource>
-        <translation>新規対話ルール…</translation>
-    </message>
-    <message>
-        <source>RTP Stream Analysis for selected stream. Press CTRL key for adding reverse stream too.</source>
-        <translation>選択したストリームのRTPストリーム分析。CTRLキーを押して逆方向のストリームも追加できます</translation>
-    </message>
-    <message>
-        <source>RTP Player</source>
-        <translation>RTPプレイヤー</translation>
-    </message>
-    <message>
-        <source>Play selected stream. Press CTRL key for playing reverse stream too.</source>
-        <translation>選択したストリームを再生します。CTRLキーを押して逆方向のストリームも再生します。</translation>
-    </message>
-    <message>
-        <source>IA&amp;X2 Stream Analysis</source>
-        <translation>IAX2ストリーム分析(&amp;X)</translation>
-    </message>
-    <message>
-        <source>Enabled Protocols…</source>
-        <oldsource>Enable Protocols…</oldsource>
-        <translation>有効化したプロトコル…</translation>
-    </message>
-    <message>
-        <source>Wiki Protocol Page</source>
-        <translation>Wikiプロトコルページ</translation>
-    </message>
-    <message>
-        <source>Open the Wireshark wiki page for this protocol.</source>
-        <translation>このプロトコルについてのWireshark Wikiページを開きます</translation>
-    </message>
-    <message>
-        <source>Filter Field Reference</source>
-        <translation>フィルタフィールドリファレンス</translation>
-    </message>
-    <message>
-        <source>Open the display filter reference page for this filter field.</source>
-        <translation>このフィルタフィールドについての表示フィルタリファレンスを開きます</translation>
-    </message>
-    <message>
-        <source>Go to the packet referenced by the selected field.</source>
-        <translation>選択されたフィールドによって参照されたパケットへ移動します</translation>
-    </message>
-    <message>
-        <source>&amp;VoIP Calls</source>
-        <translation>VoIP通話(&amp;V)</translation>
-    </message>
-    <message>
-        <source>Open &amp;Recent</source>
-        <translation>最近使ったファイルを開く(&amp;R)</translation>
-    </message>
-    <message>
-        <source>Name Resol&amp;ution</source>
-        <translation>名前解決(&amp;u)</translation>
-    </message>
-    <message>
-        <source>Service &amp;Response Time</source>
-        <translation>サービス応答時間(&amp;R)</translation>
-    </message>
-    <message>
-        <source>&amp;RTP</source>
-        <translation>&amp;RTP</translation>
-    </message>
-    <message>
-        <source>S&amp;CTP</source>
-        <translation>S&amp;CTP</translation>
-    </message>
-    <message>
-        <source>&amp;ANSI</source>
-        <translation>&amp;ANSI</translation>
-    </message>
-    <message>
-        <source>&amp;GSM</source>
-        <translation>&amp;GSM</translation>
-    </message>
-    <message>
-        <source>&amp;LTE</source>
-        <translation>&amp;LTE</translation>
-    </message>
-    <message>
-        <source>&amp;MTP3</source>
-        <translation>&amp;MTP3</translation>
-    </message>
-    <message>
-        <source>&amp;Open</source>
-        <translation>開く(&amp;O)</translation>
-    </message>
-    <message>
-        <source>&amp;Quit</source>
-        <translation>終了(&amp;Q)</translation>
-    </message>
-    <message>
-        <source>&amp;Close</source>
-        <translation>閉じる(&amp;C)</translation>
-    </message>
-    <message>
-        <source>Display &amp;Filters…</source>
-        <translation>表示フィルタ(&amp;F)…</translation>
-    </message>
-    <message>
-        <source>&amp;Unmark All Displayed</source>
-        <translation>表示されているものすべてをマーク解除(&amp;U)</translation>
-    </message>
-    <message>
-        <source>All VoIP Calls</source>
-        <translation>すべてのVoIP通話</translation>
-    </message>
-    <message>
-        <source>SIP &amp;Flows</source>
-        <translation>SIPフロー(&amp;F)</translation>
-    </message>
-    <message>
-        <source>SIP Flows</source>
-        <translation>SIPフロー</translation>
-    </message>
-    <message>
-        <source>RTP Streams</source>
-        <translation>RTPストリーム</translation>
-    </message>
-    <message>
-        <source>Edit the packet list coloring rules.</source>
-        <translation>パケット一覧の色付けルールを編集します</translation>
-    </message>
-    <message>
-        <source>Bluetooth ATT Server Attributes</source>
-        <oldsource>ATT Server Attributes</oldsource>
-        <translation>Bluetooth ATTサーバ属性</translation>
-    </message>
-    <message>
-        <source>Show Packet in New &amp;Window</source>
-        <translation>新規ウインドウでパケットを表示(&amp;W)</translation>
-    </message>
-    <message>
-        <source>Show this packet in a separate window.</source>
-        <translation>個別のウィンドウでこのパケットを表示</translation>
-    </message>
-    <message>
-        <source>Show the linked packet in a separate window.</source>
-        <translation>個別のウインドウでリンクされたパケットを表示します</translation>
-    </message>
-    <message>
-        <source>Auto Scroll in Li&amp;ve Capture</source>
-        <translation>生のキャプチャを自動スクロール(&amp;v)</translation>
-    </message>
-    <message>
-        <source>Automatically scroll to the last packet during a live capture.</source>
-        <translation>生キャプチャ中の最後のパケットを自動スクロールします</translation>
-    </message>
-    <message>
-        <source>Expert Information</source>
-        <translation>エキスパート情報</translation>
-    </message>
-    <message>
-        <source>Show expert notifications</source>
-        <translation>エキスパート通知を表示します</translation>
-    </message>
-    <message>
-        <source>Add an expression to the display filter.</source>
-        <translation>表示フィルタの書式を追加します</translation>
-    </message>
-    <message>
-        <source>REGISTER_STAT_GROUP_UNSORTED</source>
-        <translation>REGISTER_STAT_GROUP_UNSORTED </translation>
-    </message>
-    <message>
-        <source>Start of &quot;REGISTER_STAT_GROUP_UNSORTED&quot;</source>
-        <translation>&quot;RREGISTER_STAT_GROUP_UNSORTED&quot;Rの開始</translation>
-    </message>
-    <message>
-        <source>No ANSI statistics registered</source>
-        <oldsource>No tools registered</oldsource>
-        <translation>ANSI統計は登録されていません</translation>
-    </message>
-    <message>
-        <source>Resolved Addresses</source>
-        <translation>解決したアドレス</translation>
-    </message>
-    <message>
-        <source>Show each table of resolved addresses as copyable text.</source>
-        <translation>コピー可能なテキストとして解決したアドレスの表を表示します</translation>
-    </message>
-    <message>
-        <source>Color &amp;1</source>
-        <translation>色 &amp;1</translation>
-    </message>
-    <message>
-        <source>Mark the current conversation with its own color.</source>
-        <oldsource>Mark the current coversation with its own color.</oldsource>
-        <translation>独自の色で現在の対話をマークします</translation>
-    </message>
-    <message>
-        <source>Color &amp;2</source>
-        <translation>色 &amp;2</translation>
-    </message>
-    <message>
-        <source>Color &amp;3</source>
-        <translation>色 &amp;3</translation>
-    </message>
-    <message>
-        <source>Color &amp;4</source>
-        <translation>色 &amp;4</translation>
-    </message>
-    <message>
-        <source>Color &amp;5</source>
-        <translation>色 &amp;5</translation>
-    </message>
-    <message>
-        <source>Color &amp;6</source>
-        <translation>色 &amp;6</translation>
-    </message>
-    <message>
-        <source>Color &amp;7</source>
-        <translation>色 &amp;7</translation>
-    </message>
-    <message>
-        <source>Color &amp;8</source>
-        <translation>色 &amp;8</translation>
-    </message>
-    <message>
-        <source>Color &amp;9</source>
-        <translation>色 &amp;9</translation>
-    </message>
-    <message>
-        <source>Color 1&amp;0</source>
-        <translation>色 1&amp;0</translation>
-    </message>
-    <message>
-        <source>Create a new coloring rule based on this field.</source>
-        <oldsource>Create a new coloring rule based on this conversation.</oldsource>
-        <translation>この対話に基づいた新しい色付けルールを作成します</translation>
-    </message>
-    <message>
-        <source>Reset Colorization</source>
-        <translation>色付けをリセット</translation>
-    </message>
-    <message>
-        <source>Reset colorized conversations.</source>
-        <translation>対話の色付けをリセットします</translation>
-    </message>
-    <message>
-        <source>RTP Stream Analysis</source>
-        <translation>RTPストリーム分析</translation>
-    </message>
-    <message>
-        <source>Edit Resolved Name</source>
-        <translation>解決した名前を編集</translation>
-    </message>
-    <message>
-        <source>Manually edit a name resolution entry.</source>
-        <translation>名前解決エントリを手動で編集します</translation>
-    </message>
-    <message>
-        <source>Enable and disable specific protocols</source>
-        <translation>指定プロトコルを有効および無効化します</translation>
-    </message>
-    <message>
-        <source> before quitting</source>
-        <translation>終了前</translation>
-    </message>
-    <message>
-        <source>Save packets before merging?</source>
-        <translation>結合する前にパケットを保存しますか？</translation>
-    </message>
-    <message>
-        <source>A temporary capture file can&apos;t be merged.</source>
-        <translation>一時的なキャプチャファイルは結合することができません</translation>
-    </message>
-    <message>
-        <source>Save changes in &quot;%1&quot; before merging?</source>
-        <translation>結合する前に &quot;%1&quot; に変更を保存しますか？</translation>
-    </message>
-    <message>
-        <source>Changes must be saved before the files can be merged.</source>
-        <translation>ファイルを結合する前に変更を保存する必要があります</translation>
-    </message>
-    <message>
-        <source>Invalid Display Filter</source>
-        <translation>無効な表示フィルタ</translation>
-    </message>
-    <message>
-        <source>Invalid Read Filter</source>
-        <translation>無効な読込フィルタ</translation>
-    </message>
-    <message>
-        <source>The filter expression %1 isn&apos;t a valid read filter. (%2).</source>
-        <translation>フィルタ式 %1 は有効な読込みフィルタではありません(%2)</translation>
-    </message>
-    <message>
-        <source> before importing a capture</source>
-        <oldsource> before importing a new capture</oldsource>
-        <translation>新しいキャプチャファイルをインポートする前に</translation>
-    </message>
-    <message>
-        <source>Unable to export to &quot;%1&quot;.</source>
-        <translation>&quot;%1&quot; をエクスポートすることができません</translation>
-    </message>
-    <message>
-        <source>You cannot export packets to the current capture file.</source>
-        <translation>現在のキャプチャファイルへパケットをエクスポートすることはできません</translation>
-    </message>
-    <message>
-        <source>Do you want to save the changes you&apos;ve made%1?</source>
-        <oldsource>Do you want to save the captured packets</oldsource>
-        <translation>%1 に作成した変更を保存したいですか？</translation>
-    </message>
-    <message>
-        <source>Your captured packets will be lost if you don&apos;t save them.</source>
-        <translation>保存しない場合キャプチャしたパケットは失われます</translation>
-    </message>
-    <message>
-        <source>Do you want to save the changes you&apos;ve made to the capture file &quot;%1&quot;%2?</source>
-        <translation>キャプチャスタイルに行った変更を保存しますか</translation>
-    </message>
-    <message>
-        <source>Your changes will be lost if you don&apos;t save them.</source>
-        <translation>保存しない場合変更は失われます</translation>
-    </message>
-    <message>
-        <source>Check for Updates…</source>
-        <translation>更新を確認…</translation>
-    </message>
-    <message>
-        <source>Unable to drop files during capture.</source>
-        <translation>キャプチャ中にファイルをドロップできません</translation>
-    </message>
-    <message>
-        <source>Unknown file type returned by merge dialog.</source>
-        <translation>結合画面から返された未知のファイルタイプ</translation>
-    </message>
-    <message>
-        <source>Please report this as a Wireshark issue at https://gitlab.com/wireshark/wireshark/-/issues.</source>
-        <translation>どうかこれをWiresharkの問題として以下に報告ください。https://gitlab.com/wireshark/wireshark/-/issues</translation>
-    </message>
-    <message>
-        <source>Unknown file type returned by export dialog.</source>
-        <translation>エクスポート画面から返された未知のファイルタイプ</translation>
-    </message>
-    <message>
-        <source>Do you want to stop the capture and save the captured packets%1?</source>
-        <translation>キャプチャを停止してキャプチャしたパケットを保存しますか？%1</translation>
-    </message>
-    <message>
-        <source>Do you want to save the captured packets%1?</source>
-        <translation>キャプチャしたパケットを保存しますか？%1</translation>
-    </message>
-    <message>
-        <source>Save before Continue</source>
-        <translation>続ける前に保存</translation>
-    </message>
-    <message>
-        <source>Stop and Save</source>
-        <translation>停止して保存</translation>
-    </message>
-    <message>
-        <source>Stop and Quit &amp;without Saving</source>
-        <oldsource>Stop and Quit without Saving</oldsource>
-        <translation>保存しないで停止して終了(&amp;w)</translation>
-    </message>
-    <message>
-        <source>Quit &amp;without Saving</source>
-        <oldsource>Quit without Saving</oldsource>
-        <translation>保存しないで終了(&amp;w)</translation>
-    </message>
-    <message>
-        <source>There is no &quot;rtp.ssrc&quot; field in this version of Wireshark.</source>
-        <translation>このバージョンのWiresharkには &quot;rtp.ssrc&quot; フィールドはありません</translation>
-    </message>
-    <message>
-        <source>Please select an RTPv2 packet with an SSRC value</source>
-        <translation>SSRC値をもつRTPv2パケットを選んでください</translation>
-    </message>
-    <message>
-        <source>SSRC value not found.</source>
-        <translation>SSRC値が見つかりませんでした</translation>
-    </message>
-    <message>
-        <source>Show or hide the toolbar</source>
-        <translation>ツールバーを表示/非表示</translation>
-    </message>
-    <message>
-        <source>Continue &amp;without Saving</source>
-        <oldsource>Continue without Saving</oldsource>
-        <translation>保存せずに続ける(&amp;w)</translation>
-    </message>
-    <message>
-        <source>Stop and Continue &amp;without Saving</source>
-        <oldsource>Stop and Continue without Saving</oldsource>
-        <translation>保存せずに停止して続ける(&amp;w)</translation>
-    </message>
-    <message>
-        <source>The Wireshark Network Analyzer</source>
-        <translation>ワイヤーシャークネットワークアナライザ</translation>
-    </message>
-    <message>
-        <source>Capturing from %1</source>
-        <translation>%1 からキャプチャ中</translation>
-    </message>
-    <message>
-        <source> before opening another file</source>
-        <translation>別のファイルを開く前に</translation>
-    </message>
-    <message>
-        <source>Merging files.</source>
-        <translation>ファイルを結合</translation>
-    </message>
-    <message>
-        <source>%1: %2</source>
-        <translation>%1: %2</translation>
-    </message>
-    <message>
-        <source>Clear Menu</source>
-        <translation>メニューをクリア</translation>
-    </message>
-    <message>
-        <source> before closing the file</source>
-        <translation>ファイルを閉じる前に</translation>
-    </message>
-    <message>
-        <source>Export Selected Packet Bytes</source>
-        <translation>選択したパケットバイト列をエクスポート</translation>
-    </message>
-    <message>
-        <source>No Keys</source>
-        <translation>キーはありません</translation>
-    </message>
-    <message numerus="yes">
-        <source>Export SSL Session Keys (%Ln key(s))</source>
-        <oldsource>Export SSL Session Keys (%1 key%2</oldsource>
-        <translation type="vanished">
-            <numerusform>SSLセッション鍵をエクスポート (%Ln keys)</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>Raw data (*.bin *.dat *.raw);;All Files (</source>
-        <translation>Raw(無加工)データ形式 (*.bin *.dat *.raw);;すべてのファイル(</translation>
-    </message>
-    <message>
-        <source>Couldn&apos;t copy text. Try another item.</source>
-        <translation>テキストをコピーできません 別の項目を試してみてください</translation>
-    </message>
-    <message>
-        <source>Are you sure you want to remove all packet comments?</source>
-        <translation>本当にすべてのパケットコメントを削除してよいですか？</translation>
-    </message>
-    <message>
-        <source>Unable to build conversation filter.</source>
-        <translation>会話フィルタを作成できません</translation>
-    </message>
-    <message>
-        <source> before reloading the file</source>
-        <translation>ファイルを再読み込みする前に</translation>
-    </message>
-    <message>
-        <source>Error compiling filter for this conversation.</source>
-        <translation>この対話の間のフィルタ翻訳エラー</translation>
-    </message>
-    <message>
-        <source>No previous/next packet in conversation.</source>
-        <translation>対話の前/次のパケットがありません</translation>
-    </message>
-    <message>
-        <source>No interface selected.</source>
-        <translation>インターフェースが選択されていません</translation>
-    </message>
-    <message>
-        <source>Saving %1…</source>
-        <translation>保存中 %1…</translation>
-    </message>
-    <message>
-        <source>Configure all extcaps before start of capture.</source>
-        <translation>キャプチャ開始前にすべてのextcapを設定します</translation>
-    </message>
-    <message>
-        <source>Invalid capture filter.</source>
-        <translation>無効なキャプチャフィルタ</translation>
-    </message>
-    <message>
-        <source>(empty comment)</source>
-        <comment>placeholder for empty comment</comment>
-        <translation>(コメント空)</translation>
-    </message>
-    <message>
-        <source>Add New Comment…</source>
-        <translation>新規コメントを追加…</translation>
-    </message>
-    <message>
-        <source>Edit &quot;%1&quot;</source>
-        <comment>edit packet comment</comment>
-        <translation>編集 &quot;%1&quot;</translation>
-    </message>
-    <message>
-        <source>Delete &quot;%1&quot;</source>
-        <comment>delete packet comment</comment>
-        <translation>削除 &quot;%1&quot;</translation>
-    </message>
-    <message>
-        <source>Delete packet comments</source>
-        <translation>パケットコメントを削除</translation>
-    </message>
-    <message numerus="yes">
-        <source>Delete comments from %n packet(s)</source>
-        <translation>
-            <numerusform>%n パケットよりコメントを削除</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source> before starting a new capture</source>
-        <translation>新規キャプチャを開始する前に</translation>
-    </message>
-    <message>
-        <source> before reloading Lua plugins</source>
-        <translation>Lua プラグインの再読込前</translation>
-    </message>
-    <message>
-        <source>Please wait while Wireshark is initializing…</source>
-        <translation>Wiresharkが初期化している間お待ちください…</translation>
-    </message>
-    <message>
-        <source>There are no TLS Session Keys to save.</source>
-        <translation>保存するTLSセッション鍵はありません</translation>
-    </message>
-    <message numerus="yes">
-        <source>Export TLS Session Keys (%Ln key(s))</source>
-        <translation>
-            <numerusform>TLSセッション鍵をエクスポート (%Ln keys)</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>TLS Session Keys (*.keys *.txt);;All Files (</source>
-        <translation>TLSセッション鍵 (*.keys *.txt);;すべてのファイル (</translation>
-    </message>
-    <message>
-        <source>No filter available. Try another %1.</source>
-        <translation>フィルタが利用できません 別の %1 を利用してください</translation>
-    </message>
-    <message>
-        <source>column</source>
-        <translation>列</translation>
-    </message>
-    <message>
-        <source>item</source>
-        <translation>項目</translation>
-    </message>
-    <message>
-        <source>The &quot;%1&quot; column already exists.</source>
-        <translation>&quot;%1&quot; 列は既に存在します</translation>
-    </message>
-    <message>
-        <source>The &quot;%1&quot; column already exists as &quot;%2&quot;.</source>
-        <translation>&quot;%1&quot; 列は &quot;%2&quot; として既に存在します</translation>
-    </message>
-    <message>
-        <source>RTP packet search failed</source>
-        <translation>RTPパケットの検索に失敗しました</translation>
-    </message>
-    <message>
-        <source>No Interface Selected.</source>
-        <translation>インターフェースが選択されていません</translation>
-    </message>
-    <message>
-        <source> before restarting the capture</source>
-        <translation>キャプチャを再スタートする前に</translation>
-    </message>
-    <message>
-        <source>Wiki Page for %1</source>
-        <translation>%1 の Wikiページ</translation>
-    </message>
-    <message>
-        <source>&lt;p&gt;The Wireshark Wiki is maintained by the community.&lt;/p&gt;&lt;p&gt;The page you are about to load might be wonderful, incomplete, wrong, or nonexistent.&lt;/p&gt;&lt;p&gt;Proceed to the wiki?&lt;/p&gt;</source>
-        <translation>&lt;p&gt;ワイヤーシャークWikiはコミュニティによって運営されています &lt;/p&gt;&lt;p&gt;いま見ているページはすばらしかったり、不完全だったり、間違っていたり、存在しないかもしれません。&lt;/p&gt;&lt;p&gt;Wikiに移動しますか？&lt;/p&gt;</translation>
-    </message>
-    <message>
-        <source>Loading</source>
-        <translation>ロード中</translation>
-    </message>
-    <message>
-        <source>Reloading</source>
-        <translation>再読み込み中</translation>
-    </message>
-    <message>
-        <source>Rescanning</source>
-        <translation>再スキャニング中</translation>
     </message>
 </context>
 <context>
@@ -9051,8 +7131,20 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
 <context>
     <name>PacketListModel</name>
     <message>
+        <source>Column</source>
+        <translation>列</translation>
+    </message>
+    <message>
+        <source>%1 can only be sorted with %2 or fewer visible rows; increase cache size in Layout preferences</source>
+        <translation>%1 は %2 か、より少ない表示行数でのみソートできます。設定のレイアウトでキャッシュサイズを増やしてください。</translation>
+    </message>
+    <message>
         <source>Sorting &quot;%1&quot;…</source>
         <translation>&quot;%1&quot; ソート中…</translation>
+    </message>
+    <message>
+        <source>Sorting …</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -9103,14 +7195,21 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     </message>
 </context>
 <context>
-    <name>PathChooserDelegate</name>
+    <name>PathSelectionDelegate</name>
+    <message>
+        <source>Open a pipe</source>
+        <translation>パイプを開く</translation>
+    </message>
+</context>
+<context>
+    <name>PathSelectionEdit</name>
     <message>
         <source>Browse</source>
         <translation>参照</translation>
     </message>
     <message>
-        <source>Open Pipe</source>
-        <translation>パイプを開く</translation>
+        <source>Select a path</source>
+        <translation>パスを選択</translation>
     </message>
 </context>
 <context>
@@ -9332,6 +7431,24 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation>エクスポート</translation>
     </message>
     <message>
+        <source>From Zip File...</source>
+        <translation>Zipファイルより...</translation>
+    </message>
+    <message>
+        <source>From Directory...</source>
+        <translation>ディレクトリより...</translation>
+    </message>
+    <message numerus="yes">
+        <source>%Ln Selected Personal Profile(s)...</source>
+        <translation>
+            <numerusform>%Ln 選択された個人プロファイル...</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>All Personal Profiles...</source>
+        <translation>すべての個人プロファイル...</translation>
+    </message>
+    <message>
         <source>New profile</source>
         <translation>新規プロファイル</translation>
     </message>
@@ -9359,7 +7476,7 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     </message>
     <message numerus="yes">
         <source>%Ln selected personal profile(s)</source>
-        <translation>
+        <translation type="vanished">
             <numerusform>%Ln 選択された個人プロファイル</numerusform>
         </translation>
     </message>
@@ -9396,18 +7513,6 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     <message>
         <source>Zip File (*.zip)</source>
         <translation>Zipファイル (*.zip)</translation>
-    </message>
-    <message>
-        <source>from zip file</source>
-        <translation>zipファイルより</translation>
-    </message>
-    <message>
-        <source>from directory</source>
-        <translation>ディレクトリより</translation>
-    </message>
-    <message>
-        <source>all personal profiles</source>
-        <translation>すべての個人プロファイル</translation>
     </message>
     <message>
         <source>Error</source>
@@ -9704,6 +7809,10 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation>終端ビット毎秒</translation>
     </message>
     <message>
+        <source>PDUs</source>
+        <translation>PDU</translation>
+    </message>
+    <message>
         <source>&lt;small&gt;&lt;i&gt;A hint.&lt;/i&gt;&lt;/small&gt;</source>
         <translation>&lt;small&gt;&lt;i&gt;ヒント&lt;/i&gt;&lt;/small&gt;</translation>
     </message>
@@ -9875,7 +7984,7 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     </message>
     <message>
         <source>Any </source>
-        <translation>すべて </translation>
+        <translation>いずれかの</translation>
     </message>
     <message>
         <source>Don&apos;t show this message again.</source>
@@ -12615,7 +10724,7 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     </message>
     <message>
         <source>Any</source>
-        <translation>すべて</translation>
+        <translation>いずれかの</translation>
     </message>
     <message>
         <source>Network</source>
@@ -12886,6 +10995,10 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation>16進数字</translation>
     </message>
     <message>
+        <source>Percent-Encoding</source>
+        <translation>パーセント-エンコーディング</translation>
+    </message>
+    <message>
         <source>Quoted-Printable</source>
         <translation>節に分けて印刷可能</translation>
     </message>
@@ -12920,10 +11033,6 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     <message>
         <source>Image</source>
         <translation>画像形式</translation>
-    </message>
-    <message>
-        <source>Json</source>
-        <translation>Json</translation>
     </message>
     <message>
         <source>Raw</source>
@@ -12962,6 +11071,10 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation>
             <numerusform>%Ln バイトを表示中</numerusform>
         </translation>
+    </message>
+    <message>
+        <source>JSON</source>
+        <translation>JSON</translation>
     </message>
     <message>
         <source>Regex Find:</source>
@@ -13046,11 +11159,11 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     <name>StripHeadersDialog</name>
     <message>
         <source>Dialog</source>
-        <translation type="unfinished">ダイアログ</translation>
+        <translation>ダイアログ</translation>
     </message>
     <message>
         <source>Display filter:</source>
-        <translation type="unfinished">表示フィルタ:</translation>
+        <translation>表示フィルタ:</translation>
     </message>
 </context>
 <context>
@@ -13101,6 +11214,10 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
 </context>
 <context>
     <name>SyntaxLineEdit</name>
+    <message>
+        <source>Invalid filter: %1</source>
+        <translation>無効なフィルタ: %1</translation>
+    </message>
     <message>
         <source>&quot;%1&quot; is deprecated in favour of &quot;%2&quot;. See Help section 6.4.8 for details.</source>
         <translation>&quot;%1&quot; は非推奨で &quot;%2&quot; が推奨されます。詳細はヘルプ 6.4.8をご覧ください</translation>
@@ -13817,6 +11934,25 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     </message>
 </context>
 <context>
+    <name>TrafficTab</name>
+    <message>
+        <source>Map file error</source>
+        <translation>マップファイルエラー</translation>
+    </message>
+    <message>
+        <source>Could not open base file %1 for reading: %2</source>
+        <translation>%2 を読み込む際にベースファイル %1 を開くことができません。</translation>
+    </message>
+    <message>
+        <source>No endpoints available to map</source>
+        <translation>マップに利用できる終端がありません</translation>
+    </message>
+    <message>
+        <source>Unable to create temporary file</source>
+        <translation>一時ファイルを作成できません</translation>
+    </message>
+</context>
+<context>
     <name>TrafficTableDialog</name>
     <message>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Show resolved addresses and port names rather than plain values. The corresponding name resolution preference must be enabled.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
@@ -13835,44 +11971,113 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation>表示フィルタに制限</translation>
     </message>
     <message>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Only show types matching the filter value&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;フィルタ値に適当する形式のみ表示します&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+    </message>
+    <message>
+        <source>Filter list for specific type</source>
+        <translation>特定の種別でリストをフィルタ</translation>
+    </message>
+    <message>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Show absolute times in the start time column.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;開始時間列に絶対的な時間を表示します&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+    </message>
+    <message>
+        <source>GroupBox</source>
+        <translation>グループボックス</translation>
     </message>
     <message>
         <source>Absolute start time</source>
         <translation>絶対的開始時間</translation>
     </message>
     <message>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Add and remove conversation types.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;対話タイプを追加または削除します&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
-    </message>
-    <message>
-        <source>%1 Types</source>
-        <translation>%1 タイプ</translation>
-    </message>
-    <message>
         <source>Copy</source>
         <translation>コピー</translation>
     </message>
     <message>
+        <source>Unknown</source>
+        <translation>不明</translation>
+    </message>
+</context>
+<context>
+    <name>TrafficTree</name>
+    <message>
+        <source>Resize all columns to content</source>
+        <translation>すべての列を内容にあわせてリサイズします</translation>
+    </message>
+    <message>
+        <source>Filter on stream id</source>
+        <translation>ストリームIDに基づいてフィルタ</translation>
+    </message>
+    <message>
+        <source>Copy %1 table</source>
+        <translation>%1 表をコピー</translation>
+    </message>
+    <message>
         <source>as CSV</source>
-        <translation>CSV形式として</translation>
+        <translation>CSVとして</translation>
     </message>
     <message>
         <source>Copy all values of this page to the clipboard in CSV (Comma Separated Values) format.</source>
-        <translation>このページのすべての値をクリップボードにCSV(カンマ区切りテキスト)形式でコピー</translation>
+        <translation>このページの全ての値をCSV(カンマ区切りテキスト)形式でクリップボードへコピーします</translation>
     </message>
     <message>
         <source>as YAML</source>
-        <translation>YAML形式として</translation>
+        <translation>YAMLとして</translation>
     </message>
     <message>
         <source>Copy all values of this page to the clipboard in the YAML data serialization format.</source>
-        <translation>このページのすべての値をクリップボードにYAMLデータシリアル化形式でコピーします</translation>
+        <translation>このページの全ての値をシリアル化されたYAMLデータ形式でクリップボードへコピーします</translation>
     </message>
     <message>
-        <source>Unknown</source>
-        <translation>不明</translation>
+        <source>as JSON</source>
+        <translation>JSONとして</translation>
+    </message>
+    <message>
+        <source>Copy all values of this page to the clipboard in the JSON data serialization format.</source>
+        <translation>このページの全ての値をシリアル化されたJSONデータ形式でクリップボードへコピーします</translation>
+    </message>
+    <message>
+        <source>Save data as raw</source>
+        <translation>Raw(無加工)形式でデータを保存</translation>
+    </message>
+    <message>
+        <source>Disable data formatting for export/clipboard and save as raw data</source>
+        <translation>エクスポートやクリップボードのためにデータフォーマットを無効にしてRaw(無加工)形式で保存します</translation>
+    </message>
+</context>
+<context>
+    <name>TrafficTreeHeaderView</name>
+    <message>
+        <source>Less than</source>
+        <translation>より小さい</translation>
+    </message>
+    <message>
+        <source>Greater than</source>
+        <translation>より大きい</translation>
+    </message>
+    <message>
+        <source>Equal</source>
+        <translation>イコール</translation>
+    </message>
+    <message>
+        <source>Columns to display</source>
+        <translation>表示する列</translation>
+    </message>
+    <message>
+        <source>Filter %1 by</source>
+        <translation>%1 でフィルタします</translation>
+    </message>
+    <message>
+        <source>Enter filter value</source>
+        <translation>フィルタ値を入力します</translation>
+    </message>
+</context>
+<context>
+    <name>TrafficTypesModel</name>
+    <message>
+        <source>Protocol</source>
+        <translation>プロトコル</translation>
     </message>
 </context>
 <context>
@@ -14221,6 +12426,18 @@ a:hover {
 
 &lt;th&gt;&lt;a href=&quot;https://www.wireshark.org/lists/&quot;&gt;Mailing Lists&lt;/a&gt;&lt;/th&gt;
 
+&lt;td style=&quot;padding-left: 8px; padding-right: 8px;&quot;&gt;·&lt;/td&gt;
+
+&lt;th&gt;&lt;a href=&quot;https://sharkfest.wireshark.org/&quot;&gt;SharkFest&lt;/a&gt;&lt;/th&gt;
+
+&lt;td style=&quot;padding-left: 8px; padding-right: 8px;&quot;&gt;·&lt;/td&gt;
+
+&lt;th&gt;&lt;a href=&quot;https://discord.com/invite/ts9GZCjGj5&quot;&gt;Wireshark Discord&lt;/a&gt;&lt;/th&gt;
+
+&lt;td style=&quot;padding-left: 8px; padding-right: 8px;&quot;&gt;·&lt;/td&gt;
+
+&lt;th&gt;&lt;a href=&quot;https://wiresharkfoundation.org/donate/&quot;&gt;Donate&lt;/a&gt;&lt;/th&gt;
+
 &lt;/tr&gt;&lt;/table&gt;
 &lt;/body&gt;&lt;/html&gt;</source>
         <translation>&lt;html&gt;&lt;head&gt;
@@ -14252,6 +12469,18 @@ a:hover {
 
 &lt;th&gt;&lt;a href=&quot;https://www.wireshark.org/lists/&quot;&gt;メーリングリスト&lt;/a&gt;&lt;/th&gt;
 
+&lt;td style=&quot;padding-left: 8px; padding-right: 8px;&quot;&gt;·&lt;/td&gt;
+
+&lt;th&gt;&lt;a href=&quot;https://sharkfest.wireshark.org/&quot;&gt;SharkFest Wireshark開発者会議&lt;/a&gt;&lt;/th&gt;
+
+&lt;td style=&quot;padding-left: 8px; padding-right: 8px;&quot;&gt;·&lt;/td&gt;
+
+&lt;th&gt;&lt;a href=&quot;https://discord.com/invite/ts9GZCjGj5&quot;&gt;Wireshark Discord&lt;/a&gt;&lt;/th&gt;
+
+&lt;td style=&quot;padding-left: 8px; padding-right: 8px;&quot;&gt;·&lt;/td&gt;
+
+&lt;th&gt;&lt;a href=&quot;https://wiresharkfoundation.org/donate/&quot;&gt;寄付&lt;/a&gt;&lt;/th&gt;
+
 &lt;/tr&gt;&lt;/table&gt;
 &lt;/body&gt;&lt;/html&gt;</translation>
     </message>
@@ -14262,6 +12491,10 @@ a:hover {
     <message>
         <source>Show in Folder</source>
         <translation>フォルダで表示</translation>
+    </message>
+    <message>
+        <source>Welcome to %1</source>
+        <translation>%1 へようこそ</translation>
     </message>
     <message>
         <source>All interfaces shown</source>
@@ -14389,6 +12622,2166 @@ a:hover {
     <message>
         <source>Failed to attach to tap &quot;%1&quot;</source>
         <translation>タップ &quot;%1&quot; の紐づけに失敗しました</translation>
+    </message>
+</context>
+<context>
+    <name>WiresharkMainWindow</name>
+    <message>
+        <source>Wireshark</source>
+        <translation>Wireshark</translation>
+    </message>
+    <message>
+        <source>Go to packet</source>
+        <translation>パケットに移動</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>キャンセル</translation>
+    </message>
+    <message>
+        <source>File Set</source>
+        <translation>ファイルセット</translation>
+    </message>
+    <message>
+        <source>Export Packet Dissections</source>
+        <translation>エキスパートパケット解析</translation>
+    </message>
+    <message>
+        <source>Export Objects</source>
+        <translation>オブジェクトをエクスポート</translation>
+    </message>
+    <message>
+        <source>&amp;Zoom</source>
+        <translation>&amp;ズーム</translation>
+    </message>
+    <message>
+        <source>&amp;Time Display Format</source>
+        <translation>&amp;時刻表示形式</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>コピー</translation>
+    </message>
+    <message>
+        <source>Manual pages</source>
+        <translation>マニュアルページ</translation>
+    </message>
+    <message>
+        <source>Apply as Filter</source>
+        <translation>フィルタとして適用</translation>
+    </message>
+    <message>
+        <source>Prepare as Filter</source>
+        <translation>フィルタとして準備</translation>
+    </message>
+    <message>
+        <source>SCTP</source>
+        <translation>SCTP</translation>
+    </message>
+    <message>
+        <source>TCP Stream Graphs</source>
+        <translation>TCPストリームグラフ</translation>
+    </message>
+    <message>
+        <source>BACnet</source>
+        <translation>BACnet</translation>
+    </message>
+    <message>
+        <source>HTTP</source>
+        <translation>HTTP</translation>
+    </message>
+    <message>
+        <source>&amp;File</source>
+        <translation>ファイル(&amp;F)</translation>
+    </message>
+    <message>
+        <source>&amp;Capture</source>
+        <translation>キャプチャ(&amp;C)</translation>
+    </message>
+    <message>
+        <source>&amp;Help</source>
+        <translation>ヘルプ(&amp;H)</translation>
+    </message>
+    <message>
+        <source>&amp;Go</source>
+        <translation>移動(&amp;G)</translation>
+    </message>
+    <message>
+        <source>&amp;View</source>
+        <translation>表示(&amp;V)</translation>
+    </message>
+    <message>
+        <source>&amp;Analyze</source>
+        <translation>分析(&amp;A)</translation>
+    </message>
+    <message>
+        <source>Follow</source>
+        <translation>追跡</translation>
+    </message>
+    <message>
+        <source>&amp;Statistics</source>
+        <translation>統計(&amp;S)</translation>
+    </message>
+    <message>
+        <source>29West</source>
+        <translation>29West</translation>
+    </message>
+    <message>
+        <source>Topics</source>
+        <translation>トピック</translation>
+    </message>
+    <message>
+        <source>Queues</source>
+        <translation>キュー</translation>
+    </message>
+    <message>
+        <source>UIM</source>
+        <translation>UIM</translation>
+    </message>
+    <message>
+        <source>Telephon&amp;y</source>
+        <translation>電話(&amp;y)</translation>
+    </message>
+    <message>
+        <source>RTSP</source>
+        <translation>RTSP</translation>
+    </message>
+    <message>
+        <source>&amp;Edit</source>
+        <translation>編集(&amp;E)</translation>
+    </message>
+    <message>
+        <source>Packet Comments</source>
+        <translation>パケットコメント</translation>
+    </message>
+    <message>
+        <source>Main Toolbar</source>
+        <translation>メインツールバー</translation>
+    </message>
+    <message>
+        <source>Display Filter Toolbar</source>
+        <translation>表示フィルタツールバー</translation>
+    </message>
+    <message>
+        <source>Open a capture file</source>
+        <translation>キャプチャファイルを開きます</translation>
+    </message>
+    <message>
+        <source>Quit Wireshark</source>
+        <translation>Wiresharkを終了します</translation>
+    </message>
+    <message>
+        <source>&amp;Start</source>
+        <translation>開始(&amp;S)</translation>
+    </message>
+    <message>
+        <source>Start capturing packets</source>
+        <translation>パケットキャプチャを開始します</translation>
+    </message>
+    <message>
+        <source>S&amp;top</source>
+        <translation>停止(&amp;t)</translation>
+    </message>
+    <message>
+        <source>Stop capturing packets</source>
+        <translation>パケットキャプチャを停止します</translation>
+    </message>
+    <message>
+        <source>No files found</source>
+        <translation>ファイルが見つかりませんでした</translation>
+    </message>
+    <message>
+        <source>&amp;Contents</source>
+        <translation>目次(&amp;C)</translation>
+    </message>
+    <message>
+        <source>Wireshark Filter</source>
+        <translation>Wiresharkフィルタ</translation>
+    </message>
+    <message>
+        <source>TShark</source>
+        <translation>Tshark</translation>
+    </message>
+    <message>
+        <source>Rawshark</source>
+        <translation>RawShark</translation>
+    </message>
+    <message>
+        <source>Dumpcap</source>
+        <translation>Dumpcap</translation>
+    </message>
+    <message>
+        <source>Mergecap</source>
+        <translation>Mergecap</translation>
+    </message>
+    <message>
+        <source>Editcap</source>
+        <translation>Mergecap</translation>
+    </message>
+    <message>
+        <source>Text2pcap</source>
+        <translation>Text2cap</translation>
+    </message>
+    <message>
+        <source>Website</source>
+        <translation>ウェブサイト</translation>
+    </message>
+    <message>
+        <source>Downloads</source>
+        <translation>ダウンロード</translation>
+    </message>
+    <message>
+        <source>Wiki</source>
+        <translation>Wiki</translation>
+    </message>
+    <message>
+        <source>Sample Captures</source>
+        <translation>サンプルキャプチャ</translation>
+    </message>
+    <message>
+        <source>&amp;About Wireshark</source>
+        <translation>wiresharkについて</translation>
+    </message>
+    <message>
+        <source>Ask (Q&amp;&amp;A)</source>
+        <translation>問い合わせ (Q&amp;&amp;A)</translation>
+    </message>
+    <message>
+        <source>Next Packet</source>
+        <translation>次のパケット</translation>
+    </message>
+    <message>
+        <source>Go to the next packet</source>
+        <translation>次のパケットに移動します</translation>
+    </message>
+    <message>
+        <source>Previous Packet</source>
+        <translation>前のパケット</translation>
+    </message>
+    <message>
+        <source>Go to the previous packet</source>
+        <translation>前のパケットに移動します</translation>
+    </message>
+    <message>
+        <source>First Packet</source>
+        <translation>最初のパケット</translation>
+    </message>
+    <message>
+        <source>Go to the first packet</source>
+        <translation>最初のパケットに移動します</translation>
+    </message>
+    <message>
+        <source>Last Packet</source>
+        <translation>最後のパケット</translation>
+    </message>
+    <message>
+        <source>Go to the last packet</source>
+        <translation>最後のパケットに移動します</translation>
+    </message>
+    <message>
+        <source>E&amp;xpand Subtrees</source>
+        <translation>サブツリーを展開(&amp;x)</translation>
+    </message>
+    <message>
+        <source>Expand the current packet detail</source>
+        <translation>現在のパケット詳細を展開します</translation>
+    </message>
+    <message>
+        <source>&amp;Expand All</source>
+        <translation>すべて展開(&amp;E)</translation>
+    </message>
+    <message>
+        <source>Expand packet details</source>
+        <translation>パケット詳細を展開</translation>
+    </message>
+    <message>
+        <source>Collapse &amp;All</source>
+        <translation>すべて閉じる(&amp;A)</translation>
+    </message>
+    <message>
+        <source>Collapse all packet details</source>
+        <translation>すべてのパケット詳細を閉じます</translation>
+    </message>
+    <message>
+        <source>Go to specified packet</source>
+        <translation>指定したパケットへ移動します</translation>
+    </message>
+    <message>
+        <source>Merge one or more files</source>
+        <translation>１つそれ以上のファイルを結合します</translation>
+    </message>
+    <message>
+        <source>Import a file</source>
+        <translation>ファイルをインポート</translation>
+    </message>
+    <message>
+        <source>&amp;Save</source>
+        <translation>保存(&amp;S)</translation>
+    </message>
+    <message>
+        <source>Save as a different file</source>
+        <translation>異なるファイルとして保存</translation>
+    </message>
+    <message>
+        <source>Export specified packets</source>
+        <translation>指定したパケットを出力</translation>
+    </message>
+    <message>
+        <source>Export TLS Session Keys…</source>
+        <translation>TLSセッション鍵をエクスポート…</translation>
+    </message>
+    <message>
+        <source>List Files</source>
+        <translation>ファイル一覧</translation>
+    </message>
+    <message>
+        <source>Next File</source>
+        <translation>次のファイル</translation>
+    </message>
+    <message>
+        <source>Previous File</source>
+        <translation>前のファイル</translation>
+    </message>
+    <message>
+        <source>&amp;Reload</source>
+        <translation>再読込(&amp;R)</translation>
+    </message>
+    <message>
+        <source>Options</source>
+        <translation>オプション</translation>
+    </message>
+    <message>
+        <source>Capture options</source>
+        <translation>キャプチャオプション</translation>
+    </message>
+    <message>
+        <source>Capture filters</source>
+        <translation>キャプチャフィルタ</translation>
+    </message>
+    <message>
+        <source>Refresh Interfaces</source>
+        <translation>インターフェースを更新</translation>
+    </message>
+    <message>
+        <source>Refresh interfaces</source>
+        <translation>インターフェースを更新</translation>
+    </message>
+    <message>
+        <source>&amp;Restart</source>
+        <translation>再キャプチャ(&amp;R)</translation>
+    </message>
+    <message>
+        <source>Restart current capture</source>
+        <translation>現在のキャプチャを再スタートします</translation>
+    </message>
+    <message>
+        <source>As &amp;CSV…</source>
+        <translation>CSVとして(&amp;C)</translation>
+    </message>
+    <message>
+        <source>As &quot;C&quot; &amp;Arrays…</source>
+        <translation>C言語配列として(&amp;A)</translation>
+    </message>
+    <message>
+        <source>As P&amp;SML XML…</source>
+        <translation>PSML XMLとして(&amp;S)</translation>
+    </message>
+    <message>
+        <source>As P&amp;DML XML…</source>
+        <translation>PSML XMLとして(&amp;D)</translation>
+    </message>
+    <message>
+        <source>As &amp;JSON…</source>
+        <translation>JSONとして(&amp;J)</translation>
+    </message>
+    <message>
+        <source>Description</source>
+        <translation>記述</translation>
+    </message>
+    <message>
+        <source>Field Name</source>
+        <translation>フィールド名</translation>
+    </message>
+    <message>
+        <source>Value</source>
+        <translation>値</translation>
+    </message>
+    <message>
+        <source>As Filter</source>
+        <translation>フィルタとして</translation>
+    </message>
+    <message>
+        <source>Close this capture file</source>
+        <translation>このキャプチャファイルを閉じます</translation>
+    </message>
+    <message>
+        <source>Packet:</source>
+        <translation>パケット:</translation>
+    </message>
+    <message>
+        <source>Interface Toolbars</source>
+        <translation>インターフェースツールバー</translation>
+    </message>
+    <message>
+        <source>Colorize Conversation</source>
+        <translation>対話に色をつける</translation>
+    </message>
+    <message>
+        <source>Internals</source>
+        <translation>内部</translation>
+    </message>
+    <message>
+        <source>Additional Toolbars</source>
+        <translation>追加のツールバー</translation>
+    </message>
+    <message>
+        <source>Conversation Filter</source>
+        <translation>対話フィルタ</translation>
+    </message>
+    <message>
+        <source>Reliable Server Pooling (RSerPool)</source>
+        <translation>信頼できるサーバープール (RSerPool)</translation>
+    </message>
+    <message>
+        <source>SOME/IP</source>
+        <translation>SOME/IP</translation>
+    </message>
+    <message>
+        <source>&amp;DTN</source>
+        <translation>&amp;DTN</translation>
+    </message>
+    <message>
+        <source>Osmux</source>
+        <translation>Osmux</translation>
+    </message>
+    <message>
+        <source>&amp;Tools</source>
+        <oldsource>Tools</oldsource>
+        <translation>ツール(&amp;T)</translation>
+    </message>
+    <message>
+        <source>Wireless Toolbar</source>
+        <translation>無線ツールバー</translation>
+    </message>
+    <message>
+        <source>Help contents</source>
+        <translation>ヘルプ目次</translation>
+    </message>
+    <message>
+        <source>FAQs</source>
+        <translation>FAQ&apos;s</translation>
+    </message>
+    <message>
+        <source>Next Packet in Conversation</source>
+        <translation>対話の次のパケット</translation>
+    </message>
+    <message>
+        <source>Go to the next packet in this conversation</source>
+        <translation>この対話の次のパケットに移動します</translation>
+    </message>
+    <message>
+        <source>Previous Packet in Conversation</source>
+        <translation>対話の前のパケット</translation>
+    </message>
+    <message>
+        <source>Go to the previous packet in this conversation</source>
+        <translation>この対話の前のパケットに移動します</translation>
+    </message>
+    <message>
+        <source>Next Packet In History</source>
+        <translation>ヒストリの次のパケット</translation>
+    </message>
+    <message>
+        <source>Go to the next packet in your selection history</source>
+        <translation>選択ヒストリの次のパケットへ移動します</translation>
+    </message>
+    <message>
+        <source>Previous Packet In History</source>
+        <translation>ヒストリの前のパケット</translation>
+    </message>
+    <message>
+        <source>Go to the previous packet in your selection history</source>
+        <translation>選択したヒストリの前のパケットへ移動します</translation>
+    </message>
+    <message>
+        <source>Collapse Subtrees</source>
+        <translation>サブツリーを閉じる</translation>
+    </message>
+    <message>
+        <source>Collapse the current packet detail</source>
+        <translation>現在のパケット詳細を閉じます</translation>
+    </message>
+    <message>
+        <source>Go to Packet…</source>
+        <translation>パケットに移動…</translation>
+    </message>
+    <message>
+        <source>&amp;Merge…</source>
+        <translation>結合…(&amp;M)</translation>
+    </message>
+    <message>
+        <source>&amp;Import from Hex Dump…</source>
+        <translation>16進数ダンプからインポート…(&amp;I)</translation>
+    </message>
+    <message>
+        <source>Save this capture file</source>
+        <translation>このキャプチャファイルを保存します</translation>
+    </message>
+    <message>
+        <source>Save &amp;As…</source>
+        <translation>…として保存(&amp;A)</translation>
+    </message>
+    <message>
+        <source>Export Specified Packets…</source>
+        <translation>指定したパケットをエクスポート…</translation>
+    </message>
+    <message>
+        <source>Export Packet &amp;Bytes…</source>
+        <translation>パケットバイト列をエクスポート…(&amp;B)</translation>
+    </message>
+    <message>
+        <source>&amp;Print…</source>
+        <translation>印刷(&amp;P)…</translation>
+    </message>
+    <message>
+        <source>Reload this file</source>
+        <translation>このファイルを再読み込み</translation>
+    </message>
+    <message>
+        <source>Reload as File Format/Capture</source>
+        <translation>ファイルフォーマット/キャプチャとして再読み込みします</translation>
+    </message>
+    <message>
+        <source>Copy this item&apos;s description</source>
+        <translation>この項目の記述をコピーします</translation>
+    </message>
+    <message>
+        <source>Copy this item&apos;s field name</source>
+        <translation>この項目のフィールド名をコピーします</translation>
+    </message>
+    <message>
+        <source>Copy this item&apos;s value</source>
+        <translation>この項目の値をコピーします</translation>
+    </message>
+    <message>
+        <source>Copy this item as a display filter</source>
+        <translation>この項目を表示フィルタとしてコピーします</translation>
+    </message>
+    <message>
+        <source>Apply as Column</source>
+        <translation>列として適用</translation>
+    </message>
+    <message>
+        <source>Create a packet list column from the selected field.</source>
+        <translation>選択したフィールドからパケット一覧の列を作成します</translation>
+    </message>
+    <message>
+        <source>Find a packet</source>
+        <translation>パケットを検索します</translation>
+    </message>
+    <message>
+        <source>Find the next packet</source>
+        <translation>次のパケットを検索します</translation>
+    </message>
+    <message>
+        <source>Find the previous packet</source>
+        <translation>前のパケットを検索します</translation>
+    </message>
+    <message>
+        <source>&amp;Mark/Unmark Packet(s)</source>
+        <oldsource>&amp;Mark/Unmark Packet</oldsource>
+        <translation>パケットをマーク/マーク解除(&amp;M)</translation>
+    </message>
+    <message>
+        <source>Mark All Displayed</source>
+        <translation>表示されているものをすべてマークします</translation>
+    </message>
+    <message>
+        <source>Mark all displayed packets</source>
+        <translation>すべての表示されているパケットをマークします</translation>
+    </message>
+    <message>
+        <source>Unmark all displayed packets</source>
+        <translation>すべての表示されているパケットをマーク解除します</translation>
+    </message>
+    <message>
+        <source>Next Mark</source>
+        <translation>次のマーク</translation>
+    </message>
+    <message>
+        <source>Go to the next marked packet</source>
+        <translation>次にマークされたパケットに移動します</translation>
+    </message>
+    <message>
+        <source>Previous Mark</source>
+        <translation>前のマーク</translation>
+    </message>
+    <message>
+        <source>Go to the previous marked packet</source>
+        <translation>前にマークされたパケットに移動します</translation>
+    </message>
+    <message>
+        <source>&amp;Ignore/Unignore Packet(s)</source>
+        <oldsource>&amp;Ignore/Unignore Packet</oldsource>
+        <translation>パケットを無視/無視を解除(&amp;I)</translation>
+    </message>
+    <message>
+        <source>Ignore All Displayed</source>
+        <translation>表示されているものすべてを無視します</translation>
+    </message>
+    <message>
+        <source>Ignore all displayed packets</source>
+        <translation>すべての表示されたパケットを無視します</translation>
+    </message>
+    <message>
+        <source>Set/Unset Time Reference</source>
+        <translation>時間参照を設定/設定解除します</translation>
+    </message>
+    <message>
+        <source>Set or unset a time reference for this packet</source>
+        <translation>このパケットの時間参照を設定または設定解除します</translation>
+    </message>
+    <message>
+        <source>Unset All Time References</source>
+        <translation>すべての時間参照を設定解除</translation>
+    </message>
+    <message>
+        <source>Remove all time references</source>
+        <translation>すべての時間参照を削除</translation>
+    </message>
+    <message>
+        <source>Next Time Reference</source>
+        <translation>次の時間参照</translation>
+    </message>
+    <message>
+        <source>Go to the next time reference</source>
+        <translation>次の時間参照へ移動します</translation>
+    </message>
+    <message>
+        <source>Previous Time Reference</source>
+        <translation>前の時間参照</translation>
+    </message>
+    <message>
+        <source>Go to the previous time reference</source>
+        <translation>前の時間参照へ移動</translation>
+    </message>
+    <message>
+        <source>Shift or change packet timestamps</source>
+        <translation>パケットのタイムスタンプをずらすもしくは変更します</translation>
+    </message>
+    <message>
+        <source>Delete All Packet Comments</source>
+        <translation>すべてのパケットコメントを削除</translation>
+    </message>
+    <message>
+        <source>Remove all packet comments in the capture file</source>
+        <translation>キャプチャファイルにあるすべてのパケットを削除します</translation>
+    </message>
+    <message>
+        <source>&amp;Configuration Profiles…</source>
+        <translation>設定プロファイル(&amp;C)…</translation>
+    </message>
+    <message>
+        <source>Configuration profiles</source>
+        <translation>設定プロファイル</translation>
+    </message>
+    <message>
+        <source>Manage your configuration profiles</source>
+        <translation>設定プロファイルを管理します</translation>
+    </message>
+    <message>
+        <source>Manage Wireshark&apos;s preferences</source>
+        <translation>Wiresharkの設定を管理します</translation>
+    </message>
+    <message>
+        <source>Capture File Properties</source>
+        <translation>キャプチャファイルプロパティ</translation>
+    </message>
+    <message>
+        <source>Capture file properties</source>
+        <translation>キャプチャファイルプロパティ</translation>
+    </message>
+    <message>
+        <source>&amp;Protocol Hierarchy</source>
+        <translation>プロトコル階層(&amp;P)</translation>
+    </message>
+    <message>
+        <source>Show a summary of protocols present in the capture file.</source>
+        <translation>キャプチャファイルの現在のプロトコル概要を表示します</translation>
+    </message>
+    <message>
+        <source>Capinfos</source>
+        <translation>Capinfos</translation>
+    </message>
+    <message>
+        <source>Reordercap</source>
+        <translation>Reordercap</translation>
+    </message>
+    <message>
+        <source>Time Sequence (Stevens)</source>
+        <translation>タイムシーケンス (Stevens)</translation>
+    </message>
+    <message>
+        <source>TCP time sequence graph (Stevens)</source>
+        <translation>TCP タイムシーケンスグラフ (Stevens)</translation>
+    </message>
+    <message>
+        <source>Throughput</source>
+        <translation>スループット</translation>
+    </message>
+    <message>
+        <source>Round Trip Time</source>
+        <translation>往復遅延時間</translation>
+    </message>
+    <message>
+        <source>TCP round trip time</source>
+        <translation>TCP往復遅延時間</translation>
+    </message>
+    <message>
+        <source>Window Scaling</source>
+        <translation>ウインドウスケーリング</translation>
+    </message>
+    <message>
+        <source>TCP window scaling</source>
+        <translation>TCPウインドウスケーリング</translation>
+    </message>
+    <message>
+        <source>DCCP Stream</source>
+        <translation type="vanished">DCCPストリーム</translation>
+    </message>
+    <message>
+        <source>TLS Stream</source>
+        <translation type="vanished">TLS ストリーム</translation>
+    </message>
+    <message>
+        <source>HTTP Stream</source>
+        <translation type="vanished">HTTPストリーム</translation>
+    </message>
+    <message>
+        <source>HTTP/2 Stream</source>
+        <translation>HTTP/2 ストリーム</translation>
+    </message>
+    <message>
+        <source>QUIC Stream</source>
+        <translation type="vanished">QUIC ストリーム</translation>
+    </message>
+    <message>
+        <source>Websocket Stream</source>
+        <translation type="vanished">Webソケットストリーム</translation>
+    </message>
+    <message>
+        <source>SIP Call</source>
+        <translation>SIP通話</translation>
+    </message>
+    <message>
+        <source>Time Sequence (tcptrace)</source>
+        <translation>タイムシーケンス(tcptrace)</translation>
+    </message>
+    <message>
+        <source>TCP time sequence graph (tcptrace)</source>
+        <translation>TCPタイムシーケンスグラフ(tcptrace)</translation>
+    </message>
+    <message>
+        <source>Analyse this Association</source>
+        <translation>このアソシエーションを分析</translation>
+    </message>
+    <message>
+        <source>Show All Associations</source>
+        <translation>すべてのアソシエーションを表示</translation>
+    </message>
+    <message>
+        <source>Flow Graph</source>
+        <translation>フローグラフ</translation>
+    </message>
+    <message>
+        <source>Flow sequence diagram</source>
+        <translation>フローシーケンス図</translation>
+    </message>
+    <message>
+        <source>ANCP</source>
+        <translation>ANCP</translation>
+    </message>
+    <message>
+        <source>ANCP statistics</source>
+        <translation>ANCP統計</translation>
+    </message>
+    <message>
+        <source>Packets sorted by Instance ID</source>
+        <translation>インスタンスID順パケット</translation>
+    </message>
+    <message>
+        <source>BACapp statistics sorted by instance ID</source>
+        <translation>インスタンスID順に並べたBACapp統計</translation>
+    </message>
+    <message>
+        <source>Packets sorted by IP</source>
+        <translation>IP順パケット</translation>
+    </message>
+    <message>
+        <source>BACapp statistics sorted by IP</source>
+        <translation>IP順に並べたBACapp統計</translation>
+    </message>
+    <message>
+        <source>Packets sorted by object type</source>
+        <translation>オブジェクト種別順パケット</translation>
+    </message>
+    <message>
+        <source>BACapp statistics sorted by object type</source>
+        <translation>オブジェクト種別順に並べたBACapp統計</translation>
+    </message>
+    <message>
+        <source>Packets sorted by service</source>
+        <translation>サービス順パケット</translation>
+    </message>
+    <message>
+        <source>BACapp statistics sorted by service</source>
+        <translation>サービス順に並べたBACapp統計</translation>
+    </message>
+    <message>
+        <source>Collectd</source>
+        <translation>収集</translation>
+    </message>
+    <message>
+        <source>Collectd statistics</source>
+        <translation>収集統計</translation>
+    </message>
+    <message>
+        <source>DNS</source>
+        <translation>DNS</translation>
+    </message>
+    <message>
+        <source>DNS statistics</source>
+        <translation>DNS統計</translation>
+    </message>
+    <message>
+        <source>HART-IP</source>
+        <translation>HART-IP</translation>
+    </message>
+    <message>
+        <source>HART-IP statistics</source>
+        <translation>HART-IP統計</translation>
+    </message>
+    <message>
+        <source>HPFEEDS</source>
+        <translation>HPFEEDS</translation>
+    </message>
+    <message>
+        <source>hpfeeds statistics</source>
+        <translation>hpfeeds統計</translation>
+    </message>
+    <message>
+        <source>HTTP2</source>
+        <translation>HTTP2</translation>
+    </message>
+    <message>
+        <source>HTTP2 statistics</source>
+        <translation>HTTP2統計</translation>
+    </message>
+    <message>
+        <source>Packet Counter</source>
+        <translation>パケットカウンタ</translation>
+    </message>
+    <message>
+        <source>HTTP packet counter</source>
+        <translation>HTTPパケットカウンタ</translation>
+    </message>
+    <message>
+        <source>Requests</source>
+        <translation>要求</translation>
+    </message>
+    <message>
+        <source>HTTP requests</source>
+        <translation>HTTP要求</translation>
+    </message>
+    <message>
+        <source>Load Distribution</source>
+        <translation>負荷分散</translation>
+    </message>
+    <message>
+        <source>HTTP load distribution</source>
+        <translation>HTTP負荷分散</translation>
+    </message>
+    <message>
+        <source>Packet Lengths</source>
+        <translation>パケット長</translation>
+    </message>
+    <message>
+        <source>Packet length statistics</source>
+        <translation>パケット長統計</translation>
+    </message>
+    <message>
+        <source>Sametime</source>
+        <translation>Sametime</translation>
+    </message>
+    <message>
+        <source>Sametime statistics</source>
+        <translation>Sametime統計</translation>
+    </message>
+    <message>
+        <source>SOME/IP Messages</source>
+        <translation>SOME/IP メッセージ</translation>
+    </message>
+    <message>
+        <source>SOME/IP Message statistics</source>
+        <translation>SOME/IP メッセージ統計</translation>
+    </message>
+    <message>
+        <source>SOME/IP-SD Entries</source>
+        <translation>SOME/IP-SD エントリ</translation>
+    </message>
+    <message>
+        <source>SOME/IP-SD Entries statistics</source>
+        <translation>SOME/IP-SD エントリ統計</translation>
+    </message>
+    <message>
+        <source>&amp;LTP</source>
+        <translation>&amp;LTP</translation>
+    </message>
+    <message>
+        <source>LTP segment and block statistics</source>
+        <translation>LTPセグメントとブロック統計</translation>
+    </message>
+    <message>
+        <source>&amp;ISUP Messages</source>
+        <translation>ISUPメッセージ(&amp;I)</translation>
+    </message>
+    <message>
+        <source>ISUP message statistics</source>
+        <translation>ISUPメッセージ統計</translation>
+    </message>
+    <message>
+        <source>Osmux packet counts</source>
+        <translation>Osmux パケット数</translation>
+    </message>
+    <message>
+        <source>RTSP packet counts</source>
+        <translation>RTSPパケット数</translation>
+    </message>
+    <message>
+        <source>SM&amp;PP Operations</source>
+        <translation>SMPP操作(&amp;P)</translation>
+    </message>
+    <message>
+        <source>SMPP operation statistics</source>
+        <translation>SMPP操作統計</translation>
+    </message>
+    <message>
+        <source>&amp;UCP Messages</source>
+        <translation>UCPメッセージ(&amp;U)</translation>
+    </message>
+    <message>
+        <source>UCP message statistics</source>
+        <translation>UCPメッセージ統計</translation>
+    </message>
+    <message>
+        <source>F1AP</source>
+        <translation>F1AP</translation>
+    </message>
+    <message>
+        <source>F1AP Messages</source>
+        <translation>F1AP メッセージ</translation>
+    </message>
+    <message>
+        <source>NGAP</source>
+        <translation>NGAP</translation>
+    </message>
+    <message>
+        <source>NGAP Messages</source>
+        <translation>NGAP メッセージ</translation>
+    </message>
+    <message>
+        <source>Change the way packets are dissected</source>
+        <translation>パケットが解析される方法を変更します</translation>
+    </message>
+    <message>
+        <source>Reload Lua Plugins</source>
+        <translation>Luaプラグイン再読込</translation>
+    </message>
+    <message>
+        <source>Reload Lua plugins</source>
+        <translation>Luaプラグインを再読込します</translation>
+    </message>
+    <message>
+        <source>Advertisements by Topic</source>
+        <translation>トピック毎の通知</translation>
+    </message>
+    <message>
+        <source>Advertisements by Source</source>
+        <translation>送信元毎の通知</translation>
+    </message>
+    <message>
+        <source>Advertisements by Transport</source>
+        <translation>トランスポート毎の通知</translation>
+    </message>
+    <message>
+        <source>Queries by Topic</source>
+        <translation>トピック毎のクエリ</translation>
+    </message>
+    <message>
+        <source>Queries by Receiver</source>
+        <translation>受信者毎のクエリ</translation>
+    </message>
+    <message>
+        <source>Wildcard Queries by Pattern</source>
+        <translation>パターン毎のワイルドカードクエリ</translation>
+    </message>
+    <message>
+        <source>Wildcard Queries by Receiver</source>
+        <translation>受信者毎のワイルドカードクエリ</translation>
+    </message>
+    <message>
+        <source>Advertisements by Queue</source>
+        <translation>キュー毎の通知</translation>
+    </message>
+    <message>
+        <source>Queries by Queue</source>
+        <translation>キュー毎のクエリ</translation>
+    </message>
+    <message>
+        <source>Streams</source>
+        <translation>ストリーム</translation>
+    </message>
+    <message>
+        <source>LBT-RM</source>
+        <translation>LBT-RM</translation>
+    </message>
+    <message>
+        <source>LBT-RU</source>
+        <translation>LBT-RU</translation>
+    </message>
+    <message>
+        <source>Filter this Association</source>
+        <translation>このアソシエーションをフィルタします</translation>
+    </message>
+    <message>
+        <source>Strip Headers…</source>
+        <translation>ヘッダーを除去…</translation>
+    </message>
+    <message>
+        <source>Strip headers and export higher level encapsulations to file</source>
+        <translation>ヘッダを除去して上位のカプセル化をファイルにエクスポートします</translation>
+    </message>
+    <message>
+        <source>&amp;I/O Graphs</source>
+        <translation>入出力グラフ(&amp;I)</translation>
+    </message>
+    <message>
+        <source>&amp;Conversations</source>
+        <translation>対話(&amp;C)</translation>
+    </message>
+    <message>
+        <source>&amp;Endpoints</source>
+        <translation>終端(&amp;E)</translation>
+    </message>
+    <message>
+        <source>Shrink the main window text</source>
+        <translation>メインウインドウのテキストを縮小します</translation>
+    </message>
+    <message>
+        <source>Return the main window text to its normal size</source>
+        <translation>メインウインドウのテキストを標準サイズに戻します</translation>
+    </message>
+    <message>
+        <source>Reset Layout</source>
+        <translation>レイアウトをリセット</translation>
+    </message>
+    <message>
+        <source>Reset appearance layout to default size</source>
+        <translation>外観のレイアウトをデフォルトのサイズにリセットします</translation>
+    </message>
+    <message>
+        <source>Seconds Since First Captured Packet</source>
+        <translation>最初にキャプチャしたパケットからの経過時間</translation>
+    </message>
+    <message>
+        <source>Show packet times as the seconds since the first captured packet.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Packet &amp;Diagram</source>
+        <translation>パケット &amp;ダイアグラム</translation>
+    </message>
+    <message>
+        <source>Show or hide the packet diagram</source>
+        <translation>パケットダイアグラムを表示または非表示にします</translation>
+    </message>
+    <message>
+        <source>Show each conversation hash table</source>
+        <translation>各々の会話ハッシュ表を表示します</translation>
+    </message>
+    <message>
+        <source>Show each dissector table and its entries</source>
+        <translation>各々のダイセクター表とそのエントリを表示します</translation>
+    </message>
+    <message>
+        <source>Show the currently supported protocols and display filter fields</source>
+        <translation>サポートされているプロトコルと表示フィルタフィールドを表示します</translation>
+    </message>
+    <message>
+        <source>MAC Statistics</source>
+        <translation>MAC統計</translation>
+    </message>
+    <message>
+        <source>LTE MAC statistics</source>
+        <translation>LTE MAC統計</translation>
+    </message>
+    <message>
+        <source>RLC Statistics</source>
+        <translation>RLC統計</translation>
+    </message>
+    <message>
+        <source>LTE RLC statistics</source>
+        <translation>LTE RLC統計</translation>
+    </message>
+    <message>
+        <source>LTE RLC graph</source>
+        <translation>LTE RLCグラフ</translation>
+    </message>
+    <message>
+        <source>MTP3 Summary</source>
+        <translation>MTP3概要</translation>
+    </message>
+    <message>
+        <source>MTP3 summary statistics</source>
+        <translation>MTP3概要統計</translation>
+    </message>
+    <message>
+        <source>Bluetooth Devices</source>
+        <translation>Bluetoothデバイス</translation>
+    </message>
+    <message>
+        <source>Bluetooth HCI Summary</source>
+        <translation>Bluetooth HCI概要</translation>
+    </message>
+    <message>
+        <source>Display Filter &amp;Expression…</source>
+        <translation>表示フィルタ式(&amp;E)</translation>
+    </message>
+    <message>
+        <source>Display Filter Expression…</source>
+        <translation>表示フィルタ式...</translation>
+    </message>
+    <message>
+        <source>REGISTER_STAT_GROUP_RSERPOOL</source>
+        <translation>REGISTER_STAT_GROUP_RSERPOOL</translation>
+    </message>
+    <message>
+        <source>Start of &quot;REGISTER_STAT_GROUP_RSERPOOL&quot;</source>
+        <translation>&quot;REGISTER_STAT_GROUP_RSERPOOL&quot;の開始</translation>
+    </message>
+    <message>
+        <source>No GSM statistics registered</source>
+        <translation>GSM統計が登録されていません</translation>
+    </message>
+    <message>
+        <source>No LTE statistics registered</source>
+        <translation>LTE統計が登録されていません</translation>
+    </message>
+    <message>
+        <source>No MTP3 statistics registered</source>
+        <translation>MTP3統計が登録されていません</translation>
+    </message>
+    <message>
+        <source>IAX2 Stream Analysis</source>
+        <translation>IAX2ストリーム分析</translation>
+    </message>
+    <message>
+        <source>Show Packet Bytes…</source>
+        <translation>パケットバイト列を表示…</translation>
+    </message>
+    <message>
+        <source>Go to &amp;Linked Packet</source>
+        <translation>リンクされたパケットへ移動(&amp;L)</translation>
+    </message>
+    <message>
+        <source>UDP Multicast Streams</source>
+        <translation>UDPマルチキャストストリーム</translation>
+    </message>
+    <message>
+        <source>Show UTP multicast stream statistics.</source>
+        <translation>UTPマルチキャストストリーム統計を表示します</translation>
+    </message>
+    <message>
+        <source>WLAN Traffic</source>
+        <translation>無線LANトラフィック</translation>
+    </message>
+    <message>
+        <source>Show IEEE 802.11 wireless LAN statistics.</source>
+        <translation>IEEE802.11無線LAN統計を表示します</translation>
+    </message>
+    <message>
+        <source>Add a display filter button.</source>
+        <translation>表示フィルタボタンを追加します</translation>
+    </message>
+    <message>
+        <source>Firewall ACL Rules</source>
+        <translation>ファイアウォール ACL ルール</translation>
+    </message>
+    <message>
+        <source>Create firewall ACL rules</source>
+        <translation>ファイアウォール ACL ルールを作成します</translation>
+    </message>
+    <message>
+        <source>&amp;Full Screen</source>
+        <translation>フルスクリーン(&amp;F)</translation>
+    </message>
+    <message>
+        <source>Credentials</source>
+        <translation>証明書</translation>
+    </message>
+    <message>
+        <source>&amp;Options…</source>
+        <translation>オプション…(&amp;O)</translation>
+    </message>
+    <message>
+        <source>&amp;Wireless</source>
+        <translation>無線(&amp;W)</translation>
+    </message>
+    <message>
+        <source>Capture &amp;Filters…</source>
+        <translation>キャプチャフィルタ…(&amp;F)</translation>
+    </message>
+    <message>
+        <source>As Plain &amp;Text…</source>
+        <translation>プレインテキストとして…(&amp;T)</translation>
+    </message>
+    <message>
+        <source>As Plain &amp;Text</source>
+        <translation>プレインテキストとして(&amp;T)</translation>
+    </message>
+    <message>
+        <source>As &amp;CSV</source>
+        <translation>CSVとして(&amp;C)</translation>
+    </message>
+    <message>
+        <source>As &amp;YAML</source>
+        <translation>YAMLとして(&amp;Y)</translation>
+    </message>
+    <message>
+        <source>All Visible Items</source>
+        <translation>すべての見えている項目</translation>
+    </message>
+    <message>
+        <source>All Visible Selected Tree Items</source>
+        <translation>すべての見えている選択されたツリー項目</translation>
+    </message>
+    <message>
+        <source>Display Filter &amp;Macros…</source>
+        <translation>表示フィルタマクロ…(&amp;M)</translation>
+    </message>
+    <message>
+        <source>&amp;Find Packet…</source>
+        <translation>パケットの検索…(&amp;F)</translation>
+    </message>
+    <message>
+        <source>Find Ne&amp;xt</source>
+        <translation>次を検索(&amp;x)</translation>
+    </message>
+    <message>
+        <source>Find Pre&amp;vious</source>
+        <translation>前を検索(&amp;v)</translation>
+    </message>
+    <message>
+        <source>Mark or unmark each selected packet</source>
+        <translation>各々の選択されたパケットをマーク/マーク解除します</translation>
+    </message>
+    <message>
+        <source>Ignore or unignore each selected packet</source>
+        <translation>各々の選択されたパケットを無視/無視を解除します</translation>
+    </message>
+    <message>
+        <source>U&amp;nignore All Displayed</source>
+        <translation>すべての表示されているものの無視を解除します(&amp;U)</translation>
+    </message>
+    <message>
+        <source>Unignore all displayed packets</source>
+        <translation>すべての表示されたパケットの無視を解除します</translation>
+    </message>
+    <message>
+        <source>Time Shift…</source>
+        <translation>時間調整…</translation>
+    </message>
+    <message>
+        <source>&amp;Preferences…</source>
+        <translation>設定…(&amp;P)</translation>
+    </message>
+    <message>
+        <source>TCP throughput</source>
+        <translation>TCP スループット</translation>
+    </message>
+    <message>
+        <source>TCP Stream</source>
+        <translation type="vanished">TCPストリーム</translation>
+    </message>
+    <message>
+        <source>UDP Stream</source>
+        <translation type="vanished">UDPストリーム</translation>
+    </message>
+    <message>
+        <source>Request Sequences</source>
+        <translation>リクエストシーケンス</translation>
+    </message>
+    <message>
+        <source>HTTP Request Sequences</source>
+        <translation>HTTPリクエストシーケンス</translation>
+    </message>
+    <message>
+        <source>Decode &amp;As…</source>
+        <translation>…としてデコード(&amp;A)</translation>
+    </message>
+    <message>
+        <source>Export PDUs to File…</source>
+        <translation>PDUをファイルにエクスポート…</translation>
+    </message>
+    <message>
+        <source>Create graphs based on display filter fields</source>
+        <translation>表示フィルタのフィールドに基づいてグラフを作成します</translation>
+    </message>
+    <message>
+        <source>&amp;Main Toolbar</source>
+        <translation>メインツールバー(&amp;M)</translation>
+    </message>
+    <message>
+        <source>Show or hide the main toolbar</source>
+        <translation>メインツールバーを表示もしくは非表示にします</translation>
+    </message>
+    <message>
+        <source>&amp;Filter Toolbar</source>
+        <translation>フィルタツールバー(&amp;F)</translation>
+    </message>
+    <message>
+        <source>Show or hide the display filter toolbar</source>
+        <translation>表示フィルタツールバーを表示もしくは非表示にします</translation>
+    </message>
+    <message>
+        <source>Conversations at different protocol levels</source>
+        <translation>異なるプロトコルレベルの対話</translation>
+    </message>
+    <message>
+        <source>Endpoints at different protocol levels</source>
+        <translation>異なるプロトコルレベルの終端</translation>
+    </message>
+    <message>
+        <source>Colorize Packet List</source>
+        <translation>パケット一覧を色付けする</translation>
+    </message>
+    <message>
+        <source>Draw packets using your coloring rules</source>
+        <translation>色付けルールを用いてパケットを描画します</translation>
+    </message>
+    <message>
+        <source>&amp;Zoom In</source>
+        <translation>拡大(&amp;Z)</translation>
+    </message>
+    <message>
+        <source>Enlarge the main window text</source>
+        <translation>メインウインドウのテキストを拡大します</translation>
+    </message>
+    <message>
+        <source>Zoom Out</source>
+        <translation>縮小</translation>
+    </message>
+    <message>
+        <source>Normal Size</source>
+        <translation>標準サイズ</translation>
+    </message>
+    <message>
+        <source>Resize Columns</source>
+        <translation>列幅を再調整</translation>
+    </message>
+    <message>
+        <source>Resize packet list columns to fit contents</source>
+        <translation>列の内容に合わせてパケット一覧の列幅を調整します</translation>
+    </message>
+    <message>
+        <source>Date and Time of Day (1970-01-01 01:02:03.123456)</source>
+        <translation>日時 (1973-06-14 01:02:03.123456)</translation>
+    </message>
+    <message>
+        <source>Show packet times as the date and time of day.</source>
+        <translation>パケット時間を日付と時刻で表示します。</translation>
+    </message>
+    <message>
+        <source>Year, Day of Year, and Time of Day (1970/001 01:02:03.123456)</source>
+        <translation>年、通年日、時刻 (1970/001 01:02:03.123456)</translation>
+    </message>
+    <message>
+        <source>Show packet times as the year, day of the year and time of day.</source>
+        <translation>パケット時間を年、通年日、時刻で表示します</translation>
+    </message>
+    <message>
+        <source>Time of Day (01:02:03.123456)</source>
+        <translation>時刻 (01:02:03.123456)</translation>
+    </message>
+    <message>
+        <source>Seconds Since 1970-01-01</source>
+        <translation>1970年1月1日からの秒数</translation>
+    </message>
+    <message>
+        <source>Show packet times as the seconds since the UNIX / POSIX epoch (1970-01-01).</source>
+        <translation>パケットの時間をUNIX/POSIX起源(1970-01-01)以来の秒数で表示します</translation>
+    </message>
+    <message>
+        <source>Seconds Since Previous Captured Packet</source>
+        <translation>前にキャプチャされたパケットからの秒数</translation>
+    </message>
+    <message>
+        <source>Show packet times as the seconds since the previous captured packet.</source>
+        <translation>パケット時間を前にキャプチャされたパケットからの秒数で表示します</translation>
+    </message>
+    <message>
+        <source>Seconds Since Previous Displayed Packet</source>
+        <translation>前に表示されたパケットからの秒数</translation>
+    </message>
+    <message>
+        <source>Show packet times as the seconds since the previous displayed packet.</source>
+        <translation>パケット時間を前に表示されたパケットからの秒数で表示します</translation>
+    </message>
+    <message>
+        <source>UTC Date and Time of Day (1970-01-01 01:02:03.123456)</source>
+        <translation>UTC日時 (1973-06-14 01:02:03.123456)</translation>
+    </message>
+    <message>
+        <source>Show packet times as the UTC date and time of day.</source>
+        <translation>パケット時間をUTC日付および時刻で表示します</translation>
+    </message>
+    <message>
+        <source>UTC Year, Day of Year, and Time of Day (1970/001 01:02:03.123456)</source>
+        <translation>UTC年、通年日、時刻 (1970/001 01:02:03.123456)</translation>
+    </message>
+    <message>
+        <source>Show packet times as the UTC year, day of the year and time of day.</source>
+        <translation>パケット時間をUTC年、通年日、時刻で表示します</translation>
+    </message>
+    <message>
+        <source>UTC Time of Day (01:02:03.123456)</source>
+        <translation>UTC時刻 (01:02:03.123456)</translation>
+    </message>
+    <message>
+        <source>Show packet times as the UTC time of day.</source>
+        <translation>パケット時間をUTC時刻として表示します</translation>
+    </message>
+    <message>
+        <source>Automatic (from capture file)</source>
+        <translation>自動(キャプチャファイルから)</translation>
+    </message>
+    <message>
+        <source>Use the time precision indicated in the capture file.</source>
+        <translation>キャプチャファイルに記述された時間精度を利用します</translation>
+    </message>
+    <message>
+        <source>Seconds</source>
+        <translation>秒</translation>
+    </message>
+    <message>
+        <source>Tenths of a second</source>
+        <translation>×10秒</translation>
+    </message>
+    <message>
+        <source>Hundredths of a second</source>
+        <translation>×100秒</translation>
+    </message>
+    <message>
+        <source>Milliseconds</source>
+        <translation>ミリ秒</translation>
+    </message>
+    <message>
+        <source>Microseconds</source>
+        <translation>マイクロ秒</translation>
+    </message>
+    <message>
+        <source>Nanoseconds</source>
+        <translation>ナノ秒</translation>
+    </message>
+    <message>
+        <source>Display Seconds With Hours and Minutes</source>
+        <translation>時分秒表示</translation>
+    </message>
+    <message>
+        <source>Display seconds with hours and minutes</source>
+        <translation>時分秒で表示します</translation>
+    </message>
+    <message>
+        <source>Resolve &amp;Physical Addresses</source>
+        <translation>物理アドレスを解決(&amp;P)</translation>
+    </message>
+    <message>
+        <source>Show names for known MAC addresses. Lookups use a local database.</source>
+        <translation>既知のMACアドレスの名前を表示します ローカルデータベースを参照します</translation>
+    </message>
+    <message>
+        <source>Resolve &amp;Network Addresses</source>
+        <translation>ネットワークアドレスを解決(&amp;N)</translation>
+    </message>
+    <message>
+        <source>Show names for known IPv4, IPv6, and IPX addresses. Lookups can generate network traffic.</source>
+        <translation>既知のIPv4、IPv6およびIPXアドレスの名前を表示します 解決にはネットワークトラフィックを生成します</translation>
+    </message>
+    <message>
+        <source>Resolve &amp;Transport Addresses</source>
+        <translation>トランスポート層アドレスを解決(&amp;T)</translation>
+    </message>
+    <message>
+        <source>Show names for known TCP, UDP, and SCTP services. Lookups can generate traffic on some systems.</source>
+        <translation>既知のTCP UDPおよびSCTPサービスの名前を表示します システムによっては解決にトラフィックを生成します</translation>
+    </message>
+    <message>
+        <source>Wire&amp;less Toolbar</source>
+        <translation>無線ツールバー(&amp;l)</translation>
+    </message>
+    <message>
+        <source>Show or hide the wireless toolbar</source>
+        <translation>無線ツールバーを表示または非表示にします</translation>
+    </message>
+    <message>
+        <source>&amp;Status Bar</source>
+        <translation>ステータスバー(&amp;S)</translation>
+    </message>
+    <message>
+        <source>Show or hide the status bar</source>
+        <translation>ステータスバーを表示または非表示にします</translation>
+    </message>
+    <message>
+        <source>Packet &amp;List</source>
+        <translation>パケット一覧(&amp;L)</translation>
+    </message>
+    <message>
+        <source>Show or hide the packet list</source>
+        <translation>パケット一覧を表示または非表示にします</translation>
+    </message>
+    <message>
+        <source>Packet &amp;Details</source>
+        <translation>パケット詳細(&amp;D)</translation>
+    </message>
+    <message>
+        <source>Show or hide the packet details</source>
+        <translation>パケット詳細を表示または非表示にします</translation>
+    </message>
+    <message>
+        <source>Packet &amp;Bytes</source>
+        <translation>パケットバイト列(&amp;B)</translation>
+    </message>
+    <message>
+        <source>Show or hide the packet bytes</source>
+        <translation>パケットバイト列を表示または非表示にします</translation>
+    </message>
+    <message>
+        <source>&amp;Conversation Hash Tables</source>
+        <translation>対話ハッシュ表(&amp;C)</translation>
+    </message>
+    <message>
+        <source>&amp;Dissector Tables</source>
+        <translation>ダイセクター表(&amp;D)</translation>
+    </message>
+    <message>
+        <source>&amp;Supported Protocols</source>
+        <translation>サポートされているプロトコル(&amp;S)</translation>
+    </message>
+    <message>
+        <source>MAP Summary</source>
+        <translation>MAP概要</translation>
+    </message>
+    <message>
+        <source>GSM MAP summary statistics</source>
+        <translation>GSM MAP 概要統計</translation>
+    </message>
+    <message>
+        <source>RLC &amp;Graph</source>
+        <translation>RLCグラフ(&amp;G)</translation>
+    </message>
+    <message>
+        <source>&amp;Coloring Rules…</source>
+        <translation>色付けルール…(&amp;C)</translation>
+    </message>
+    <message>
+        <source>Show Linked Packet in New Window</source>
+        <translation>新規ウインドウでリンクされたパケットを表示</translation>
+    </message>
+    <message>
+        <source>New Coloring Rule…</source>
+        <oldsource>New Conversation Rule…</oldsource>
+        <translation>新規対話ルール…</translation>
+    </message>
+    <message>
+        <source>RTP Stream Analysis for selected stream. Press CTRL key for adding reverse stream too.</source>
+        <translation>選択したストリームのRTPストリーム分析。CTRLキーを押して逆方向のストリームも追加できます</translation>
+    </message>
+    <message>
+        <source>RTP Player</source>
+        <translation>RTPプレイヤー</translation>
+    </message>
+    <message>
+        <source>Play selected stream. Press CTRL key for playing reverse stream too.</source>
+        <translation>選択したストリームを再生します。CTRLキーを押して逆方向のストリームも再生します。</translation>
+    </message>
+    <message>
+        <source>IA&amp;X2 Stream Analysis</source>
+        <translation>IAX2ストリーム分析(&amp;X)</translation>
+    </message>
+    <message>
+        <source>Enabled Protocols…</source>
+        <oldsource>Enable Protocols…</oldsource>
+        <translation>有効化したプロトコル…</translation>
+    </message>
+    <message>
+        <source>Wiki Protocol Page</source>
+        <translation>Wikiプロトコルページ</translation>
+    </message>
+    <message>
+        <source>Open the Wireshark wiki page for this protocol.</source>
+        <translation>このプロトコルについてのWireshark Wikiページを開きます</translation>
+    </message>
+    <message>
+        <source>Filter Field Reference</source>
+        <translation>フィルタフィールドリファレンス</translation>
+    </message>
+    <message>
+        <source>Open the display filter reference page for this filter field.</source>
+        <translation>このフィルタフィールドについての表示フィルタリファレンスを開きます</translation>
+    </message>
+    <message>
+        <source>Go to the packet referenced by the selected field.</source>
+        <translation>選択されたフィールドによって参照されたパケットへ移動します</translation>
+    </message>
+    <message>
+        <source>&amp;VoIP Calls</source>
+        <translation>VoIP通話(&amp;V)</translation>
+    </message>
+    <message>
+        <source>Open &amp;Recent</source>
+        <translation>最近使ったファイルを開く(&amp;R)</translation>
+    </message>
+    <message>
+        <source>Name Resol&amp;ution</source>
+        <translation>名前解決(&amp;u)</translation>
+    </message>
+    <message>
+        <source>Service &amp;Response Time</source>
+        <translation>サービス応答時間(&amp;R)</translation>
+    </message>
+    <message>
+        <source>&amp;RTP</source>
+        <translation>&amp;RTP</translation>
+    </message>
+    <message>
+        <source>S&amp;CTP</source>
+        <translation>S&amp;CTP</translation>
+    </message>
+    <message>
+        <source>&amp;ANSI</source>
+        <translation>&amp;ANSI</translation>
+    </message>
+    <message>
+        <source>&amp;GSM</source>
+        <translation>&amp;GSM</translation>
+    </message>
+    <message>
+        <source>&amp;LTE</source>
+        <translation>&amp;LTE</translation>
+    </message>
+    <message>
+        <source>&amp;MTP3</source>
+        <translation>&amp;MTP3</translation>
+    </message>
+    <message>
+        <source>&amp;Open</source>
+        <translation>開く(&amp;O)</translation>
+    </message>
+    <message>
+        <source>&amp;Quit</source>
+        <translation>終了(&amp;Q)</translation>
+    </message>
+    <message>
+        <source>&amp;Close</source>
+        <translation>閉じる(&amp;C)</translation>
+    </message>
+    <message>
+        <source>Display &amp;Filters…</source>
+        <translation>表示フィルタ(&amp;F)…</translation>
+    </message>
+    <message>
+        <source>&amp;Unmark All Displayed</source>
+        <translation>表示されているものすべてをマーク解除(&amp;U)</translation>
+    </message>
+    <message>
+        <source>All VoIP Calls</source>
+        <translation>すべてのVoIP通話</translation>
+    </message>
+    <message>
+        <source>SIP &amp;Flows</source>
+        <translation>SIPフロー(&amp;F)</translation>
+    </message>
+    <message>
+        <source>SIP Flows</source>
+        <translation>SIPフロー</translation>
+    </message>
+    <message>
+        <source>RTP Streams</source>
+        <translation>RTPストリーム</translation>
+    </message>
+    <message>
+        <source>Edit the packet list coloring rules.</source>
+        <translation>パケット一覧の色付けルールを編集します</translation>
+    </message>
+    <message>
+        <source>Bluetooth ATT Server Attributes</source>
+        <oldsource>ATT Server Attributes</oldsource>
+        <translation>Bluetooth ATTサーバ属性</translation>
+    </message>
+    <message>
+        <source>Show Packet in New &amp;Window</source>
+        <translation>新規ウインドウでパケットを表示(&amp;W)</translation>
+    </message>
+    <message>
+        <source>Show this packet in a separate window.</source>
+        <translation>個別のウィンドウでこのパケットを表示</translation>
+    </message>
+    <message>
+        <source>Show the linked packet in a separate window.</source>
+        <translation>個別のウインドウでリンクされたパケットを表示します</translation>
+    </message>
+    <message>
+        <source>Auto Scroll in Li&amp;ve Capture</source>
+        <translation>生のキャプチャを自動スクロール(&amp;v)</translation>
+    </message>
+    <message>
+        <source>Automatically scroll to the last packet during a live capture.</source>
+        <translation>生キャプチャ中の最後のパケットを自動スクロールします</translation>
+    </message>
+    <message>
+        <source>Expert Information</source>
+        <translation>エキスパート情報</translation>
+    </message>
+    <message>
+        <source>Show expert notifications</source>
+        <translation>エキスパート通知を表示します</translation>
+    </message>
+    <message>
+        <source>Add an expression to the display filter.</source>
+        <translation>表示フィルタの書式を追加します</translation>
+    </message>
+    <message>
+        <source>REGISTER_STAT_GROUP_UNSORTED</source>
+        <translation>REGISTER_STAT_GROUP_UNSORTED </translation>
+    </message>
+    <message>
+        <source>Start of &quot;REGISTER_STAT_GROUP_UNSORTED&quot;</source>
+        <translation>&quot;RREGISTER_STAT_GROUP_UNSORTED&quot;Rの開始</translation>
+    </message>
+    <message>
+        <source>No ANSI statistics registered</source>
+        <oldsource>No tools registered</oldsource>
+        <translation>ANSI統計は登録されていません</translation>
+    </message>
+    <message>
+        <source>Resolved Addresses</source>
+        <translation>解決したアドレス</translation>
+    </message>
+    <message>
+        <source>Show each table of resolved addresses as copyable text.</source>
+        <translation>コピー可能なテキストとして解決したアドレスの表を表示します</translation>
+    </message>
+    <message>
+        <source>Color &amp;1</source>
+        <translation>色 &amp;1</translation>
+    </message>
+    <message>
+        <source>Mark the current conversation with its own color.</source>
+        <oldsource>Mark the current coversation with its own color.</oldsource>
+        <translation>独自の色で現在の対話をマークします</translation>
+    </message>
+    <message>
+        <source>Color &amp;2</source>
+        <translation>色 &amp;2</translation>
+    </message>
+    <message>
+        <source>Color &amp;3</source>
+        <translation>色 &amp;3</translation>
+    </message>
+    <message>
+        <source>Color &amp;4</source>
+        <translation>色 &amp;4</translation>
+    </message>
+    <message>
+        <source>Color &amp;5</source>
+        <translation>色 &amp;5</translation>
+    </message>
+    <message>
+        <source>Color &amp;6</source>
+        <translation>色 &amp;6</translation>
+    </message>
+    <message>
+        <source>Color &amp;7</source>
+        <translation>色 &amp;7</translation>
+    </message>
+    <message>
+        <source>Color &amp;8</source>
+        <translation>色 &amp;8</translation>
+    </message>
+    <message>
+        <source>Color &amp;9</source>
+        <translation>色 &amp;9</translation>
+    </message>
+    <message>
+        <source>Color 1&amp;0</source>
+        <translation>色 1&amp;0</translation>
+    </message>
+    <message>
+        <source>Create a new coloring rule based on this field.</source>
+        <oldsource>Create a new coloring rule based on this conversation.</oldsource>
+        <translation>この対話に基づいた新しい色付けルールを作成します</translation>
+    </message>
+    <message>
+        <source>Reset Colorization</source>
+        <translation>色付けをリセット</translation>
+    </message>
+    <message>
+        <source>Reset colorized conversations.</source>
+        <translation>対話の色付けをリセットします</translation>
+    </message>
+    <message>
+        <source>RTP Stream Analysis</source>
+        <translation>RTPストリーム分析</translation>
+    </message>
+    <message>
+        <source>Edit Resolved Name</source>
+        <translation>解決した名前を編集</translation>
+    </message>
+    <message>
+        <source>Manually edit a name resolution entry.</source>
+        <translation>名前解決エントリを手動で編集します</translation>
+    </message>
+    <message>
+        <source>Enable and disable specific protocols</source>
+        <translation>指定プロトコルを有効および無効化します</translation>
+    </message>
+    <message>
+        <source> before quitting</source>
+        <translation>終了前</translation>
+    </message>
+    <message>
+        <source>Save packets before merging?</source>
+        <translation>結合する前にパケットを保存しますか？</translation>
+    </message>
+    <message>
+        <source>A temporary capture file can&apos;t be merged.</source>
+        <translation>一時的なキャプチャファイルは結合することができません</translation>
+    </message>
+    <message>
+        <source>Save changes in &quot;%1&quot; before merging?</source>
+        <translation>結合する前に &quot;%1&quot; に変更を保存しますか？</translation>
+    </message>
+    <message>
+        <source>Changes must be saved before the files can be merged.</source>
+        <translation>ファイルを結合する前に変更を保存する必要があります</translation>
+    </message>
+    <message>
+        <source>Invalid Display Filter</source>
+        <translation>無効な表示フィルタ</translation>
+    </message>
+    <message>
+        <source>Invalid Read Filter</source>
+        <translation>無効な読込フィルタ</translation>
+    </message>
+    <message>
+        <source>The filter expression %1 isn&apos;t a valid read filter. (%2).</source>
+        <translation>フィルタ式 %1 は有効な読込みフィルタではありません(%2)</translation>
+    </message>
+    <message>
+        <source> before importing a capture</source>
+        <oldsource> before importing a new capture</oldsource>
+        <translation>新しいキャプチャファイルをインポートする前に</translation>
+    </message>
+    <message>
+        <source>Unable to export to &quot;%1&quot;.</source>
+        <translation>&quot;%1&quot; をエクスポートすることができません</translation>
+    </message>
+    <message>
+        <source>You cannot export packets to the current capture file.</source>
+        <translation>現在のキャプチャファイルへパケットをエクスポートすることはできません</translation>
+    </message>
+    <message>
+        <source>Do you want to save the changes you&apos;ve made%1?</source>
+        <oldsource>Do you want to save the captured packets</oldsource>
+        <translation>%1 に作成した変更を保存したいですか？</translation>
+    </message>
+    <message>
+        <source>Your captured packets will be lost if you don&apos;t save them.</source>
+        <translation>保存しない場合キャプチャしたパケットは失われます</translation>
+    </message>
+    <message>
+        <source>Do you want to save the changes you&apos;ve made to the capture file &quot;%1&quot;%2?</source>
+        <translation>キャプチャスタイルに行った変更を保存しますか</translation>
+    </message>
+    <message>
+        <source>Your changes will be lost if you don&apos;t save them.</source>
+        <translation>保存しない場合変更は失われます</translation>
+    </message>
+    <message>
+        <source>Check for Updates…</source>
+        <translation>更新を確認…</translation>
+    </message>
+    <message>
+        <source>Unable to drop files during capture.</source>
+        <translation>キャプチャ中にファイルをドロップできません</translation>
+    </message>
+    <message>
+        <source>Unknown file type returned by merge dialog.</source>
+        <translation>結合画面から返された未知のファイルタイプ</translation>
+    </message>
+    <message>
+        <source>Please report this as a Wireshark issue at https://gitlab.com/wireshark/wireshark/-/issues.</source>
+        <translation>どうかこれをWiresharkの問題として以下に報告ください。https://gitlab.com/wireshark/wireshark/-/issues</translation>
+    </message>
+    <message>
+        <source>Unknown file type returned by export dialog.</source>
+        <translation>エクスポート画面から返された未知のファイルタイプ</translation>
+    </message>
+    <message>
+        <source>Do you want to stop the capture and save the captured packets%1?</source>
+        <translation>キャプチャを停止してキャプチャしたパケットを保存しますか？%1</translation>
+    </message>
+    <message>
+        <source>Do you want to save the captured packets%1?</source>
+        <translation>キャプチャしたパケットを保存しますか？%1</translation>
+    </message>
+    <message>
+        <source>Save before Continue</source>
+        <translation>続ける前に保存</translation>
+    </message>
+    <message>
+        <source>Stop and Save</source>
+        <translation>停止して保存</translation>
+    </message>
+    <message>
+        <source>Stop and Quit &amp;without Saving</source>
+        <oldsource>Stop and Quit without Saving</oldsource>
+        <translation>保存しないで停止して終了(&amp;w)</translation>
+    </message>
+    <message>
+        <source>Quit &amp;without Saving</source>
+        <oldsource>Quit without Saving</oldsource>
+        <translation>保存しないで終了(&amp;w)</translation>
+    </message>
+    <message>
+        <source>There is no &quot;rtp.ssrc&quot; field in this version of Wireshark.</source>
+        <translation>このバージョンのWiresharkには &quot;rtp.ssrc&quot; フィールドはありません</translation>
+    </message>
+    <message>
+        <source>Please select an RTPv2 packet with an SSRC value</source>
+        <translation>SSRC値をもつRTPv2パケットを選んでください</translation>
+    </message>
+    <message>
+        <source>SSRC value not found.</source>
+        <translation>SSRC値が見つかりませんでした</translation>
+    </message>
+    <message>
+        <source>Show or hide the toolbar</source>
+        <translation>ツールバーを表示/非表示</translation>
+    </message>
+    <message>
+        <source>Continue &amp;without Saving</source>
+        <oldsource>Continue without Saving</oldsource>
+        <translation>保存せずに続ける(&amp;w)</translation>
+    </message>
+    <message>
+        <source>Stop and Continue &amp;without Saving</source>
+        <oldsource>Stop and Continue without Saving</oldsource>
+        <translation>保存せずに停止して続ける(&amp;w)</translation>
+    </message>
+    <message>
+        <source>The Wireshark Network Analyzer</source>
+        <translation>ワイヤーシャークネットワークアナライザ</translation>
+    </message>
+    <message>
+        <source>Capturing from %1</source>
+        <translation>%1 からキャプチャ中</translation>
+    </message>
+    <message>
+        <source> before opening another file</source>
+        <translation>別のファイルを開く前に</translation>
+    </message>
+    <message>
+        <source>Merging files.</source>
+        <translation>ファイルを結合</translation>
+    </message>
+    <message>
+        <source>%1: %2</source>
+        <translation>%1: %2</translation>
+    </message>
+    <message>
+        <source>Clear Menu</source>
+        <translation>メニューをクリア</translation>
+    </message>
+    <message>
+        <source> before closing the file</source>
+        <translation>ファイルを閉じる前に</translation>
+    </message>
+    <message>
+        <source>Export Selected Packet Bytes</source>
+        <translation>選択したパケットバイト列をエクスポート</translation>
+    </message>
+    <message>
+        <source>No Keys</source>
+        <translation>キーはありません</translation>
+    </message>
+    <message numerus="yes">
+        <source>Export SSL Session Keys (%Ln key(s))</source>
+        <oldsource>Export SSL Session Keys (%1 key%2</oldsource>
+        <translation type="vanished">
+            <numerusform>SSLセッション鍵をエクスポート (%Ln keys)</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Raw data (*.bin *.dat *.raw);;All Files (</source>
+        <translation>Raw(無加工)データ形式 (*.bin *.dat *.raw);;すべてのファイル(</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t copy text. Try another item.</source>
+        <translation>テキストをコピーできません 別の項目を試してみてください</translation>
+    </message>
+    <message>
+        <source>Are you sure you want to remove all packet comments?</source>
+        <translation>本当にすべてのパケットコメントを削除してよいですか？</translation>
+    </message>
+    <message>
+        <source>Unable to build conversation filter.</source>
+        <translation>会話フィルタを作成できません</translation>
+    </message>
+    <message>
+        <source> before reloading the file</source>
+        <translation>ファイルを再読み込みする前に</translation>
+    </message>
+    <message>
+        <source>Error compiling filter for this conversation.</source>
+        <translation>この対話の間のフィルタ翻訳エラー</translation>
+    </message>
+    <message>
+        <source>No previous/next packet in conversation.</source>
+        <translation>対話の前/次のパケットがありません</translation>
+    </message>
+    <message>
+        <source>No interface selected.</source>
+        <translation>インターフェースが選択されていません</translation>
+    </message>
+    <message>
+        <source>Saving %1…</source>
+        <translation>保存中 %1…</translation>
+    </message>
+    <message>
+        <source>Configure all extcaps before start of capture.</source>
+        <translation>キャプチャ開始前にすべてのextcapを設定します</translation>
+    </message>
+    <message>
+        <source>Invalid capture filter.</source>
+        <translation>無効なキャプチャフィルタ</translation>
+    </message>
+    <message>
+        <source>(empty comment)</source>
+        <comment>placeholder for empty comment</comment>
+        <translation>(コメント空)</translation>
+    </message>
+    <message>
+        <source>Add New Comment…</source>
+        <translation>新規コメントを追加…</translation>
+    </message>
+    <message>
+        <source>Edit &quot;%1&quot;</source>
+        <comment>edit packet comment</comment>
+        <translation>編集 &quot;%1&quot;</translation>
+    </message>
+    <message>
+        <source>Delete &quot;%1&quot;</source>
+        <comment>delete packet comment</comment>
+        <translation>削除 &quot;%1&quot;</translation>
+    </message>
+    <message>
+        <source>Delete packet comments</source>
+        <translation>パケットコメントを削除</translation>
+    </message>
+    <message numerus="yes">
+        <source>Delete comments from %n packet(s)</source>
+        <translation>
+            <numerusform>%n パケットよりコメントを削除</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source> before starting a new capture</source>
+        <translation>新規キャプチャを開始する前に</translation>
+    </message>
+    <message>
+        <source> before reloading Lua plugins</source>
+        <translation>Lua プラグインの再読込前</translation>
+    </message>
+    <message>
+        <source>Please wait while Wireshark is initializing…</source>
+        <translation>Wiresharkが初期化している間お待ちください…</translation>
+    </message>
+    <message>
+        <source>There are no TLS Session Keys to save.</source>
+        <translation>保存するTLSセッション鍵はありません</translation>
+    </message>
+    <message numerus="yes">
+        <source>Export TLS Session Keys (%Ln key(s))</source>
+        <translation>
+            <numerusform>TLSセッション鍵をエクスポート (%Ln keys)</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>TLS Session Keys (*.keys *.txt);;All Files (</source>
+        <translation>TLSセッション鍵 (*.keys *.txt);;すべてのファイル (</translation>
+    </message>
+    <message>
+        <source>No filter available. Try another %1.</source>
+        <translation>フィルタが利用できません 別の %1 を利用してください</translation>
+    </message>
+    <message>
+        <source>column</source>
+        <translation>列</translation>
+    </message>
+    <message>
+        <source>item</source>
+        <translation>項目</translation>
+    </message>
+    <message>
+        <source>The &quot;%1&quot; column already exists.</source>
+        <translation>&quot;%1&quot; 列は既に存在します</translation>
+    </message>
+    <message>
+        <source>The &quot;%1&quot; column already exists as &quot;%2&quot;.</source>
+        <translation>&quot;%1&quot; 列は &quot;%2&quot; として既に存在します</translation>
+    </message>
+    <message>
+        <source>RTP packet search failed</source>
+        <translation>RTPパケットの検索に失敗しました</translation>
+    </message>
+    <message>
+        <source>No Interface Selected.</source>
+        <translation>インターフェースが選択されていません</translation>
+    </message>
+    <message>
+        <source> before restarting the capture</source>
+        <translation>キャプチャを再スタートする前に</translation>
+    </message>
+    <message>
+        <source>Wiki Page for %1</source>
+        <translation>%1 の Wikiページ</translation>
+    </message>
+    <message>
+        <source>&lt;p&gt;The Wireshark Wiki is maintained by the community.&lt;/p&gt;&lt;p&gt;The page you are about to load might be wonderful, incomplete, wrong, or nonexistent.&lt;/p&gt;&lt;p&gt;Proceed to the wiki?&lt;/p&gt;</source>
+        <translation>&lt;p&gt;ワイヤーシャークWikiはコミュニティによって運営されています &lt;/p&gt;&lt;p&gt;いま見ているページはすばらしかったり、不完全だったり、間違っていたり、存在しないかもしれません。&lt;/p&gt;&lt;p&gt;Wikiに移動しますか？&lt;/p&gt;</translation>
+    </message>
+    <message>
+        <source>Loading</source>
+        <translation>ロード中</translation>
+    </message>
+    <message>
+        <source>Reloading</source>
+        <translation>再読み込み中</translation>
+    </message>
+    <message>
+        <source>Rescanning</source>
+        <translation>再スキャニング中</translation>
     </message>
 </context>
 <context>

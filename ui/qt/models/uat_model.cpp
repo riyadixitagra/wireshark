@@ -239,8 +239,9 @@ int UatModel::columnCount(const QModelIndex &parent) const
 
 QModelIndex UatModel::appendEntry(QVariantList rowData)
 {
-    // A row with less entries could be added, where the remaining entries are empty
-    if (rowData.count() == 0 || rowData.count() < rowCount())
+    // Don't add an empty row, or a row with more entries than we have columns,
+    // but a row with fewer can be added, where the remaining entries are empty
+    if (rowData.count() == 0 || rowData.count() > columnCount())
         return QModelIndex();
 
     QModelIndex newIndex;
@@ -257,7 +258,7 @@ QModelIndex UatModel::appendEntry(QVariantList rowData)
             if (field->mode != PT_TXTMOD_BOOL) {
                 data = rowData[col].toString();
             } else {
-                if (rowData[col] == Qt::Checked) {
+                if (rowData[col].toInt() == Qt::Checked) {
                     data = QString("TRUE");
                 } else {
                     data = QString("FALSE");
@@ -314,7 +315,7 @@ bool UatModel::setData(const QModelIndex &index, const QVariant &value, int role
         const QByteArray &bytes = field->mode == PT_TXTMOD_HEXBYTES ? QByteArray::fromHex(str) : str;
         field->cb.set(rec, bytes.constData(), (unsigned) bytes.size(), field->cbdata.set, field->fld_data);
     } else {
-        if (value == Qt::Checked) {
+        if (value.toInt() == Qt::Checked) {
             field->cb.set(rec, "TRUE", 4, field->cbdata.set, field->fld_data);
         } else {
             field->cb.set(rec, "FALSE", 5, field->cbdata.set, field->fld_data);

@@ -23,6 +23,8 @@
 void proto_register_calcappprotocol(void);
 void proto_reg_handoff_calcappprotocol(void);
 
+static dissector_handle_t calcappprotocol_handle;
+
 #define CALCAPPPROTOCOL_PAYLOAD_PROTOCOL_ID_LEGACY 0x29097603
 
 
@@ -176,6 +178,7 @@ static void calcappprotocol_stat_init(stat_tap_table_ui* new_stat)
   table = stat_tap_init_table(table_name, num_fields, 0, NULL);
   stat_tap_add_table(new_stat, table);
 
+  memset(items, 0x0, sizeof(items));
   /* Add a row for each value type */
   while (message_type_values[i].strptr) {
     items[MESSAGE_TYPE_COLUMN].type                = TABLE_ITEM_STRING;
@@ -204,7 +207,7 @@ static void calcappprotocol_stat_init(stat_tap_table_ui* new_stat)
 }
 
 static tap_packet_status
-calcappprotocol_stat_packet(void* tapdata, packet_info* pinfo _U_, epan_dissect_t* edt _U_, const void* data)
+calcappprotocol_stat_packet(void* tapdata, packet_info* pinfo _U_, epan_dissect_t* edt _U_, const void* data, tap_flags_t flags _U_)
 {
   stat_data_t*                     stat_data = (stat_data_t*)tapdata;
   const tap_calcappprotocol_rec_t* tap_rec   = (const tap_calcappprotocol_rec_t*)data;
@@ -401,14 +404,13 @@ proto_register_calcappprotocol(void)
   tap_calcappprotocol = register_tap("calcappprotocol");
 
   register_stat_tap_table_ui(&calcappprotocol_stat_table);
+
+  calcappprotocol_handle = register_dissector("calcappprotocol", dissect_calcappprotocol, proto_calcappprotocol);
 }
 
 void
 proto_reg_handoff_calcappprotocol(void)
 {
-  dissector_handle_t calcappprotocol_handle;
-
-  calcappprotocol_handle = create_dissector_handle(dissect_calcappprotocol, proto_calcappprotocol);
   dissector_add_uint("sctp.ppi", CALCAPPPROTOCOL_PAYLOAD_PROTOCOL_ID_LEGACY, calcappprotocol_handle);
   dissector_add_uint("sctp.ppi", CALCAPP_PAYLOAD_PROTOCOL_ID, calcappprotocol_handle);
 }

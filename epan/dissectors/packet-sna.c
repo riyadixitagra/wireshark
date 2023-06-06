@@ -346,13 +346,6 @@ static const value_string sna_th_efi_vals[] = {
 	{ 0x0,	NULL }
 };
 
-/* Request/Response Indicator */
-static const value_string sna_rh_rri_vals[] = {
-	{ 0, "Request" },
-	{ 1, "Response" },
-	{ 0x0,	NULL }
-};
-
 /* Request/Response Unit Category */
 static const value_string sna_rh_ru_category_vals[] = {
 	{ 0, "Function Management Data (FMD)" },
@@ -1147,8 +1140,7 @@ dissect_optional(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree)
 		if (tree) {
 			sub_tree = proto_tree_add_subtree(tree, tvb,
 			    offset, len << 2, ett, NULL,
-			    val_to_str(type, sna_nlp_opti_vals,
-			    "Unknown Segment Type"));
+			    val_to_str_const(type, sna_nlp_opti_vals, "Unknown Segment Type"));
 			proto_tree_add_uint(sub_tree, hf_sna_nlp_opti_len,
 			    tvb, offset, 1, len);
 			proto_tree_add_uint(sub_tree, hf_sna_nlp_opti_type,
@@ -2887,7 +2879,7 @@ proto_register_sna(void)
 
 		{ &hf_sna_nlp_opti_0f_bits,
 		  { "Client Bits", "sna.nlp.thdr.optional.0f.bits",
-		    FT_UINT8, BASE_HEX, VALS(sna_nlp_opti_0f_bits_vals),
+		    FT_UINT16, BASE_HEX, VALS(sna_nlp_opti_0f_bits_vals),
 		    0x0, NULL, HFILL }},
 
 		{ &hf_sna_nlp_opti_10_tcid,
@@ -3054,8 +3046,8 @@ proto_register_sna(void)
 		    BASE_HEX, NULL, 0x0, NULL, HFILL }},
 
 		{ &hf_sna_rh_rri,
-		  { "Request/Response Indicator", "sna.rh.rri", FT_UINT8,
-		    BASE_DEC, VALS(sna_rh_rri_vals), 0x80, NULL, HFILL }},
+		  { "Request/Response Indicator", "sna.rh.rri", FT_BOOLEAN,
+		    8, TFS(&tfs_response_request), 0x80, NULL, HFILL }},
 
 		{ &hf_sna_rh_ru_category,
 		  { "Request/Response Unit Category", "sna.rh.ru_category",

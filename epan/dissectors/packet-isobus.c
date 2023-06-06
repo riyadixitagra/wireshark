@@ -403,11 +403,11 @@ dissect_isobus(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void* data)
     {
     case 0:
         col_append_fstr(pinfo->cinfo, COL_INFO, "[%s] ",
-            val_to_str(pdu_format, pdu_format_dp0_short, "Unknown"));
+            val_to_str_const(pdu_format, pdu_format_dp0_short, "Unknown"));
         break;
     case 1:
         col_append_fstr(pinfo->cinfo, COL_INFO, "[%s] ",
-            val_to_str(pdu_format, pdu_format_dp1_short, "Unknown"));
+            val_to_str_const(pdu_format, pdu_format_dp1_short, "Unknown"));
         break;
     }
 
@@ -535,7 +535,8 @@ dissect_isobus(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void* data)
 
             proto_tree_add_item(tree, hf_isobus_transportprotocol_connabort_pgn, tvb, data_offset, 3, ENC_LITTLE_ENDIAN);
 
-            col_append_fstr(pinfo->cinfo, COL_INFO, "Connection Abort, %s", rval_to_str(connection_abort_reason, connection_abort_reasons, "unknown reason"));
+            col_append_fstr(pinfo->cinfo, COL_INFO, "Connection Abort, %s",
+                            rval_to_str_const(connection_abort_reason, connection_abort_reasons, "unknown reason"));
         }
         else if (control_byte == 32)
         {
@@ -651,12 +652,12 @@ proto_register_isobus(void)
         },
         { &hf_isobus_ext_data_page,
           { "Ext data page", "isobus.edp",
-            FT_UINT32, BASE_HEX, NULL, 0x2000000,
+            FT_UINT32, BASE_HEX, NULL, 0x02000000,
             NULL, HFILL }
         },
         { &hf_isobus_data_page,
           { "Data page", "isobus.datapage",
-            FT_UINT32, BASE_HEX, NULL, 0x1000000,
+            FT_UINT32, BASE_HEX, NULL, 0x01000000,
             NULL, HFILL }
         },
         { &hf_isobus_pdu_format_dp0,

@@ -12,6 +12,7 @@
  */
 
 #include <config.h>
+#define WS_LOG_DOMAIN  LOG_DOMAIN_MAIN
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -26,12 +27,12 @@
 
 #include <wiretap/wtap.h>
 
-#include <ui/cmdarg_err.h>
+#include <wsutil/cmdarg_err.h>
 #include <wsutil/file_util.h>
 #include <wsutil/filesystem.h>
 #include <wsutil/privileges.h>
 #include <cli_main.h>
-#include <ui/version_info.h>
+#include <wsutil/version_info.h>
 
 #ifdef HAVE_PLUGINS
 #include <wsutil/plugins.h>
@@ -78,7 +79,7 @@ captype_cmdarg_err_cont(const char *msg_format, va_list ap)
 int
 main(int argc, char *argv[])
 {
-    char  *init_progfile_dir_error;
+    char  *configuration_init_error;
     static const struct report_message_routines captype_report_routines = {
         failure_message,
         failure_message,
@@ -121,6 +122,8 @@ main(int argc, char *argv[])
     /* Early logging command-line initialization. */
     ws_log_parse_args(&argc, argv, vcmdarg_err, 1);
 
+    ws_noisy("Finished log init and parsing command line log arguments");
+
     /* Initialize the version information. */
     ws_init_version_info("Captype", NULL, NULL);
 
@@ -137,12 +140,12 @@ main(int argc, char *argv[])
      * Attempt to get the pathname of the directory containing the
      * executable file.
      */
-    init_progfile_dir_error = init_progfile_dir(argv[0]);
-    if (init_progfile_dir_error != NULL) {
+    configuration_init_error = configuration_init(argv[0], NULL);
+    if (configuration_init_error != NULL) {
         fprintf(stderr,
                 "captype: Can't get pathname of directory containing the captype program: %s.\n",
-                init_progfile_dir_error);
-        g_free(init_progfile_dir_error);
+                configuration_init_error);
+        g_free(configuration_init_error);
     }
 
     init_report_message("captype", &captype_report_routines);

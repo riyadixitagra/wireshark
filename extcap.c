@@ -43,15 +43,23 @@
 #include <wsutil/tempfile.h>
 #include <wsutil/wslog.h>
 #include <wsutil/ws_assert.h>
+#include <wsutil/version_info.h>
 
+#include "capture/capture_session.h"
 #include "capture_opts.h"
 
 #include "extcap.h"
 #include "extcap_parser.h"
 
-#include "ui/version_info.h"
-
-static void extcap_child_watch_cb(GPid pid, gint status, gpointer user_data);
+/* Number of seconds to wait for extcap process to exit after cleanup.
+ * If extcap does not exit before the timeout, it is forcefully terminated.
+ */
+#ifdef _WIN32
+/* Extcap interface does not specify SIGTERM replacement on Windows yet */
+#define EXTCAP_CLEANUP_TIMEOUT 0
+#else
+#define EXTCAP_CLEANUP_TIMEOUT 30
+#endif
 
 /* internal container, for all the extcap executables that have been found.
  * Will be reset if extcap_clear_interfaces() is being explicitly called
@@ -263,10 +271,7 @@ extcap_get_extcap_paths(void)
 {
     GSList *paths = NULL;
 
-    char *persconffile_path = get_persconffile_path("extcap", FALSE);
-    paths = extcap_get_extcap_paths_from_dir(paths, persconffile_path);
-    g_free(persconffile_path);
-
+    paths = extcap_get_extcap_paths_from_dir(paths, get_extcap_pers_dir());
     paths = extcap_get_extcap_paths_from_dir(paths, get_extcap_dir());
 
     return paths;
@@ -1013,7 +1018,7 @@ extcap_get_if_configuration_values(const char * ifname, const char * argname, GH
 }
 
 gboolean
-extcap_has_configuration(const char *ifname, gboolean is_required)
+_extcap_requires_configuration_int(const char *ifname, gboolean check_required)
 {
     GList *arguments = 0;
     GList *walker = 0, * item = 0;
@@ -1033,10 +1038,11 @@ extcap_has_configuration(const char *ifname, gboolean is_required)
             {
                 extcap_arg *arg = (extcap_arg *)(item->data);
                 /* Should required options be present, or any kind of options */
-                if (!is_required)
+                if (!check_required)
                 {
                     found = TRUE;
                 }
+                /* Following branch is executed when check of required items is requested */
                 else if (arg->is_required)
                 {
                     const gchar *stored = NULL;
@@ -1054,13 +1060,7 @@ extcap_has_configuration(const char *ifname, gboolean is_required)
 
                     if (arg->is_required)
                     {
-                        /* If stored and defval is identical and the argument is required,
-                         * configuration is needed */
-                        if (defval && stored && g_strcmp0(stored, defval) == 0)
-                        {
-                            found = TRUE;
-                        }
-                        else if (!defval && (!stored || !*stored))
+                        if (!defval && (!stored || !*stored))
                         {
                             found = TRUE;
                         }
@@ -1083,6 +1083,18 @@ extcap_has_configuration(const char *ifname, gboolean is_required)
     extcap_free_if_configuration(arguments, TRUE);
 
     return found;
+}
+
+gboolean
+extcap_has_configuration(const char *ifname)
+{
+  return _extcap_requires_configuration_int(ifname, FALSE);
+}
+
+gboolean
+extcap_requires_configuration(const char *ifname)
+{
+  return _extcap_requires_configuration_int(ifname, TRUE);
 }
 
 static gboolean cb_verify_filter(extcap_callback_info_t cb_info)
@@ -1157,14 +1169,14 @@ extcap_has_toolbar(const char *ifname)
     return FALSE;
 }
 
-void extcap_if_cleanup(capture_options *capture_opts, gchar **errormsg)
+#ifdef HAVE_LIBPCAP
+static gboolean extcap_terminate_cb(gpointer user_data)
 {
+    capture_session *cap_session = (capture_session *)user_data;
+    capture_options *capture_opts = cap_session->capture_opts;
     interface_options *interface_opts;
-    ws_pipe_t *pipedata;
-    guint icnt = 0;
-    gboolean overwrite_exitcode;
-    gchar *buffer;
-#define STDERR_BUFFER_SIZE 1024
+    guint icnt;
+    gboolean all_finished = TRUE;
 
     for (icnt = 0; icnt < capture_opts->ifaces->len; icnt++)
     {
@@ -1177,10 +1189,135 @@ void extcap_if_cleanup(capture_options *capture_opts, gchar **errormsg)
             continue;
         }
 
-        overwrite_exitcode = FALSE;
+        if (interface_opts->extcap_pid != WS_INVALID_PID)
+        {
+#ifdef _WIN32
+            TerminateProcess(interface_opts->extcap_pid, 0);
+#else
+            kill(interface_opts->extcap_pid, SIGKILL);
+#endif
+            all_finished = FALSE;
+        }
 
-        ws_debug("Extcap [%s] - Cleaning up fifo: %s; PID: %d", interface_opts->name,
-              interface_opts->extcap_fifo, interface_opts->extcap_pid);
+        /* Do not care about stdout/stderr anymore */
+        if (interface_opts->extcap_stdout_watch > 0)
+        {
+            g_source_remove(interface_opts->extcap_stdout_watch);
+            interface_opts->extcap_stdout_watch = 0;
+        }
+
+        if (interface_opts->extcap_stderr_watch > 0)
+        {
+            g_source_remove(interface_opts->extcap_stderr_watch);
+            interface_opts->extcap_stderr_watch = 0;
+        }
+    }
+
+    capture_opts->wait_for_extcap_cbs = TRUE;
+    capture_opts->extcap_terminate_id = 0;
+    if (all_finished)
+    {
+        capture_process_finished(cap_session);
+    }
+
+    return G_SOURCE_REMOVE;
+}
+
+void extcap_request_stop(capture_session *cap_session)
+{
+    capture_options *capture_opts = cap_session->capture_opts;
+    interface_options *interface_opts;
+    guint icnt = 0;
+
+    if (capture_opts->extcap_terminate_id > 0)
+    {
+        /* Already requested, do not extend timeout */
+        return;
+    }
+
+    if (capture_opts->wait_for_extcap_cbs)
+    {
+        /* Terminate callback was called, waiting for child callbacks */
+        return;
+    }
+
+    if (extcap_session_stop(cap_session))
+    {
+        /* Nothing left to do, all extcaps have fully finished */
+        return;
+    }
+
+    for (icnt = 0; icnt < capture_opts->ifaces->len; icnt++)
+    {
+        interface_opts = &g_array_index(capture_opts->ifaces, interface_options,
+                                       icnt);
+
+        /* skip native interfaces */
+        if (interface_opts->if_type != IF_EXTCAP)
+        {
+            continue;
+        }
+
+        ws_debug("Extcap [%s] - Requesting stop PID: %"PRIdMAX, interface_opts->name,
+              (intmax_t)interface_opts->extcap_pid);
+
+#ifndef _WIN32
+        if (interface_opts->extcap_pid != WS_INVALID_PID)
+        {
+            kill(interface_opts->extcap_pid, SIGTERM);
+        }
+#endif
+    }
+
+    capture_opts->extcap_terminate_id =
+        g_timeout_add_seconds(EXTCAP_CLEANUP_TIMEOUT, extcap_terminate_cb, cap_session);
+}
+
+static gboolean
+extcap_add_arg_and_remove_cb(gpointer key, gpointer value, gpointer data)
+{
+    GPtrArray *args = (GPtrArray *)data;
+
+    if (key != NULL)
+    {
+        g_ptr_array_add(args, g_strdup((const gchar *)key));
+
+        if (value != NULL)
+        {
+            g_ptr_array_add(args, g_strdup((const gchar *)value));
+        }
+
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+gboolean extcap_session_stop(capture_session *cap_session)
+{
+    capture_options *capture_opts = cap_session->capture_opts;
+    interface_options *interface_opts;
+    guint i;
+
+    for (i = 0; i < capture_opts->ifaces->len; i++)
+    {
+        interface_opts = &g_array_index(capture_opts->ifaces, interface_options, i);
+        if (interface_opts->if_type != IF_EXTCAP)
+        {
+            continue;
+        }
+
+        if ((interface_opts->extcap_pid != WS_INVALID_PID) ||
+            (interface_opts->extcap_stdout_watch > 0) ||
+            (interface_opts->extcap_stderr_watch > 0))
+        {
+            /* Capture session is not finished, wait for remaining watches */
+            return FALSE;
+        }
+
+        g_free(interface_opts->extcap_pipedata);
+        interface_opts->extcap_pipedata = NULL;
+
 #ifdef _WIN32
         if (interface_opts->extcap_pipe_h != INVALID_HANDLE_VALUE)
         {
@@ -1209,8 +1346,19 @@ void extcap_if_cleanup(capture_options *capture_opts, gchar **errormsg)
 #else
         if (interface_opts->extcap_fifo != NULL && file_exists(interface_opts->extcap_fifo))
         {
+            /* If extcap didn't open the fifo, dumpcap would be waiting on it
+             * until user manually stops capture. Simply open and close fifo
+             * here to let dumpcap return from the select() call. This has no
+             * effect if dumpcap is not waiting.
+             */
+            int fd = ws_open(interface_opts->extcap_fifo, O_WRONLY|O_NONBLOCK, 0000);
+            if (fd != -1) {
+                close(fd);
+            }
             /* the fifo will not be freed here, but with the other capture_opts in capture_sync */
             ws_unlink(interface_opts->extcap_fifo);
+            get_dirname(interface_opts->extcap_fifo);
+            rmdir(interface_opts->extcap_fifo);
             interface_opts->extcap_fifo = NULL;
         }
         if (interface_opts->extcap_control_in && file_exists(interface_opts->extcap_control_in))
@@ -1223,132 +1371,127 @@ void extcap_if_cleanup(capture_options *capture_opts, gchar **errormsg)
             ws_unlink(interface_opts->extcap_control_out);
             interface_opts->extcap_control_out = NULL;
         }
-        /* Send termination signal to child. On Linux and OSX the child will not notice that the
-         * pipe has been closed before writing to the pipe.
-         */
-        if (interface_opts->extcap_pid != WS_INVALID_PID)
-        {
-            kill(interface_opts->extcap_pid, SIGTERM);
-        }
 #endif
-        /* Maybe the client closed and removed fifo, but ws should check if
-         * pid should be closed */
-        ws_debug("Extcap [%s] - Closing spawned PID: %d", interface_opts->name,
-              interface_opts->extcap_pid);
+    }
 
-        pipedata = (ws_pipe_t *) interface_opts->extcap_pipedata;
-        if (pipedata)
+    /* All child processes finished */
+    capture_opts->wait_for_extcap_cbs = FALSE;
+    if (capture_opts->extcap_terminate_id > 0)
+    {
+        g_source_remove(capture_opts->extcap_terminate_id);
+        capture_opts->extcap_terminate_id = 0;
+    }
+
+    /* Nothing left to do, do not prevent capture session stop */
+    return TRUE;
+}
+
+static void
+extcap_watch_removed(capture_session *cap_session, interface_options *interface_opts)
+{
+    if ((interface_opts->extcap_pid == WS_INVALID_PID) &&
+        (interface_opts->extcap_stdout_watch == 0) &&
+        (interface_opts->extcap_stderr_watch == 0))
+    {
+        /* Close session if this was the last remaining process */
+        capture_process_finished(cap_session);
+    }
+}
+
+static interface_options *
+extcap_find_channel_interface(capture_session *cap_session, GIOChannel *source)
+{
+    capture_options *capture_opts = cap_session->capture_opts;
+    interface_options *interface_opts;
+    guint i;
+
+    for (i = 0; i < capture_opts->ifaces->len; i++)
+    {
+        ws_pipe_t *pipedata;
+        interface_opts = &g_array_index(capture_opts->ifaces, interface_options, i);
+        pipedata = (ws_pipe_t *)interface_opts->extcap_pipedata;
+        if (pipedata &&
+            ((pipedata->stdout_io == source) || (pipedata->stderr_io == source)))
         {
-            if (pipedata->stderr_fd > 0)
-            {
-                buffer = (gchar *)g_malloc0(STDERR_BUFFER_SIZE + 1);
-                ws_read_string_from_pipe(ws_get_pipe_handle(pipedata->stderr_fd), buffer, STDERR_BUFFER_SIZE + 1);
-                if (strlen(buffer) > 0)
-                {
-                    pipedata->stderr_msg = g_strdup(buffer);
-                    pipedata->exitcode = 1;
-                }
-                g_free(buffer);
-            }
-
-#ifndef _WIN32
-            /* Final child watch may not have been called */
-            if (interface_opts->extcap_child_watch > 0)
-            {
-                extcap_child_watch_cb(pipedata->pid, 0, capture_opts);
-                /* it will have changed in extcap_child_watch_cb */
-                interface_opts = &g_array_index(capture_opts->ifaces, interface_options,
-                                               icnt);
-            }
-#endif
-
-            if (pipedata->stderr_msg != NULL)
-            {
-                overwrite_exitcode = TRUE;
-            }
-
-            if (overwrite_exitcode || pipedata->exitcode != 0)
-            {
-                if (pipedata->stderr_msg != NULL)
-                {
-                    if (*errormsg == NULL)
-                    {
-                        *errormsg = ws_strdup_printf("Error by extcap pipe: %s", pipedata->stderr_msg);
-                    }
-                    else
-                    {
-                        gchar *temp = g_strconcat(*errormsg, "\nError by extcap pipe: " , pipedata->stderr_msg, NULL);
-                        g_free(*errormsg);
-                        *errormsg = temp;
-                    }
-                    g_free(pipedata->stderr_msg);
-                }
-
-                pipedata->stderr_msg = NULL;
-                pipedata->exitcode = 0;
-            }
-        }
-
-        if (interface_opts->extcap_child_watch > 0)
-        {
-            g_source_remove(interface_opts->extcap_child_watch);
-            interface_opts->extcap_child_watch = 0;
-        }
-
-        if (pipedata) {
-            if (pipedata->stdout_fd > 0)
-            {
-                ws_close(pipedata->stdout_fd);
-            }
-
-            if (pipedata->stderr_fd > 0)
-            {
-                ws_close(pipedata->stderr_fd);
-            }
-
-            if (interface_opts->extcap_pid != WS_INVALID_PID)
-            {
-                ws_pipe_close(pipedata);
-                interface_opts->extcap_pid = WS_INVALID_PID;
-
-                g_free(pipedata);
-                interface_opts->extcap_pipedata = NULL;
-            }
+            return interface_opts;
         }
     }
+
+    ws_assert_not_reached();
 }
 
 static gboolean
-extcap_add_arg_and_remove_cb(gpointer key, gpointer value, gpointer data)
+extcap_stdout_cb(GIOChannel *source, GIOCondition condition _U_, gpointer data)
 {
-    GPtrArray *args = (GPtrArray *)data;
+    capture_session *cap_session = (capture_session *)data;
+    interface_options *interface_opts = extcap_find_channel_interface(cap_session, source);
+    char buf[128];
+    gsize bytes_read = 0;
+    GIOStatus status = G_IO_STATUS_EOF;
 
-    if (key != NULL)
+    /* Discard data to prevent child process hanging on stdout write */
+    if (condition & G_IO_IN)
     {
-        g_ptr_array_add(args, g_strdup((const gchar *)key));
-
-        if (value != NULL)
-        {
-            g_ptr_array_add(args, g_strdup((const gchar *)value));
-        }
-
-        return TRUE;
+        status = g_io_channel_read_chars(source, buf, sizeof(buf), &bytes_read, NULL);
     }
 
-    return FALSE;
+    if ((bytes_read == 0) || (status != G_IO_STATUS_NORMAL))
+    {
+        interface_opts->extcap_stdout_watch = 0;
+        extcap_watch_removed(cap_session, interface_opts);
+        return G_SOURCE_REMOVE;
+    }
+    return G_SOURCE_CONTINUE;
 }
 
-void extcap_child_watch_cb(GPid pid, gint status, gpointer user_data)
+static gboolean
+extcap_stderr_cb(GIOChannel *source, GIOCondition condition, gpointer data)
+{
+    capture_session *cap_session = (capture_session *)data;
+    interface_options *interface_opts = extcap_find_channel_interface(cap_session, source);
+    char buf[128];
+    gsize bytes_read = 0;
+    GIOStatus status = G_IO_STATUS_EOF;
+
+    if (condition & G_IO_IN)
+    {
+        status = g_io_channel_read_chars(source, buf, sizeof(buf), &bytes_read, NULL);
+    }
+
+#define STDERR_BUFFER_SIZE 1024
+    if (bytes_read > 0)
+    {
+        if (interface_opts->extcap_stderr == NULL)
+        {
+            interface_opts->extcap_stderr = g_string_new_len(buf, bytes_read);
+        }
+        else
+        {
+            gssize remaining = STDERR_BUFFER_SIZE - interface_opts->extcap_stderr->len;
+            if (remaining > 0)
+            {
+                gssize bytes = bytes_read;
+                bytes = MIN(bytes, remaining);
+                g_string_append_len(interface_opts->extcap_stderr, buf, bytes);
+            }
+        }
+    }
+
+    if ((bytes_read == 0) || (status != G_IO_STATUS_NORMAL))
+    {
+        interface_opts->extcap_stderr_watch = 0;
+        extcap_watch_removed(cap_session, interface_opts);
+        return G_SOURCE_REMOVE;
+    }
+    return G_SOURCE_CONTINUE;
+}
+
+static void extcap_child_watch_cb(GPid pid, gint status _U_, gpointer user_data)
 {
     guint i;
     interface_options *interface_opts;
-    ws_pipe_t *pipedata = NULL;
-    capture_options *capture_opts = (capture_options *)(user_data);
-
-    if (capture_opts == NULL || capture_opts->ifaces == NULL || capture_opts->ifaces->len == 0)
-    {
-        return;
-    }
+    capture_session *cap_session = (capture_session *)(user_data);
+    capture_options *capture_opts = cap_session->capture_opts;
 
     /* Close handle to child process. */
     g_spawn_close_pid(pid);
@@ -1359,36 +1502,10 @@ void extcap_child_watch_cb(GPid pid, gint status, gpointer user_data)
         interface_opts = &g_array_index(capture_opts->ifaces, interface_options, i);
         if (interface_opts->extcap_pid == pid)
         {
-            pipedata = (ws_pipe_t *)interface_opts->extcap_pipedata;
-            if (pipedata != NULL)
-            {
-                interface_opts->extcap_pid = WS_INVALID_PID;
-                pipedata->exitcode = 0;
-#ifndef _WIN32
-                if (WIFEXITED(status))
-                {
-                    if (WEXITSTATUS(status) != 0)
-                    {
-                        pipedata->exitcode = WEXITSTATUS(status);
-                    }
-                }
-                else
-                {
-                    pipedata->exitcode = G_SPAWN_ERROR_FAILED;
-                }
-#else
-                if (status != 0)
-                {
-                    pipedata->exitcode = status;
-                }
-#endif
-                if (status == 0 && pipedata->stderr_msg != NULL)
-                {
-                    pipedata->exitcode = 1;
-                }
-            }
-            g_source_remove(interface_opts->extcap_child_watch);
-            interface_opts->extcap_child_watch = 0;
+            ws_debug("Extcap [%s] - Closing spawned PID: %"PRIdMAX, interface_opts->name,
+                     (intmax_t)interface_opts->extcap_pid);
+            interface_opts->extcap_pid = WS_INVALID_PID;
+            extcap_watch_removed(cap_session, interface_opts);
             break;
         }
     }
@@ -1520,7 +1637,7 @@ static gboolean extcap_create_pipe(const gchar *ifname, gchar **fifo, HANDLE *ha
     /* Security struct to enable Inheritable HANDLE */
     memset(&security, 0, sizeof(SECURITY_ATTRIBUTES));
     security.nLength = sizeof(SECURITY_ATTRIBUTES);
-    security.bInheritHandle = TRUE;
+    security.bInheritHandle = FALSE;
     security.lpSecurityDescriptor = NULL;
 
     /* create a namedPipe */
@@ -1534,13 +1651,13 @@ static gboolean extcap_create_pipe(const gchar *ifname, gchar **fifo, HANDLE *ha
 
     if (*handle_out == INVALID_HANDLE_VALUE)
     {
-        ws_debug("Error creating pipe => (%d)", GetLastError());
+        ws_debug("Error creating pipe => (%ld)", GetLastError());
         g_free (pipename);
         return FALSE;
     }
     else
     {
-        ws_debug("Wireshark Created pipe =>(%s) handle (%" PRIuPTR ")", pipename, *handle_out);
+        ws_debug("Wireshark Created pipe =>(%s) handle (%" PRIuMAX ")", pipename, (uintmax_t)*handle_out);
         *fifo = g_strdup(pipename);
     }
 
@@ -1549,33 +1666,27 @@ static gboolean extcap_create_pipe(const gchar *ifname, gchar **fifo, HANDLE *ha
 #else
 static gboolean extcap_create_pipe(const gchar *ifname, gchar **fifo, const gchar *temp_dir, const gchar *pipe_prefix)
 {
-    gchar *temp_name = NULL;
-    int fd = 0;
+    gchar *subdir_tmpl = g_strdup_printf("%s_%s_XXXXXX", pipe_prefix, ifname);
+    gchar *temp_subdir = create_tempdir(temp_dir, subdir_tmpl, NULL);
 
-    gchar *pfx = g_strconcat(pipe_prefix, "_", ifname, NULL);
-    if ((fd = create_tempfile(temp_dir, &temp_name, pfx, NULL, NULL)) < 0)
+    g_free(subdir_tmpl);
+    if (temp_subdir == NULL)
     {
-        g_free(pfx);
         return FALSE;
     }
-    g_free(pfx);
 
-    ws_close(fd);
+    gchar *fifo_path = g_build_path(G_DIR_SEPARATOR_S, temp_subdir, "fifo", NULL);
+    g_free(temp_subdir);
 
-    ws_debug("Extcap - Creating fifo: %s", temp_name);
+    ws_debug("Extcap - Creating fifo: %s", fifo_path);
 
-    if (file_exists(temp_name))
+    if (mkfifo(fifo_path, 0600) == 0)
     {
-        ws_unlink(temp_name);
-    }
-
-    if (mkfifo(temp_name, 0600) == 0)
-    {
-        *fifo = temp_name;
+        *fifo = fifo_path;
     }
     else
     {
-        g_free(temp_name);
+        g_free(fifo_path);
     }
     return TRUE;
 }
@@ -1584,8 +1695,9 @@ static gboolean extcap_create_pipe(const gchar *ifname, gchar **fifo, const gcha
 /* call mkfifo for each extcap,
  * returns FALSE if there's an error creating a FIFO */
 gboolean
-extcap_init_interfaces(capture_options *capture_opts)
+extcap_init_interfaces(capture_session *cap_session)
 {
+    capture_options *capture_opts = cap_session->capture_opts;
     guint i;
     interface_options *interface_opts;
     ws_pipe_t *pipedata;
@@ -1653,11 +1765,24 @@ extcap_init_interfaces(capture_options *capture_opts)
             continue;
         }
 
-        ws_close(pipedata->stdin_fd);
+        g_io_channel_unref(pipedata->stdin_io);
+        pipedata->stdin_io = NULL;
         interface_opts->extcap_pid = pid;
 
-        interface_opts->extcap_child_watch =
-            g_child_watch_add(pid, extcap_child_watch_cb, (gpointer)capture_opts);
+        g_child_watch_add_full(G_PRIORITY_HIGH, pid, extcap_child_watch_cb,
+                               (gpointer)cap_session, NULL);
+        interface_opts->extcap_stdout_watch =
+            g_io_add_watch(pipedata->stdout_io, G_IO_IN | G_IO_HUP,
+                           extcap_stdout_cb, (gpointer)cap_session);
+        interface_opts->extcap_stderr_watch =
+            g_io_add_watch(pipedata->stderr_io, G_IO_IN | G_IO_HUP,
+                           extcap_stderr_cb, (gpointer)cap_session);
+
+        /* Pipedata pointers are only used to match GIOChannel to interface.
+         * GIOChannel watch holds the only remaining reference.
+         */
+        g_io_channel_unref(pipedata->stdout_io);
+        g_io_channel_unref(pipedata->stderr_io);
 
 #ifdef _WIN32
         /* On Windows, wait for extcap to connect to named pipe.
@@ -1689,6 +1814,7 @@ extcap_init_interfaces(capture_options *capture_opts)
 
     return TRUE;
 }
+#endif /* HAVE_LIBPCAP */
 
 /************* EXTCAP LOAD INTERFACE LIST ***************
  *

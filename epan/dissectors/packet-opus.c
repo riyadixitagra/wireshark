@@ -25,8 +25,6 @@
 void proto_reg_handoff_opus(void);
 void proto_register_opus(void);
 
-static range_t *g_dynamic_payload_type_range = NULL;
-
 static dissector_handle_t opus_handle;
 
 /* Initialize the protocol and registered fields */
@@ -59,16 +57,16 @@ static expert_field ei_opus_err_r7 = EI_INIT;
 static const value_string opus_codec_toc_config_request_vals[] = {
     {0, "NB, SILK-only ptime=10"},
     {1, "NB, SILK-only ptime=20"},
-    {2, "NB, SILK-only ptime=30"},
-    {3, "NB, SILK-only ptime=40"},
+    {2, "NB, SILK-only ptime=40"},
+    {3, "NB, SILK-only ptime=60"},
     {4, "MB, SILK-only ptime=10"},
     {5, "MB, SILK-only ptime=20"},
-    {6, "MB, SILK-only ptime=30"},
-    {7, "MB, SILK-only ptime=40"},
+    {6, "MB, SILK-only ptime=40"},
+    {7, "MB, SILK-only ptime=60"},
     {8, "WB, SILK-only ptime=10"},
     {9, "WB, SILK-only ptime=20"},
-    {10, "WB, SILK-only ptime=30"},
-    {11, "WB, SILK-only ptime=40"},
+    {10, "WB, SILK-only ptime=40"},
+    {11, "WB, SILK-only ptime=60"},
     {12, "SWB, Hybrid ptime=10"},
     {13, "SWB, Hybrid ptime=20"},
     {14, "FB, Hybrid ptime=10"},
@@ -128,7 +126,7 @@ parse_size_field(const unsigned char *ch, int32_t cn, int16_t *size)
 }
 
 static int16_t
-opus_packet_get_samples_per_frame(const unsigned char *data, int16_t Fs)
+opus_packet_get_samples_per_frame(const unsigned char *data, uint16_t Fs)
 {
     int audiosize;
     if (data[0] & 0x80) {
@@ -347,7 +345,7 @@ proto_register_opus(void)
           &opus_codec_toc_config_request_vals_ext, 0xF8, "Opus TOC config",
           HFILL}},
         {&hf_opus_toc_s,
-         {"TOC.S bit", "opus.TOC.s", FT_BOOLEAN, SEP_DOT, TFS(&toc_s_bit_vals),
+         {"TOC.S bit", "opus.TOC.s", FT_BOOLEAN, 8, TFS(&toc_s_bit_vals),
           0x04, NULL, HFILL}},
         {&hf_opus_toc_c,
          {"TOC.C bits", "opus.TOC.c", FT_UINT8, BASE_DEC | BASE_EXT_STRING,
@@ -356,10 +354,10 @@ proto_register_opus(void)
          {"Frame Count.m", "opus.FC.m", FT_UINT8, BASE_DEC, NULL, 0x3F,
           "Frame Count", HFILL}},
         {&hf_opus_frame_count_p,
-         {"Frame Count.p bit", "opus.FC.p", FT_BOOLEAN, SEP_DOT,
+         {"Frame Count.p bit", "opus.FC.p", FT_BOOLEAN, 8,
           TFS(&fc_p_bit_vals), 0x40, NULL, HFILL}},
         {&hf_opus_frame_count_v,
-         {"Frame Count.v bit", "opus.FC.v", FT_BOOLEAN, SEP_DOT,
+         {"Frame Count.v bit", "opus.FC.v", FT_BOOLEAN, 8,
           TFS(&fc_v_bit_vals), 0x80, NULL, HFILL}},
         {&hf_opus_frame_size,
          {"Frame Size", "opus.frame_size", FT_BYTES, BASE_NONE, NULL, 0x0, NULL,
@@ -424,17 +422,12 @@ proto_register_opus(void)
     proto_register_field_array(proto_opus, hf, array_length(hf));
     proto_register_subtree_array(ett, array_length(ett));
 
-    opus_module = prefs_register_protocol(proto_opus, proto_reg_handoff_opus);
+    opus_module = prefs_register_protocol(proto_opus, NULL);
 
     expert_opus = expert_register_protocol(proto_opus);
     expert_register_field_array(expert_opus, ei, array_length(ei));
 
-    prefs_register_range_preference(opus_module, "dynamic.payload.type",
-                                    "OPUS dynamic payload types",
-                                    "Dynamic payload types which will be "
-                                    "interpreted as OPUS; Values must be in "
-                                    "the range 1 - 127",
-                                    &g_dynamic_payload_type_range, 127);
+    prefs_register_obsolete_preference(opus_module, "dynamic.payload.type");
 
     opus_handle = register_dissector("opus", dissect_opus, proto_opus);
 }
@@ -442,20 +435,9 @@ proto_register_opus(void)
 void
 proto_reg_handoff_opus(void)
 {
-    static range_t  *dynamic_payload_type_range = NULL;
-    static gboolean  opus_prefs_initialized      = FALSE;
+    dissector_add_string("rtp_dyn_payload_type" , "OPUS", opus_handle);
 
-    if (!opus_prefs_initialized) {
-        dissector_add_string("rtp_dyn_payload_type" , "OPUS", opus_handle);
-        opus_prefs_initialized = TRUE;
-    } else {
-        dissector_delete_uint_range("rtp.pt", dynamic_payload_type_range, opus_handle);
-        wmem_free(wmem_epan_scope(), dynamic_payload_type_range);
-    }
-
-    dynamic_payload_type_range = range_copy(wmem_epan_scope(), g_dynamic_payload_type_range);
-    range_remove_value(wmem_epan_scope(), &dynamic_payload_type_range, 0);
-    dissector_add_uint_range("rtp.pt", dynamic_payload_type_range, opus_handle);
+    dissector_add_uint_range_with_preference("rtp.pt", "", opus_handle);
 }
 
 /*

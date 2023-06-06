@@ -8023,7 +8023,7 @@ static gint ett_zbee_zcl_msg = -1;
 static gint ett_zbee_zcl_msg_message_control = -1;
 static gint ett_zbee_zcl_msg_ext_message_control = -1;
 
-static expert_field ei_zbee_zcl_msg_msg_ctrl_depreciated = EI_INIT;
+static expert_field ei_zbee_zcl_msg_msg_ctrl_deprecated = EI_INIT;
 
 /* Message Control Transmission */
 static const value_string zbee_zcl_msg_ctrl_tx_names[] = {
@@ -8221,7 +8221,7 @@ dissect_zcl_msg_cancel(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, guin
     *offset += 1;
 
     if (msg_ctrl != 0x00) {
-       expert_add_info(pinfo, tree, &ei_zbee_zcl_msg_msg_ctrl_depreciated);
+       expert_add_info(pinfo, tree, &ei_zbee_zcl_msg_msg_ctrl_deprecated);
     }
 
 } /* dissect_zcl_msg_cancel */
@@ -8436,7 +8436,7 @@ proto_register_zbee_zcl_msg(void)
     /* Expert Info */
     expert_module_t* expert_zbee_zcl_msg;
     static ei_register_info ei[] = {
-        { &ei_zbee_zcl_msg_msg_ctrl_depreciated, { "zbee_zcl_se.msg.msg_ctrl.depreciated", PI_PROTOCOL, PI_WARN, "Message Control depreciated in this message, should be 0x00", EXPFILL }},
+        { &ei_zbee_zcl_msg_msg_ctrl_deprecated, { "zbee_zcl_se.msg.msg_ctrl.deprecated", PI_PROTOCOL, PI_WARN, "Message Control deprecated in this message, should be 0x00", EXPFILL }},
     };
 
     /* Register the ZigBee ZCL Messaging cluster protocol name and description */
@@ -11799,7 +11799,7 @@ dissect_zcl_calendar_publish_seasons(tvbuff_t *tvb, proto_tree *tree, guint *off
     proto_tree_add_item(tree, hf_zbee_zcl_calendar_total_number_of_commands, tvb, *offset, 1, ENC_NA);
     *offset += 1;
 
-    for (gint i = 0; tvb_reported_length_remaining(tvb, *offset) >= 5; i++) {
+    while (tvb_reported_length_remaining(tvb, *offset) >= 5) {
         /* Season Start Date */
         dissect_zcl_date(tvb, tree, offset, ett_zbee_zcl_calendar_season_start_date, "Season Start Date", hf_zbee_zcl_calendar_date_year, hf_zbee_zcl_calendar_date_month, hf_zbee_zcl_calendar_date_month_day, hf_zbee_zcl_calendar_date_week_day);
 

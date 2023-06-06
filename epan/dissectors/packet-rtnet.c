@@ -582,7 +582,7 @@ dissect_rtmac(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void* data _U
     if (ver == 1) {
       if (!type_str) {
         if (dissector != data_handle)
-          type_str = dissector_handle_get_short_name(dissector);
+          type_str = dissector_handle_get_protocol_short_name(dissector);
         else
           type_str = "Unknown";
       }
@@ -591,7 +591,7 @@ dissect_rtmac(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void* data _U
         type_str = val_to_str_const(type, rtmac_type_vals, "Unknown");
       else {
         if (dissector != data_handle)
-          type_str = dissector_handle_get_short_name(dissector);
+          type_str = dissector_handle_get_protocol_short_name(dissector);
         else
           type_str = "Unknown";
       }
@@ -944,13 +944,13 @@ proto_register_rtmac(void) {
     { &hf_tdma_v1_msg_request_conf_mtu,
       { "MTU",
         "tdma-v1.msg.request_conf.mtu",
-        FT_UINT8, BASE_DEC, NULL, 0x0,
+        FT_UINT16, BASE_DEC, NULL, 0x0,
         "TDMA MTU", HFILL }},
 
     { &hf_tdma_v1_msg_request_conf_cycle,
       { "Cycle",
         "tdma-v1.msg.request_conf.cycle",
-        FT_UINT8, BASE_DEC, NULL, 0x0,
+        FT_UINT32, BASE_DEC, NULL, 0x0,
         "TDMA Cycle", HFILL }},
 
     /* TDMA ack conf */
@@ -970,13 +970,13 @@ proto_register_rtmac(void) {
     { &hf_tdma_v1_msg_ack_conf_mtu,
       { "MTU",
         "tdma-v1.msg.ack_conf.mtu",
-        FT_UINT8, BASE_DEC, NULL, 0x0,
+        FT_UINT16, BASE_DEC, NULL, 0x0,
         "TDMA MTU", HFILL }},
 
     { &hf_tdma_v1_msg_ack_conf_cycle,
       { "Cycle",
         "tdma-v1.msg.ack_conf.cycle",
-        FT_UINT8, BASE_DEC, NULL, 0x0,
+        FT_UINT32, BASE_DEC, NULL, 0x0,
         "TDMA Cycle", HFILL }},
 
     /* TDMA ack ack conf */

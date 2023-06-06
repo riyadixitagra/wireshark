@@ -108,6 +108,9 @@ static int hf_pdcp_nr_security_direction = -1;
 static int hf_pdcp_nr_security_count = -1;
 static int hf_pdcp_nr_security_cipher_key = -1;
 static int hf_pdcp_nr_security_integrity_key = -1;
+static int hf_pdcp_nr_security_cipher_key_setup_frame = -1;
+static int hf_pdcp_nr_security_integrity_key_setup_frame = -1;
+static int hf_pdcp_nr_security_deciphered_data = -1;
 
 
 /* Protocol subtree. */
@@ -118,10 +121,13 @@ static int ett_pdcp_nr_sequence_analysis = -1;
 static int ett_pdcp_report_bitmap = -1;
 static int ett_pdcp_security = -1;
 
-static expert_field ei_pdcp_nr_sequence_analysis_wrong_sequence_number = EI_INIT;
+static expert_field ei_pdcp_nr_sequence_analysis_wrong_sequence_number_ul = EI_INIT;
+static expert_field ei_pdcp_nr_sequence_analysis_wrong_sequence_number_dl = EI_INIT;
 static expert_field ei_pdcp_nr_reserved_bits_not_zero = EI_INIT;
-static expert_field ei_pdcp_nr_sequence_analysis_sn_repeated = EI_INIT;
-static expert_field ei_pdcp_nr_sequence_analysis_sn_missing = EI_INIT;
+static expert_field ei_pdcp_nr_sequence_analysis_sn_repeated_ul = EI_INIT;
+static expert_field ei_pdcp_nr_sequence_analysis_sn_repeated_dl = EI_INIT;
+static expert_field ei_pdcp_nr_sequence_analysis_sn_missing_ul = EI_INIT;
+static expert_field ei_pdcp_nr_sequence_analysis_sn_missing_dl = EI_INIT;
 static expert_field ei_pdcp_nr_digest_wrong = EI_INIT;
 static expert_field ei_pdcp_nr_unknown_udp_framing_tag = EI_INIT;
 static expert_field ei_pdcp_nr_missing_udp_framing_tag = EI_INIT;
@@ -198,7 +204,7 @@ static gboolean check_valid_key_string(const char* raw_string, char* checked_str
     if (length < 32) {
         if (length > 0) {
             *error = ws_strdup_printf("PDCP NR: Invalid key string (%s) - should include 32 ASCII hex characters (16 bytes) but only %u chars given",
-                                     raw_string, length);
+                                      raw_string, length);
         }
         return FALSE;
     }
@@ -293,98 +299,144 @@ UAT_CSTRING_CB_DEF(uat_ue_keys_records, upIntegrityKeyString,  uat_ue_keys_recor
 
 /* Also supporting a hash table with entries from these functions */
 
-/* Table from ueid -> uat_ue_keys_record_t* */
+/* Table from ueid -> ue_key_entries_t* */
 static wmem_map_t *pdcp_security_key_hash = NULL;
 
+typedef enum {
+    rrc_cipher,
+    rrc_integrity,
+    up_cipher,
+    up_integrity
+} ue_key_type_t;
 
-void set_pdcp_nr_rrc_ciphering_key(guint16 ueid, const char *key)
+typedef struct {
+    ue_key_type_t key_type;
+    gchar         *keyString;
+    guint8        binaryKey[16];
+    gboolean      keyOK;
+    guint32       setup_frame;
+} key_entry_t;
+
+/* List of key entries for an individual UE */
+typedef struct {
+    #define MAX_KEY_ENTRIES_PER_UE 32
+    guint       num_entries_set;
+    key_entry_t entries[MAX_KEY_ENTRIES_PER_UE];
+} ue_key_entries_t;
+
+
+void set_pdcp_nr_rrc_ciphering_key(guint16 ueid, const char *key, guint32 frame_num)
 {
     char *err = NULL;
 
     /* Get or create struct for this UE */
-    uat_ue_keys_record_t *key_record = (uat_ue_keys_record_t*)wmem_map_lookup(pdcp_security_key_hash,
-                                                                              GUINT_TO_POINTER((guint)ueid));
-    if (key_record == NULL) {
+    ue_key_entries_t *key_entries = (ue_key_entries_t*)wmem_map_lookup(pdcp_security_key_hash,
+                                                                       GUINT_TO_POINTER((guint)ueid));
+    if (key_entries == NULL) {
         /* Create and add to table */
-        key_record = wmem_new0(wmem_file_scope(), uat_ue_keys_record_t);
-        key_record->ueid = ueid;
-        wmem_map_insert(pdcp_security_key_hash, GUINT_TO_POINTER((guint)ueid), key_record);
+        key_entries = wmem_new0(wmem_file_scope(), ue_key_entries_t);
+        wmem_map_insert(pdcp_security_key_hash, GUINT_TO_POINTER((guint)ueid), key_entries);
     }
 
-    /* Check and convert RRC ciphering key */
-    key_record->rrcCipherKeyString = g_strdup(key);
-    update_key_from_string(key_record->rrcCipherKeyString, key_record->rrcCipherBinaryKey, &key_record->rrcCipherKeyOK, &err);
+    if (key_entries->num_entries_set == MAX_KEY_ENTRIES_PER_UE) {
+        /* No more room.. */
+        return;
+    }
+
+    key_entry_t *new_key_entry = &key_entries->entries[key_entries->num_entries_set++];
+    new_key_entry->key_type = rrc_cipher;
+    new_key_entry->keyString = g_strdup(key);
+    new_key_entry->setup_frame = frame_num;
+    update_key_from_string(new_key_entry->keyString, new_key_entry->binaryKey, &new_key_entry->keyOK, &err);
     if (err) {
         report_failure("%s: (RRC Ciphering Key)", err);
         g_free(err);
     }
 }
 
-void set_pdcp_nr_rrc_integrity_key(guint16 ueid, const char *key)
+void set_pdcp_nr_rrc_integrity_key(guint16 ueid, const char *key, guint32 frame_num)
 {
     char *err = NULL;
 
     /* Get or create struct for this UE */
-    uat_ue_keys_record_t *key_record = (uat_ue_keys_record_t*)wmem_map_lookup(pdcp_security_key_hash,
-                                                                              GUINT_TO_POINTER((guint)ueid));
-    if (key_record == NULL) {
+    ue_key_entries_t *key_entries = (ue_key_entries_t*)wmem_map_lookup(pdcp_security_key_hash,
+                                                                       GUINT_TO_POINTER((guint)ueid));
+    if (key_entries == NULL) {
         /* Create and add to table */
-        key_record = wmem_new0(wmem_file_scope(), uat_ue_keys_record_t);
-        key_record->ueid = ueid;
-        wmem_map_insert(pdcp_security_key_hash, GUINT_TO_POINTER((guint)ueid), key_record);
+        key_entries = wmem_new0(wmem_file_scope(), ue_key_entries_t);
+        wmem_map_insert(pdcp_security_key_hash, GUINT_TO_POINTER((guint)ueid), key_entries);
     }
 
-    /* Check and convert RRC integrity key */
-    key_record->rrcIntegrityKeyString = g_strdup(key);
-    update_key_from_string(key_record->rrcIntegrityKeyString, key_record->rrcIntegrityBinaryKey, &key_record->rrcIntegrityKeyOK, &err);
+    if (key_entries->num_entries_set == MAX_KEY_ENTRIES_PER_UE) {
+        /* No more room.. */
+        return;
+    }
+
+    key_entry_t *new_key_entry = &key_entries->entries[key_entries->num_entries_set++];
+    new_key_entry->key_type = rrc_integrity;
+    new_key_entry->keyString = g_strdup(key);
+    new_key_entry->setup_frame = frame_num;
+    update_key_from_string(new_key_entry->keyString, new_key_entry->binaryKey, &new_key_entry->keyOK, &err);
     if (err) {
         report_failure("%s: (RRC Integrity Key)", err);
         g_free(err);
     }
 }
 
-void set_pdcp_nr_up_ciphering_key(guint16 ueid, const char *key)
+void set_pdcp_nr_up_ciphering_key(guint16 ueid, const char *key, guint32 frame_num)
 {
     char *err = NULL;
 
     /* Get or create struct for this UE */
-    uat_ue_keys_record_t *key_record = (uat_ue_keys_record_t*)wmem_map_lookup(pdcp_security_key_hash,
-                                                                              GUINT_TO_POINTER((guint)ueid));
-    if (key_record == NULL) {
+    ue_key_entries_t *key_entries = (ue_key_entries_t*)wmem_map_lookup(pdcp_security_key_hash,
+                                                                       GUINT_TO_POINTER((guint)ueid));
+    if (key_entries == NULL) {
         /* Create and add to table */
-        key_record = wmem_new0(wmem_file_scope(), uat_ue_keys_record_t);
-        key_record->ueid = ueid;
-        wmem_map_insert(pdcp_security_key_hash, GUINT_TO_POINTER((guint)ueid), key_record);
+        key_entries = wmem_new0(wmem_file_scope(), ue_key_entries_t);
+        wmem_map_insert(pdcp_security_key_hash, GUINT_TO_POINTER((guint)ueid), key_entries);
     }
 
-    /* Check and convert ciphering UP key */
-    key_record->upCipherKeyString = g_strdup(key);
-    update_key_from_string(key_record->upCipherKeyString, key_record->upCipherBinaryKey, &key_record->upCipherKeyOK, &err);
+    if (key_entries->num_entries_set == MAX_KEY_ENTRIES_PER_UE) {
+        /* No more room.. */
+        return;
+    }
+
+    key_entry_t *new_key_entry = &key_entries->entries[key_entries->num_entries_set++];
+    new_key_entry->key_type = up_cipher;
+    new_key_entry->keyString = g_strdup(key);
+    new_key_entry->setup_frame = frame_num;
+    update_key_from_string(new_key_entry->keyString, new_key_entry->binaryKey, &new_key_entry->keyOK, &err);
     if (err) {
-        report_failure("%s: (UserPlane Ciphering Key)", err);
+        report_failure("%s: (UP Cipher Key)", err);
         g_free(err);
     }
 }
 
-void set_pdcp_nr_up_integrity_key(guint16 ueid, const char *key)
+void set_pdcp_nr_up_integrity_key(guint16 ueid, const char *key, guint32 frame_num)
 {
     char *err = NULL;
 
     /* Get or create struct for this UE */
-    uat_ue_keys_record_t *key_record = (uat_ue_keys_record_t*)wmem_map_lookup(pdcp_security_key_hash,
-                                                                              GUINT_TO_POINTER((guint)ueid));
-    if (key_record == NULL) {
+    ue_key_entries_t *key_entries = (ue_key_entries_t*)wmem_map_lookup(pdcp_security_key_hash,
+                                                                       GUINT_TO_POINTER((guint)ueid));
+    if (key_entries == NULL) {
         /* Create and add to table */
-        key_record = wmem_new0(wmem_file_scope(), uat_ue_keys_record_t);
-        key_record->ueid = ueid;
-        wmem_map_insert(pdcp_security_key_hash, GUINT_TO_POINTER((guint)ueid), key_record);
+        key_entries = wmem_new0(wmem_file_scope(), ue_key_entries_t);
+        wmem_map_insert(pdcp_security_key_hash, GUINT_TO_POINTER((guint)ueid), key_entries);
     }
 
-    /* Check and convert UP integrity key */
-    key_record->upIntegrityKeyString = g_strdup(key);
-    update_key_from_string(key_record->upIntegrityKeyString, key_record->upIntegrityBinaryKey, &key_record->upIntegrityKeyOK, &err);
+    if (key_entries->num_entries_set == MAX_KEY_ENTRIES_PER_UE) {
+        /* No more room.. */
+        return;
+    }
+
+    key_entry_t *new_key_entry = &key_entries->entries[key_entries->num_entries_set++];
+    new_key_entry->key_type = up_integrity;
+    new_key_entry->keyString = g_strdup(key);
+    new_key_entry->setup_frame = frame_num;
+    update_key_from_string(new_key_entry->keyString, new_key_entry->binaryKey, &new_key_entry->keyOK, &err);
     if (err) {
-        report_failure("%s: (UserPlane Integrity Key)", err);
+        report_failure("%s: (UP Integrity Key)", err);
         g_free(err);
     }
 }
@@ -678,15 +730,67 @@ typedef struct pdu_security_settings_t
     guint8  direction;
 } pdu_security_settings_t;
 
-static uat_ue_keys_record_t* look_up_keys_record(guint16 ueid)
+static uat_ue_keys_record_t* look_up_keys_record(guint16 ueid, guint32 frame_num,
+                                                 guint32 *config_frame_rrc_cipher,
+                                                 guint32 *config_frame_rrc_integrity,
+                                                 guint32 *config_frame_up_cipher,
+                                                 guint32 *config_frame_up_integrity)
 {
     unsigned int record_id;
 
     /* Try hash table first (among entries added by set_pdcp_nr_xxx_key() functions) */
-    uat_ue_keys_record_t* key_record = (uat_ue_keys_record_t*)wmem_map_lookup(pdcp_security_key_hash,
-                                                                              GUINT_TO_POINTER((guint)ueid));
+    ue_key_entries_t* key_record = (ue_key_entries_t*)wmem_map_lookup(pdcp_security_key_hash,
+                                                                      GUINT_TO_POINTER((guint)ueid));
     if (key_record != NULL) {
-        return key_record;
+        /* Will build up and return usual type */
+        uat_ue_keys_record_t *keys = wmem_new0(wmem_file_scope(), uat_ue_keys_record_t);
+
+        /* Fill in details */
+        keys->ueid = ueid;
+        /* Walk entries backwards (want last entry before frame_num) */
+        for (gint e=key_record->num_entries_set; e>0; e--) {
+            key_entry_t *entry = &key_record->entries[e-1];
+
+            if (frame_num > entry->setup_frame) {
+                /* This frame is after corresponding setup, so can adopt if don't have one */
+                switch (entry->key_type) {
+                    case rrc_cipher:
+                        if (!keys->rrcCipherKeyOK) {
+                            keys->rrcCipherKeyString = entry->keyString;
+                            memcpy(keys->rrcCipherBinaryKey, entry->binaryKey, 16);
+                            keys->rrcCipherKeyOK = entry->keyOK;
+                            *config_frame_rrc_cipher = entry->setup_frame;
+                        }
+                        break;
+                    case rrc_integrity:
+                        if (!keys->rrcIntegrityKeyOK) {
+                            keys->rrcIntegrityKeyString = entry->keyString;
+                            memcpy(keys->rrcIntegrityBinaryKey, entry->binaryKey, 16);
+                            keys->rrcIntegrityKeyOK = entry->keyOK;
+                            *config_frame_rrc_integrity = entry->setup_frame;
+                        }
+                        break;
+                    case up_cipher:
+                        if (!keys->upCipherKeyOK) {
+                            keys->upCipherKeyString = entry->keyString;
+                            memcpy(keys->upCipherBinaryKey, entry->binaryKey, 16);
+                            keys->upCipherKeyOK = entry->keyOK;
+                            *config_frame_up_cipher = entry->setup_frame;
+                        }
+                        break;
+                    case up_integrity:
+                        if (!keys->upIntegrityKeyOK) {
+                            keys->upIntegrityKeyString = entry->keyString;
+                            memcpy(keys->upIntegrityBinaryKey, entry->binaryKey, 16);
+                            keys->upIntegrityKeyOK = entry->keyOK;
+                            *config_frame_up_integrity = entry->setup_frame;
+                        }
+                        break;
+                }
+            }
+        }
+        /* Return this struct (even if doesn't have all/any keys set..) */
+        return keys;
     }
 
     /* Else look up UAT entries. N.B. linear search... */
@@ -769,7 +873,11 @@ static void addBearerSequenceInfo(pdcp_sequence_report_in_frame *p,
                                         tvb, 0, 0, TRUE);
             proto_item_set_generated(ti);
             if (p->lastSN != p->firstSN) {
-                expert_add_info_format(pinfo, ti, &ei_pdcp_nr_sequence_analysis_sn_missing,
+                /* Range missing */
+                expert_add_info_format(pinfo, ti,
+                                       (p_pdcp_nr_info->direction == PDCP_NR_DIRECTION_UPLINK) ?
+                                           &ei_pdcp_nr_sequence_analysis_sn_missing_ul :
+                                           &ei_pdcp_nr_sequence_analysis_sn_missing_dl,
                                        "PDCP SNs (%u to %u) missing for %s on UE %u (%s-%u)",
                                        p->firstSN, p->lastSN,
                                        val_to_str_const(p_pdcp_nr_info->direction, direction_vals, "Unknown"),
@@ -780,7 +888,11 @@ static void addBearerSequenceInfo(pdcp_sequence_report_in_frame *p,
                                        p->firstSN, p->lastSN);
             }
             else {
-                expert_add_info_format(pinfo, ti, &ei_pdcp_nr_sequence_analysis_sn_missing,
+                /* Single SN missing */
+                expert_add_info_format(pinfo, ti,
+                                       (p_pdcp_nr_info->direction == PDCP_NR_DIRECTION_UPLINK) ?
+                                           &ei_pdcp_nr_sequence_analysis_sn_missing_ul :
+                                           &ei_pdcp_nr_sequence_analysis_sn_missing_dl,
                                        "PDCP SN (%u) missing for %s on UE %u (%s-%u)",
                                        p->firstSN,
                                        val_to_str_const(p_pdcp_nr_info->direction, direction_vals, "Unknown"),
@@ -799,7 +911,10 @@ static void addBearerSequenceInfo(pdcp_sequence_report_in_frame *p,
             ti = proto_tree_add_boolean(seqnum_tree, hf_pdcp_nr_sequence_analysis_repeated,
                                         tvb, 0, 0, TRUE);
             proto_item_set_generated(ti);
-            expert_add_info_format(pinfo, ti, &ei_pdcp_nr_sequence_analysis_sn_repeated,
+            expert_add_info_format(pinfo, ti,
+                                   (p_pdcp_nr_info->direction == PDCP_NR_DIRECTION_UPLINK) ?
+                                       &ei_pdcp_nr_sequence_analysis_sn_repeated_ul :
+                                       &ei_pdcp_nr_sequence_analysis_sn_repeated_dl,
                                    "PDCP SN (%u) repeated for %s for UE %u (%s-%u)",
                                    p->firstSN,
                                    val_to_str_const(p_pdcp_nr_info->direction, direction_vals, "Unknown"),
@@ -812,7 +927,10 @@ static void addBearerSequenceInfo(pdcp_sequence_report_in_frame *p,
 
         default:
             /* Incorrect sequence number */
-            expert_add_info_format(pinfo, ti_expected_sn, &ei_pdcp_nr_sequence_analysis_wrong_sequence_number,
+            expert_add_info_format(pinfo, ti_expected_sn,
+                                   (p_pdcp_nr_info->direction == PDCP_NR_DIRECTION_UPLINK) ?
+                                       &ei_pdcp_nr_sequence_analysis_wrong_sequence_number_ul :
+                                       &ei_pdcp_nr_sequence_analysis_wrong_sequence_number_dl,
                                    "Wrong Sequence Number for %s on UE %u (%s-%u) - got %u, expected %u",
                                    val_to_str_const(p_pdcp_nr_info->direction, direction_vals, "Unknown"),
                                    p_pdcp_nr_info->ueid,
@@ -860,7 +978,14 @@ static void addBearerSequenceInfo(pdcp_sequence_report_in_frame *p,
         pdu_security->count = count;
 
         /* KEY.  Look this UE up among UEs that have keys configured */
-        keys_record = look_up_keys_record(p_pdcp_nr_info->ueid);
+        guint32 config_frame_rrc_cipher=0, config_frame_rrc_integrity=0,
+                config_frame_up_cipher=0, config_frame_up_integrity=0;
+        keys_record = look_up_keys_record(p_pdcp_nr_info->ueid, pinfo->num,
+                                          &config_frame_rrc_cipher, &config_frame_rrc_integrity,
+                                          &config_frame_up_cipher,  &config_frame_up_integrity);
+
+        guint32 config_frame_cipher=0, config_frame_integrity=0;
+
         if (keys_record != NULL) {
             if (p_pdcp_nr_info->plane == NR_SIGNALING_PLANE) {
                 /* Get RRC ciphering key */
@@ -868,12 +993,14 @@ static void addBearerSequenceInfo(pdcp_sequence_report_in_frame *p,
                     cipher_key = keys_record->rrcCipherKeyString;
                     pdu_security->cipherKey = &(keys_record->rrcCipherBinaryKey[0]);
                     pdu_security->cipherKeyValid = TRUE;
+                    config_frame_cipher = config_frame_rrc_cipher;
                 }
                 /* Get RRC integrity key */
                 if (keys_record->rrcIntegrityKeyOK) {
                     integrity_key = keys_record->rrcIntegrityKeyString;
                     pdu_security->integrityKey = &(keys_record->rrcIntegrityBinaryKey[0]);
                     pdu_security->integrityKeyValid = TRUE;
+                    config_frame_integrity = config_frame_rrc_integrity;
                 }
             }
             else {
@@ -882,12 +1009,14 @@ static void addBearerSequenceInfo(pdcp_sequence_report_in_frame *p,
                     cipher_key = keys_record->upCipherKeyString;
                     pdu_security->cipherKey = &(keys_record->upCipherBinaryKey[0]);
                     pdu_security->cipherKeyValid = TRUE;
+                    config_frame_cipher = config_frame_up_cipher;
                 }
                 /* Get userplane integrity key */
                 if (keys_record->upIntegrityKeyOK) {
                     integrity_key = keys_record->upIntegrityKeyString;
                     pdu_security->integrityKey = &(keys_record->upIntegrityBinaryKey[0]);
                     pdu_security->integrityKeyValid = TRUE;
+                    config_frame_integrity = config_frame_up_integrity;
                 }
             }
 
@@ -896,11 +1025,23 @@ static void addBearerSequenceInfo(pdcp_sequence_report_in_frame *p,
                 ti = proto_tree_add_string(security_tree, hf_pdcp_nr_security_cipher_key,
                                            tvb, 0, 0, cipher_key);
                 proto_item_set_generated(ti);
+                /* If came from frame, link to it */
+                if (config_frame_cipher != 0) {
+                    ti = proto_tree_add_uint(security_tree, hf_pdcp_nr_security_cipher_key_setup_frame,
+                                             tvb, 0, 0, config_frame_cipher);
+                    proto_item_set_generated(ti);
+                }
             }
             if (integrity_key != NULL) {
                 ti = proto_tree_add_string(security_tree, hf_pdcp_nr_security_integrity_key,
                                            tvb, 0, 0, integrity_key);
                 proto_item_set_generated(ti);
+                /* If came from frame, link to it */
+                if (config_frame_integrity != 0) {
+                    ti = proto_tree_add_uint(security_tree, hf_pdcp_nr_security_integrity_key_setup_frame,
+                                             tvb, 0, 0, config_frame_integrity);
+                    proto_item_set_generated(ti);
+                }
             }
 
             pdu_security->direction = p_pdcp_nr_info->direction;
@@ -1067,11 +1208,11 @@ static void checkBearerSequenceInfo(packet_info *pinfo, tvbuff_t *tvb,
 }
 
 
-/* Hash table for security state for a UE
+/* Hash table for security state for a UE during first pass.
    Maps UEId -> pdcp_security_info_t*  */
 static wmem_map_t *pdcp_security_hash = NULL;
 
-/* Result is (ueid, framenum) -> pdcp_security_info_t*  */
+
 typedef struct  ueid_frame_t {
     guint32 framenum;
     guint16 ueid;
@@ -1113,6 +1254,8 @@ static guint pdcp_nr_ueid_frame_hash_func(gconstpointer v)
     const ueid_frame_t *ueid_frame = (const ueid_frame_t *)v;
     return ueid_frame->framenum + 100*ueid_frame->ueid;
 }
+
+/* Result is ueid_frame_t -> pdcp_security_info_t*  */
 static wmem_map_t *pdcp_security_result_hash = NULL;
 
 
@@ -1121,6 +1264,8 @@ static wmem_map_t *pdcp_security_result_hash = NULL;
 /* Write the given formatted text to:
    - the info column
    - the top-level PDCP PDU item */
+static void write_pdu_label_and_info(proto_item *pdu_ti,
+                                     packet_info *pinfo, const char *format, ...) G_GNUC_PRINTF(3, 4);
 static void write_pdu_label_and_info(proto_item *pdu_ti,
                                      packet_info *pinfo, const char *format, ...)
 {
@@ -1354,14 +1499,15 @@ void set_pdcp_nr_security_algorithms(guint16 ueid, pdcp_nr_security_info_t *secu
     }
     else {
         /* Just update existing entry already in table */
-        ue_security->previous_configuration_frame = ue_security->configuration_frame;
+        ue_security->previous_algorithm_configuration_frame = ue_security->algorithm_configuration_frame;
         ue_security->previous_integrity = ue_security->integrity;
         ue_security->previous_ciphering = ue_security->ciphering;
 
-        ue_security->configuration_frame = security_info->configuration_frame;
+        ue_security->algorithm_configuration_frame = security_info->algorithm_configuration_frame;
         ue_security->integrity = security_info->integrity;
         ue_security->ciphering = security_info->ciphering;
         ue_security->seen_next_ul_pdu = FALSE;
+        ue_security->dl_after_reest_request = FALSE;
     }
 
     /* Also add an entry for this PDU already to use these settings, as otherwise it won't be present
@@ -1370,7 +1516,7 @@ void set_pdcp_nr_security_algorithms(guint16 ueid, pdcp_nr_security_info_t *secu
     /* Deep copy*/
     *p_frame_security = *ue_security;
     wmem_map_insert(pdcp_security_result_hash,
-                    get_ueid_frame_hash_key(ueid, ue_security->configuration_frame, TRUE),
+                    get_ueid_frame_hash_key(ueid, ue_security->algorithm_configuration_frame, TRUE),
                     p_frame_security);
 }
 
@@ -1385,11 +1531,27 @@ void set_pdcp_nr_security_algorithms_failed(guint16 ueid)
     if (ue_security != NULL) {
         /* TODO: could remove from table if previous_configuration_frame is 0 */
         /* Go back to previous state */
-        ue_security->configuration_frame = ue_security->previous_configuration_frame;
+        ue_security->algorithm_configuration_frame = ue_security->previous_algorithm_configuration_frame;
         ue_security->integrity = ue_security->previous_integrity;
         ue_security->ciphering = ue_security->previous_ciphering;
     }
 }
+
+/* Function to indicate rrcReestablishmentRequest.
+ * This results in the next DL SRB1 PDU not being decrypted */
+void set_pdcp_nr_rrc_reestablishment_request(guint16 ueid)
+{
+    pdcp_nr_security_info_t *pdu_security = (pdcp_nr_security_info_t*)wmem_map_lookup(pdcp_security_hash,
+                                                                                      GUINT_TO_POINTER(ueid));
+
+    /* Set flag if entry found */
+    if (pdu_security) {
+        pdu_security->dl_after_reest_request = TRUE;
+        /* Also, will need to repeat securityCommand, so unset this flag */
+        pdu_security->seen_next_ul_pdu = FALSE;
+    }
+}
+
 
 /* Decipher payload if algorithm is supported and plausible inputs are available */
 static tvbuff_t *decipher_payload(tvbuff_t *tvb, packet_info *pinfo, int *offset,
@@ -1600,7 +1762,6 @@ static guint32 calculate_digest(pdu_security_settings_t *pdu_security_settings, 
             }
 #endif
 
-#if GCRYPT_VERSION_NUMBER >= 0x010600 /* 1.6.0 */
         case nia2:
             {
                 /* AES */
@@ -1663,7 +1824,6 @@ static guint32 calculate_digest(pdu_security_settings_t *pdu_security_settings, 
                 *calculated = TRUE;
                 return ((mac[0] << 24) | (mac[1] << 16) | (mac[2] << 8) | mac[3]);
             }
-#endif
 #ifdef HAVE_ZUC
         case nia3:
             {
@@ -1900,7 +2060,7 @@ static int dissect_pdcp_nr(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, 
     /* If no RLC layer in this frame, query RLC table for configured drb settings */
     if (!p_get_proto_data(wmem_file_scope(), pinfo, proto_rlc_nr, 0)) {
         /* Signalling plane is always 12 bits SN */
-        if (p_pdcp_info->plane == NR_SIGNALING_PLANE) {
+        if (p_pdcp_info->plane == NR_SIGNALING_PLANE && p_pdcp_info->bearerType == Bearer_DCCH) {
             p_pdcp_info->seqnum_length = PDCP_NR_SN_LENGTH_12_BITS;
         }
         /* If DRB channel, query rlc mappings (from RRC) */
@@ -1986,11 +2146,12 @@ static int dissect_pdcp_nr(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, 
             /* No entry added from RRC, but still use configured defaults */
             if ((global_default_ciphering_algorithm != nea0) ||
                 (global_default_integrity_algorithm != nia0)) {
-                /* Copy algorithms from preference defaults */
+
+                /* Copy algorithms from preference defaults into new entry. */
                 pdcp_nr_security_info_t *security_to_store = wmem_new0(wmem_file_scope(), pdcp_nr_security_info_t);
                 security_to_store->ciphering = global_default_ciphering_algorithm;
                 security_to_store->integrity = global_default_integrity_algorithm;
-                security_to_store->seen_next_ul_pdu = TRUE;
+                security_to_store->seen_next_ul_pdu = FALSE;
                 wmem_map_insert(pdcp_security_result_hash,
                                 get_ueid_frame_hash_key(p_pdcp_info->ueid, pinfo->num, TRUE),
                                 security_to_store);
@@ -2011,9 +2172,9 @@ static int dissect_pdcp_nr(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, 
         proto_item_set_generated(security_ti);
 
         /* Setup frame */
-        if (pinfo->num > pdu_security->configuration_frame) {
+        if (pinfo->num > pdu_security->algorithm_configuration_frame) {
             ti = proto_tree_add_uint(security_tree, hf_pdcp_nr_security_setup_frame,
-                                     tvb, 0, 0, pdu_security->configuration_frame);
+                                     tvb, 0, 0, pdu_security->algorithm_configuration_frame);
             proto_item_set_generated(ti);
         }
 
@@ -2049,7 +2210,7 @@ static int dissect_pdcp_nr(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, 
     /*****************************/
     /* Signalling plane messages */
     if (p_pdcp_info->plane == NR_SIGNALING_PLANE) {
-        if (p_pdcp_info->bearerType == Bearer_DCCH) {
+        if (p_pdcp_info->seqnum_length != 0) {
             /* Always 12 bits SN */
             /* Verify 4 reserved bits are 0 */
             guint8 reserved = (first_byte & 0xf0) >> 4;
@@ -2269,13 +2430,25 @@ static int dissect_pdcp_nr(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, 
             should_decipher = TRUE;
         }
         else {
-            /* Past SecurityModeComplete */
-            should_decipher= pdu_security->seen_next_ul_pdu;
+            /* Control plane */
+            /* Decipher if past securityModeComplete, snf not on DL after reestRequest */
+            should_decipher = pdu_security->seen_next_ul_pdu && !pdu_security->dl_after_reest_request;
         }
     }
     payload_tvb = decipher_payload(tvb, pinfo, &offset, &pdu_security_settings, p_pdcp_info, sdap_length,
                                    should_decipher,
                                    &payload_deciphered);
+
+    /* Add deciphered data as a filterable field */
+    if (payload_deciphered) {
+        proto_tree_add_item(pdcp_tree, hf_pdcp_nr_security_deciphered_data,
+                            payload_tvb, 0,  tvb_reported_length(payload_tvb), ENC_NA);
+    }
+
+    if ((p_pdcp_info->direction == PDCP_NR_DIRECTION_DOWNLINK) && current_security && (current_security->dl_after_reest_request)) {
+        /* Have passed DL frame following reestRequest, so set back again */
+        current_security->dl_after_reest_request = FALSE;
+    }
 
     proto_item *mac_ti = NULL;
     guint32  calculated_digest = 0;
@@ -2291,13 +2464,15 @@ static int dissect_pdcp_nr(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, 
 
     if (p_pdcp_info->plane == NR_SIGNALING_PLANE) {
         /* Compute payload length (no MAC on common control Bearers) */
-        guint32 data_length = tvb_reported_length_remaining(payload_tvb, offset)-4;
+        guint32 data_length = tvb_reported_length_remaining(payload_tvb, offset);
+        if (p_pdcp_info->maci_present) {
+            data_length -= 4;
+        }
 
-        /* RRC data is all but last 4 bytes.
-           Call nr-rrc dissector (according to direction and Bearer type) if we have valid data */
+        /* Call nr-rrc dissector (according to direction and Bearer type) if we have valid data */
         if ((global_pdcp_dissect_signalling_plane_as_rrc) &&
             ((pdu_security == NULL) || (pdu_security->ciphering == nea0) || payload_deciphered ||
-             p_pdcp_info->ciphering_disabled || !pdu_security->seen_next_ul_pdu)) {
+             p_pdcp_info->ciphering_disabled || !pdu_security->seen_next_ul_pdu || pdu_security->dl_after_reest_request)) {
 
             /* Get appropriate dissector handle */
             dissector_handle_t rrc_handle = lookup_rrc_dissector_handle(p_pdcp_info, data_length);
@@ -2323,11 +2498,13 @@ static int dissect_pdcp_nr(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, 
                                      data_length, ENC_NA);
             }
 
+            /* After payload - have we seen SecurityModResponse? */
             if (!PINFO_FD_VISITED(pinfo) &&
                 (current_security != NULL) && !current_security->seen_next_ul_pdu &&
                 p_pdcp_info->direction == PDCP_NR_DIRECTION_UPLINK)
             {
-                /* i.e. we have already seen SecurityModeResponse! */
+                /* i.e. we have now seen SecurityModeComplete ! */
+                /* Set current security for UE, but not value stored for this PDU */
                 current_security->seen_next_ul_pdu = TRUE;
             }
         }
@@ -2342,7 +2519,6 @@ static int dissect_pdcp_nr(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, 
         gint payload_length = tvb_reported_length_remaining(payload_tvb, offset) - ((p_pdcp_info->maci_present) ? 4 : 0);
 
         if (sdap_length) {
-
             /* SDAP */
             proto_item *sdap_ti;
             proto_tree *sdap_tree;
@@ -2363,6 +2539,7 @@ static int dissect_pdcp_nr(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, 
                 proto_item_append_text(sdap_ti, " (RDI=%s, RQI=%s",
                                        tfs_get_string(rdi, &sdap_rdi), tfs_get_string(rqi, &sdap_rqi));
             }
+            /* QFI is common to both directions */
             proto_tree_add_item_ret_uint(sdap_tree, hf_sdap_qfi, payload_tvb, offset, 1, ENC_NA, &qfi);
             offset++;
             proto_item_append_text(sdap_ti, "  QFI=%u)", qfi);
@@ -2557,7 +2734,7 @@ void proto_register_pdcp_nr(void)
         },
         { &hf_pdcp_nr_rohc_profile,
             { "ROHC profile",
-              "pdcp-nr.rohc.profile", FT_UINT8, BASE_DEC, VALS(rohc_profile_vals), 0x0,
+              "pdcp-nr.rohc.profile", FT_UINT16, BASE_DEC, VALS(rohc_profile_vals), 0x0,
               "ROHC Mode", HFILL
             }
         },
@@ -2756,7 +2933,25 @@ void proto_register_pdcp_nr(void)
               "pdcp-nr.security-config.integrity-key", FT_STRING, BASE_NONE, NULL, 0x0,
               NULL, HFILL
             }
-        }
+        },
+        { &hf_pdcp_nr_security_cipher_key_setup_frame,
+            { "CIPHER KEY setup",
+              "pdcp-nr.security-config.cipher-key.setup-frame", FT_FRAMENUM, BASE_NONE, NULL, 0x0,
+              NULL, HFILL
+            }
+        },
+        { &hf_pdcp_nr_security_integrity_key_setup_frame,
+            { "INTEGRITY KEY setup",
+              "pdcp-nr.security-config.integrity-key.setup-frame", FT_FRAMENUM, BASE_NONE, NULL, 0x0,
+              NULL, HFILL
+            }
+        },
+        { &hf_pdcp_nr_security_deciphered_data,
+            { "Deciphered Data",
+              "pdcp-nr.deciphered-data", FT_BYTES, BASE_NONE, NULL, 0x0,
+              NULL, HFILL
+            }
+        },
     };
 
     static hf_register_info hf_sdap[] =
@@ -2805,9 +3000,12 @@ void proto_register_pdcp_nr(void)
     };
 
     static ei_register_info ei[] = {
-        { &ei_pdcp_nr_sequence_analysis_sn_missing, { "pdcp-nr.sequence-analysis.sn-missing", PI_SEQUENCE, PI_WARN, "PDCP SN missing", EXPFILL }},
-        { &ei_pdcp_nr_sequence_analysis_sn_repeated, { "pdcp-nr.sequence-analysis.sn-repeated", PI_SEQUENCE, PI_WARN, "PDCP SN repeated", EXPFILL }},
-        { &ei_pdcp_nr_sequence_analysis_wrong_sequence_number, { "pdcp-nr.sequence-analysis.wrong-sequence-number", PI_SEQUENCE, PI_WARN, "Wrong Sequence Number", EXPFILL }},
+        { &ei_pdcp_nr_sequence_analysis_sn_missing_ul, { "pdcp-nr.sequence-analysis.sn-missing-ul", PI_SEQUENCE, PI_WARN, "UL PDCP SNs missing", EXPFILL }},
+        { &ei_pdcp_nr_sequence_analysis_sn_missing_dl, { "pdcp-nr.sequence-analysis.sn-missing-dl", PI_SEQUENCE, PI_WARN, "DL PDCP SNs missing", EXPFILL }},
+        { &ei_pdcp_nr_sequence_analysis_sn_repeated_ul, { "pdcp-nr.sequence-analysis.sn-repeated-ul", PI_SEQUENCE, PI_WARN, "UL PDCP SNs repeated", EXPFILL }},
+        { &ei_pdcp_nr_sequence_analysis_sn_repeated_dl, { "pdcp-nr.sequence-analysis.sn-repeated-dl", PI_SEQUENCE, PI_WARN, "DL PDCP SNs repeated", EXPFILL }},
+        { &ei_pdcp_nr_sequence_analysis_wrong_sequence_number_ul, { "pdcp-nr.sequence-analysis.wrong-sequence-number-ul", PI_SEQUENCE, PI_WARN, "UL Wrong Sequence Number", EXPFILL }},
+        { &ei_pdcp_nr_sequence_analysis_wrong_sequence_number_dl, { "pdcp-nr.sequence-analysis.wrong-sequence-number-dl", PI_SEQUENCE, PI_WARN, "DL Wrong Sequence Number", EXPFILL }},
         { &ei_pdcp_nr_reserved_bits_not_zero, { "pdcp-nr.reserved-bits-not-zero", PI_MALFORMED, PI_ERROR, "Reserved bits not zero", EXPFILL }},
         { &ei_pdcp_nr_digest_wrong, { "pdcp-nr.maci-wrong", PI_SEQUENCE, PI_ERROR, "MAC-I doesn't match expected value", EXPFILL }},
         { &ei_pdcp_nr_unknown_udp_framing_tag, { "pdcp-nr.unknown-udp-framing-tag", PI_UNDECODED, PI_WARN, "Unknown UDP framing tag, aborting dissection", EXPFILL }},

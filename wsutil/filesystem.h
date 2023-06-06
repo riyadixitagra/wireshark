@@ -22,22 +22,60 @@ extern "C" {
  */
 #define DEFAULT_PROFILE      "Default"
 
-
-/*
+/**
+ * Initialize our configuration environment.
+ *
  * Get the pathname of the directory from which the executable came,
- * and save it for future use.  Returns NULL on success, and a
- * g_mallocated string containing an error on failure.
+ * and save it for future use.
+ *
+ * Set our configuration namespace, which determines the top-level
+ * configuration directory name and environment variable prefixes.
+ * Default is "Wireshark".
+ *
+ * @param arg0 Executable name hint. Should be argv[0].
+ * @param namespace_name The namespace to use. "Wireshark" or NULL uses
+ *        the Wireshark namespace. "Logray" uses the Logray namespace.
+ * @return NULL on success, and a g_mallocated string containing an error on failure.
  */
-WS_DLL_PUBLIC char *init_progfile_dir(const char *arg0);
+WS_DLL_PUBLIC char *configuration_init(const char *arg0, const char *namespace_name);
+
+/**
+ * Get the configuration namespace name.
+ * @return The namespace name. One of "Wireshark" or "Logray".
+ */
+WS_DLL_PUBLIC const char *get_configuration_namespace(void);
+
+/**
+ * Check to see if the configuration namespace is for packet analysis
+ * (Wireshark) or log analysis (Logray).
+ * @return true if the configuration namespace is for packets.
+ */
+WS_DLL_PUBLIC bool is_packet_configuration_namespace(void);
 
 /*
- * Get the directory in which the program resides.
+ * Get the directory in which the main (Wireshark, TShark, Logray, etc)
+ * program resides.
+ * Extcaps should use get_extcap_dir() to get their path.
+ *
+ * @return The main program file directory.
  */
 WS_DLL_PUBLIC const char *get_progfile_dir(void);
 
 /*
+ * Construct the path name of a non-extcap Wireshark executable file,
+ * given the program name.  The executable name doesn't include ".exe";
+ * append it on Windows, so that callers don't have to worry about that.
+ *
+ * This presumes that all non-extcap executables are in the same directory.
+ *
+ * The returned file name was g_malloc()'d so it must be g_free()d when the
+ * caller is done with it.
+ */
+WS_DLL_PUBLIC char *get_executable_path(const char *filename);
+
+/*
  * Get the directory in which plugins are stored; this must not be called
- * before init_progfile_dir() is called, as they might be stored in a
+ * before configuration_init() is called, as they might be stored in a
  * subdirectory of the program file directory.
  */
 WS_DLL_PUBLIC const char *get_plugins_dir(void);
@@ -59,10 +97,15 @@ WS_DLL_PUBLIC const char *get_plugins_pers_dir_with_version(void);
 
 /*
  * Get the directory in which extcap hooks are stored; this must not be called
- * before init_progfile_dir() is called, as they might be stored in a
+ * before configuration_init() is called, as they might be stored in a
  * subdirectory of the program file directory.
  */
 WS_DLL_PUBLIC const char *get_extcap_dir(void);
+
+/*
+ * Get the personal extcap dir.
+ */
+WS_DLL_PUBLIC const char *get_extcap_pers_dir(void);
 
 /*
  * Get the flag indicating whether we're running from a build
@@ -84,6 +127,30 @@ WS_DLL_PUBLIC const char *get_datafile_dir(void);
  * caller is done with it.
  */
 WS_DLL_PUBLIC char *get_datafile_path(const char *filename);
+
+/*
+ * Get the directory in which global documentation files are
+ * stored.
+ */
+WS_DLL_PUBLIC const char *get_doc_dir(void);
+
+/*
+ * Construct the path name of a global documentation file, given the
+ * file name.
+ *
+ * The returned file name was g_malloc()'d so it must be g_free()d when the
+ * caller is done with it.
+ */
+WS_DLL_PUBLIC char *get_docfile_path(const char *filename);
+
+/*
+ * Construct the path URL of a global documentation file, given the
+ * file name.
+ *
+ * The returned file name was g_malloc()'d so it must be g_free()d when the
+ * caller is done with it.
+ */
+WS_DLL_PUBLIC char *doc_file_url(const char *filename);
 
 /*
  * Get the directory in which files that, at least on UNIX, are

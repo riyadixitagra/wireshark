@@ -23,7 +23,7 @@
 #include <ui/qt/utils/tango_colors.h>
 #include <ui/qt/utils/qt_ui_utils.h>
 #include "progress_frame.h"
-#include "wireshark_application.h"
+#include "main_application.h"
 #include "ui/qt/widgets/wireshark_file_dialog.h"
 
 #include <QCursor>
@@ -130,6 +130,8 @@ TCPStreamDialog::TCPStreamDialog(QWidget *parent, capture_file *cf, tcp_graph_ty
     ui->setupUi(this);
     if (parent) loadGeometry(parent->width() * 2 / 3, parent->height() * 4 / 5);
     setAttribute(Qt::WA_DeleteOnClose, true);
+
+    ui->streamNumberSpinBox->setStyleSheet("QSpinBox { min-width: 2em; }");
 
     guint32 th_stream = select_tcpip_session(cap_file_);
     if (th_stream == G_MAXUINT32) {
@@ -1664,9 +1666,9 @@ void TCPStreamDialog::graphClicked(QMouseEvent *event)
         // XXX We should find some way to get streamPlot to handle a
         // contextMenuEvent instead.
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0 ,0)
-        ctx_menu_.exec(event->globalPosition().toPoint());
+        ctx_menu_.popup(event->globalPosition().toPoint());
 #else
-        ctx_menu_.exec(event->globalPos());
+        ctx_menu_.popup(event->globalPos());
 #endif
     } else  if (mouse_drags_) {
         if (sp->axisRect()->rect().contains(event->pos())) {
@@ -1843,7 +1845,7 @@ void TCPStreamDialog::transformYRange(const QCPRange &y_range1)
 void TCPStreamDialog::on_buttonBox_accepted()
 {
     QString file_name, extension;
-    QDir path(wsApp->lastOpenDir());
+    QDir path(mainApp->lastOpenDir());
     QString pdf_filter = tr("Portable Document Format (*.pdf)");
     QString png_filter = tr("Portable Network Graphics (*.png)");
     QString bmp_filter = tr("Windows Bitmap (*.bmp)");
@@ -1855,7 +1857,7 @@ void TCPStreamDialog::on_buttonBox_accepted()
             .arg(bmp_filter)
             .arg(jpeg_filter);
 
-    file_name = WiresharkFileDialog::getSaveFileName(this, wsApp->windowTitleString(tr("Save Graph As…")),
+    file_name = WiresharkFileDialog::getSaveFileName(this, mainApp->windowTitleString(tr("Save Graph As…")),
                                              path.canonicalPath(), filter, &extension);
 
     if (file_name.length() > 0) {
@@ -1871,7 +1873,7 @@ void TCPStreamDialog::on_buttonBox_accepted()
         }
         // else error dialog?
         if (save_ok) {
-            wsApp->setLastOpenDirFromFilename(file_name);
+            mainApp->setLastOpenDirFromFilename(file_name);
         }
     }
 }
@@ -2212,5 +2214,5 @@ void TCPStreamDialog::GraphUpdater::doUpdate()
 
 void TCPStreamDialog::on_buttonBox_helpRequested()
 {
-    wsApp->helpTopicAction(HELP_STATS_TCP_STREAM_GRAPHS_DIALOG);
+    mainApp->helpTopicAction(HELP_STATS_TCP_STREAM_GRAPHS_DIALOG);
 }

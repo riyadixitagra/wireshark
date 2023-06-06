@@ -166,7 +166,7 @@ static int Proto__tostring(lua_State* L) {
 WSLUA_FUNCTION wslua_register_postdissector(lua_State* L) {
     /* Make a <<lua_class_Proto,`Proto`>> protocol (with a dissector function) a post-dissector.
        It will be called for every frame after dissection. */
-#define WSLUA_ARG_register_postdissector_PROTO 1 /* the protocol to be used as post-dissector. */
+#define WSLUA_ARG_register_postdissector_PROTO 1 /* The protocol to be used as post-dissector. */
 #define WSLUA_OPTARG_register_postdissector_ALLFIELDS 2 /* Whether to generate all fields.
                                                            Note: This impacts performance (default=false). */
 
@@ -233,7 +233,8 @@ WSLUA_METHOD Proto_register_heuristic(lua_State* L) {
     Proto proto = checkProto(L,1);
     const gchar *listname = luaL_checkstring(L, WSLUA_ARG_Proto_register_heuristic_LISTNAME);
     const gchar *proto_name = proto->name;
-    const int top = lua_gettop(L);
+    const int top _U_ = lua_gettop(L);
+
     gchar *short_name;
 
     if (!proto_name || proto->hfid == -1) {
@@ -377,6 +378,9 @@ static int Proto_get_prefs(lua_State* L) {
 
 /* WSLUA_ATTRIBUTE Proto_prefs_changed WO The preferences changed routine of this dissector,
    a Lua function you define.
+
+   The function is called when the protocol's preferences are changed.
+   It is passed no arguments.
  */
 static int Proto_set_prefs_changed(lua_State* L) {
     Proto proto = checkProto(L,1);
@@ -396,7 +400,8 @@ static int Proto_set_prefs_changed(lua_State* L) {
 
 /* WSLUA_ATTRIBUTE Proto_init WO The init routine of this dissector, a function you define.
 
-   The called init function is passed no arguments.
+   The init function is called when the a new capture file is opened or when
+   the open capture file is closed.  It is passed no arguments.
 */
 static int Proto_set_init(lua_State* L) {
     Proto proto = checkProto(L,1);
@@ -420,7 +425,7 @@ WSLUA_ATTRIBUTE_STRING_GETTER(Proto,name);
 /* WSLUA_ATTRIBUTE Proto_description RO The description given to this dissector. */
 WSLUA_ATTRIBUTE_NAMED_STRING_GETTER(Proto,description,desc);
 
-/* WSLUA_ATTRIBUTE Proto_fields RW The `ProtoField`s Lua table of this dissector. */
+/* WSLUA_ATTRIBUTE Proto_fields RW The `ProtoField`++'++s Lua table of this dissector. */
 static int Proto_get_fields(lua_State* L) {
     Proto proto = checkProto(L,1);
     lua_rawgeti(L, LUA_REGISTRYINDEX, proto->fields);

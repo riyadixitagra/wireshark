@@ -23,7 +23,7 @@
 void proto_register_kink(void);
 void proto_reg_handoff_kink(void);
 
-#define KINK_PORT       57203 /* Not IANA registered */
+#define KINK_PORT       910
 
 #define KINK_ISAKMP_PAYLOAD_BASE 14
 
@@ -903,7 +903,7 @@ proto_register_kink(void) {
         NULL, HFILL }},
     { &hf_kink_payload_length,
       { "Payload Length",       "kink.payloadLength",
-        FT_UINT8,       BASE_DEC,       NULL,        0x0,
+        FT_UINT16,      BASE_DEC,       NULL,        0x0,
         NULL, HFILL }},
     { &hf_kink_epoch,
       { "EPOCH",       "kink.epoch",

@@ -43,6 +43,20 @@
 #include <wsutil/wsgcrypt.h>
 #include <wsutil/ws_roundup.h>
 
+#ifdef _WIN32
+#include <windows.h>
+#else
+/* Defined in winnt.h */
+#define OWNER_SECURITY_INFORMATION 0x00000001
+#define GROUP_SECURITY_INFORMATION 0x00000002
+#define DACL_SECURITY_INFORMATION 0x00000004
+#define SACL_SECURITY_INFORMATION 0x00000008
+#define LABEL_SECURITY_INFORMATION 0x00000010
+#define ATTRIBUTE_SECURITY_INFORMATION 0x00000020
+#define SCOPE_SECURITY_INFORMATION 0x00000040
+#define BACKUP_SECURITY_INFORMATION 0x00010000
+#endif
+
 //#define DEBUG_SMB2
 #ifdef DEBUG_SMB2
 #define DEBUG(...) g_ ## warning(__VA_ARGS__)
@@ -449,6 +463,8 @@ static int hf_smb2_share_caps_assymetric = -1;
 static int hf_smb2_share_caps_redirect_to_owner = -1;
 static int hf_smb2_create_flags = -1;
 static int hf_smb2_lock_count = -1;
+static int hf_smb2_lock_sequence_number = -1;
+static int hf_smb2_lock_sequence_index = -1;
 static int hf_smb2_min_count = -1;
 static int hf_smb2_remaining_bytes = -1;
 static int hf_smb2_channel_info_offset = -1;
@@ -1156,7 +1172,7 @@ smb2stat_init(struct register_srt* srt _U_, GArray* srt_array)
 }
 
 static tap_packet_status
-smb2stat_packet(void *pss, packet_info *pinfo, epan_dissect_t *edt _U_, const void *prv)
+smb2stat_packet(void *pss, packet_info *pinfo, epan_dissect_t *edt _U_, const void *prv, tap_flags_t flags _U_)
 {
 	guint i = 0;
 	srt_stat_table *smb2_srt_table;
@@ -3381,8 +3397,8 @@ dissect_smb2_capabilities(proto_tree *parent_tree, tvbuff_t *tvb, int offset)
 
 
 
-#define NEGPROT_SIGN_REQ	0x0002
-#define NEGPROT_SIGN_ENABLED	0x0001
+#define NEGPROT_SIGN_REQ	0x02
+#define NEGPROT_SIGN_ENABLED	0x01
 
 static int
 dissect_smb2_secmode(proto_tree *parent_tree, tvbuff_t *tvb, int offset)
@@ -3525,7 +3541,7 @@ static void
 dissect_smb2_secblob(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, smb2_info_t *si _U_)
 {
 	if ((tvb_captured_length(tvb)>=7)
-	&&  (!tvb_memeql(tvb, 0, "NTLMSSP", 7))) {
+	&&  (!tvb_memeql(tvb, 0, (const guint8*)"NTLMSSP", 7))) {
 		call_dissector(ntlmssp_handle, tvb, pinfo, tree);
 	} else {
 		call_dissector(gssapi_handle, tvb, pinfo, tree);
@@ -4068,13 +4084,9 @@ dissect_smb2_tree_connect_request(tvbuff_t *tvb, packet_info *pinfo, proto_tree 
 
 	offset = dissect_smb2_olb_tvb_max_offset(offset, &olb);
 
-	/* treelen  +1 is overkill here if the string is unicode,
-	 * but who ever has more than a handful of TCON in a trace anyways
-	 */
 	if (!pinfo->fd->visited && si->saved && buf && olb.len) {
 		si->saved->extra_info_type = SMB2_EI_TREENAME;
-		si->saved->extra_info = wmem_alloc(wmem_file_scope(), olb.len+1);
-		snprintf((char *)si->saved->extra_info,olb.len+1,"%s",buf);
+		si->saved->extra_info = wmem_strdup(wmem_file_scope(), buf);
 	}
 
 	if (buf) {
@@ -4403,8 +4415,7 @@ dissect_smb2_find_request(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, i
 
 	if (!pinfo->fd->visited && si->saved && olb.len) {
 		si->saved->extra_info_type = SMB2_EI_FINDPATTERN;
-		si->saved->extra_info = wmem_alloc(wmem_file_scope(), olb.len+1);
-		snprintf((char *)si->saved->extra_info,olb.len+1,"%s",buf);
+		si->saved->extra_info = wmem_strdup(wmem_file_scope(), buf);
 	}
 
 	col_append_fstr(pinfo->cinfo, COL_INFO, " %s Pattern: %s",
@@ -5539,18 +5550,6 @@ static const true_false_string tfs_additional_backup = {
 	"NOT requesting backup operation security information",
 };
 
-#ifndef _MSC_VER
-/*  Those macros are already defined by winnt.h for Windows build */
-#define OWNER_SECURITY_INFORMATION 0x00000001
-#define GROUP_SECURITY_INFORMATION 0x00000002
-#define DACL_SECURITY_INFORMATION 0x00000004
-#define SACL_SECURITY_INFORMATION 0x00000008
-#define LABEL_SECURITY_INFORMATION 0x00000010
-#define ATTRIBUTE_SECURITY_INFORMATION 0x00000020
-#define SCOPE_SECURITY_INFORMATION 0x00000040
-#define BACKUP_SECURITY_INFORMATION 0x00010000
-#endif
-
 static int
 dissect_additional_information_sec_mask(tvbuff_t *tvb, proto_tree *parent_tree, int offset)
 {
@@ -6162,8 +6161,9 @@ dissect_smb2_lock_request(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, i
 	proto_tree_add_item(tree, hf_smb2_lock_count, tvb, offset, 2, ENC_LITTLE_ENDIAN);
 	offset += 2;
 
-	/* reserved */
-	proto_tree_add_item(tree, hf_smb2_reserved, tvb, offset, 4, ENC_NA);
+	/* Lock Sequence Number/Index */
+	proto_tree_add_item(tree, hf_smb2_lock_sequence_number, tvb, offset, 4, ENC_LITTLE_ENDIAN);
+	proto_tree_add_item(tree, hf_smb2_lock_sequence_index, tvb, offset, 4, ENC_LITTLE_ENDIAN);
 	offset += 4;
 
 	/* fid */
@@ -6290,6 +6290,7 @@ dissect_file_data_smb2_pipe(tvbuff_t *raw_tvb, packet_info *pinfo, proto_tree *t
 	const smb2_fid_info_t *file = NULL;
 	guint32 id;
 	fragment_head *fd_head;
+	fragment_item *fd_i;
 	tvbuff_t *tvb;
 	tvbuff_t *new_tvb;
 	proto_item *frag_tree_item;
@@ -6389,12 +6390,10 @@ dissect_file_data_smb2_pipe(tvbuff_t *raw_tvb, packet_info *pinfo, proto_tree *t
 		   we might pick up from the Read/Write calls instead of
 		   assuming we always get them in the correct order
 		*/
-		while (fd_head->next) {
-			fd_head = fd_head->next;
-		}
+		for (fd_i = fd_head->next; fd_i->next; fd_i = fd_i->next) {}
 		fd_head = fragment_add_check(&smb2_pipe_reassembly_table,
 			tvb, 0, pinfo, id, NULL,
-			fd_head->offset+fd_head->len,
+			fd_i->offset+fd_i->len,
 			reported_len, TRUE);
 
 		/* if we completed reassembly */
@@ -8213,13 +8212,11 @@ add_timestamp_to_info_col(tvbuff_t *tvb, packet_info *pinfo, smb2_info_t *si,
 	if (!pinfo->fd->visited) {
 		if (si->saved && si->saved->extra_info_type == SMB2_EI_FILENAME) {
 			gchar *saved_name = (gchar *)si->saved->extra_info;
-			gulong len = (gulong)strlen(saved_name);
 
-			si->saved->extra_info = (gchar *)wmem_alloc(wmem_file_scope(), len + 32 + 1);
-			snprintf((gchar *)si->saved->extra_info,
-				   len + 32 + 1 , "%s@%s", (char *)saved_name,
-				   abs_time_to_str(pinfo->pool, &ts,
-					           ABSOLUTE_TIME_UTC, FALSE));
+			si->saved->extra_info = wmem_strdup_printf(wmem_file_scope(),
+				"%s@%s", (char *)saved_name,
+				abs_time_to_str(pinfo->pool, &ts,
+					ABSOLUTE_TIME_UTC, FALSE));
 			wmem_free(wmem_file_scope(), saved_name);
 		}
 	}
@@ -9177,8 +9174,7 @@ dissect_smb2_create_request(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree,
 		}
 		if (si->saved && f_olb.len < 1024) {
 			si->saved->extra_info_type = SMB2_EI_FILENAME;
-			si->saved->extra_info = (gchar *)wmem_alloc(wmem_file_scope(), f_olb.len+1);
-			snprintf((gchar *)si->saved->extra_info, f_olb.len+1, "%s", fname);
+			si->saved->extra_info = wmem_strdup(wmem_file_scope(), fname);
 		}
 	}
 
@@ -10100,7 +10096,6 @@ static smb2_function smb2_dissector[256] = {
 #define SMB3_AES128CCM_NONCE	11
 #define SMB3_AES128GCM_NONCE	12
 
-#if GCRYPT_VERSION_NUMBER >= 0x010600 /* 1.6.0 */
 static gboolean is_decrypted_header_ok(guint8 *p, size_t size)
 {
 	if (size < 4)
@@ -10362,7 +10357,6 @@ decrypt_smb_payload(packet_info *pinfo,
 		sti->session->server_port = pinfo->srcport;
 	return data;
 }
-#endif
 
 /*
   Append tvb[offset:offset+length] to out
@@ -10668,13 +10662,9 @@ dissect_smb2_transform_header(packet_info *pinfo, proto_tree *tree,
 	sti->session = smb2_get_session(sti->conv, sti->sesid, NULL, NULL);
 	smb2_add_session_info(sesid_tree, sesid_item, tvb, sesid_offset, sti->session);
 
-#if GCRYPT_VERSION_NUMBER >= 0x010600 /* 1.6.0 */
 	if (sti->flags & SMB2_TRANSFORM_FLAGS_ENCRYPTED) {
 		plain_data = decrypt_smb_payload(pinfo, tvb, offset, offset_aad, sti);
 	}
-#else
-	(void) offset_aad;
-#endif
 	*enc_tvb = tvb_new_subset_length(tvb, offset, sti->size);
 
 	if (plain_data != NULL) {
@@ -10829,7 +10819,7 @@ dissect_smb2_tid_sesid(packet_info *pinfo _U_, proto_tree *tree, tvbuff_t *tvb, 
 
 	return offset;
 }
-#if GCRYPT_VERSION_NUMBER >= 0x010600
+
 static void
 dissect_smb2_signature(packet_info *pinfo, tvbuff_t *tvb, int offset, proto_tree *tree, smb2_info_t *si)
 {
@@ -10896,7 +10886,6 @@ dissect_smb2_signature(packet_info *pinfo, tvbuff_t *tvb, int offset, proto_tree
 
 	return;
 }
-#endif
 
 static int
 dissect_smb2(tvbuff_t *tvb, packet_info *pinfo, proto_tree *parent_tree, gboolean first_in_chain)
@@ -11063,11 +11052,7 @@ dissect_smb2(tvbuff_t *tvb, packet_info *pinfo, proto_tree *parent_tree, gboolea
 		offset = dissect_smb2_tid_sesid(pinfo, header_tree, tvb, offset, si);
 
 		/* Signature */
-#if GCRYPT_VERSION_NUMBER >= 0x010600
 		dissect_smb2_signature(pinfo, tvb, offset, header_tree, si);
-#else
-		proto_tree_add_item(header_tree, hf_smb2_signature, tvb, offset, 16, ENC_NA);
-#endif
 		offset += 16;
 		proto_item_set_len(header_item, offset);
 
@@ -12782,6 +12767,16 @@ proto_register_smb2(void)
 		{ &hf_smb2_lock_count,
 			{ "Lock Count", "smb2.lock_count", FT_UINT16, BASE_DEC,
 			NULL, 0, NULL, HFILL }
+		},
+
+		{ &hf_smb2_lock_sequence_number,
+			{ "Lock Sequence Number", "smb2.lock_sequence_number", FT_UINT32, BASE_DEC,
+			NULL, 0x0000000F, NULL, HFILL }
+		},
+
+		{ &hf_smb2_lock_sequence_index,
+			{ "Lock Sequence Index", "smb2.lock_sequence_index", FT_UINT32, BASE_DEC,
+			NULL, 0xFFFFFFF0, NULL, HFILL }
 		},
 
 		{ &hf_smb2_capabilities,

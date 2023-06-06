@@ -17,11 +17,15 @@
 #include <epan/range.h>
 #include <epan/to_str.h>
 #include <epan/value_string.h>
+#include <epan/prefs.h>
 
 #include <ui/recent.h>
+#include <ui/last_open_dir.h>
 #include "ui/ws_ui_util.h"
 
 #include <wsutil/str_util.h>
+
+#include <ui/qt/main_application.h>
 
 #include <QAction>
 #include <QApplication>
@@ -152,11 +156,7 @@ const QString file_size_to_qstring(const gint64 size)
 
 const QString time_t_to_qstring(time_t ti_time)
 {
-#if QT_VERSION >= QT_VERSION_CHECK(5, 8, 0)
     QDateTime date_time = QDateTime::fromSecsSinceEpoch(qint64(ti_time));
-#else
-    QDateTime date_time = QDateTime::fromTime_t(uint(ti_time));
-#endif
     QString time_str = date_time.toLocalTime().toString("yyyy-MM-dd hh:mm:ss");
     return time_str;
 }
@@ -167,8 +167,12 @@ QString html_escape(const QString plain_string) {
 
 
 void smooth_font_size(QFont &font) {
+#if (QT_VERSION >= QT_VERSION_CHECK(6, 0, 0))
+    QList<int> size_list = QFontDatabase::smoothSizes(font.family(), font.styleName());
+#else
     QFontDatabase fdb;
     QList<int> size_list = fdb.smoothSizes(font.family(), font.styleName());
+#endif
 
     if (size_list.size() < 2) return;
 
@@ -293,5 +297,43 @@ QString make_filter_based_on_rtpstream_id(QVector<rtpstream_id_t *> stream_ids)
     }
 
     return filter;
+}
+
+QString lastOpenDir()
+{
+    QString result;
+
+    switch (prefs.gui_fileopen_style) {
+
+    case FO_STYLE_LAST_OPENED:
+        /* The user has specified that we should start out in the last directory
+           we looked in.  If we've already opened a file, use its containing
+           directory, if we could determine it, as the directory, otherwise
+           use the "last opened" directory saved in the preferences file if
+           there was one. */
+        /* This is now the default behaviour in file_selection_new() */
+        result = QString(get_last_open_dir());
+        break;
+
+    case FO_STYLE_SPECIFIED:
+        /* The user has specified that we should always start out in a
+           specified directory; if they've specified that directory,
+           start out by showing the files in that dir. */
+        if (prefs.gui_fileopen_dir[0] != '\0')
+            result = QString(prefs.gui_fileopen_dir);
+        break;
+    }
+
+    QDir ld(result);
+    if (ld.exists())
+        return result;
+
+    return QString();
+}
+
+void storeLastDir(QString dir)
+{
+    if (mainApp && dir.length() > 0)
+        mainApp->setLastOpenDir(qUtf8Printable(dir));
 }
 

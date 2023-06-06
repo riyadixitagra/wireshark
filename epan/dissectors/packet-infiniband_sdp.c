@@ -17,7 +17,6 @@
 
 #include <epan/packet.h>
 #include <epan/prefs.h>
-#include <epan/addr_resolv.h>
 #include <epan/conversation.h>
 
 #include "packet-infiniband.h"
@@ -152,7 +151,7 @@ dissect_ib_sdp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *data _
     proto_tree_add_item(SDP_BSDH_header_tree, hf_ib_sdp_mid, tvb, local_offset, 1, ENC_BIG_ENDIAN); local_offset += 1;
 
     col_append_fstr(pinfo->cinfo, COL_INFO, "(SDP %s)",
-                    rval_to_str(mid, mid_meanings, "Unknown"));
+                    rval_to_str_const(mid, mid_meanings, "Unknown"));
 
     proto_tree_add_item(SDP_BSDH_header_tree, hf_ib_sdp_flags, tvb, local_offset, 1, ENC_BIG_ENDIAN);
     proto_tree_add_item(SDP_BSDH_header_tree, hf_ib_sdp_flags_oobpres, tvb, local_offset, 2, ENC_BIG_ENDIAN);
@@ -249,14 +248,14 @@ dissect_ib_sdp_heur(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *d
        will not work since we do not have the source QP. this WILL succeed when we're still
        in the process of CM negotiations */
     conv = find_conversation(pinfo->num, &pinfo->src, &pinfo->dst,
-                             ENDPOINT_IBQP, pinfo->srcport, pinfo->destport, 0);
+                             CONVERSATION_IBQP, pinfo->srcport, pinfo->destport, 0);
 
     if (!conv) {
         /* if not, try to find an established RC channel. recall Infiniband conversations are
            registered with one side of the channel. since the packet is only guaranteed to
            contain the qpn of the destination, we'll use this */
         conv = find_conversation(pinfo->num, &pinfo->dst, &pinfo->dst,
-                                 ENDPOINT_IBQP, pinfo->destport, pinfo->destport, NO_ADDR_B|NO_PORT_B);
+                                 CONVERSATION_IBQP, pinfo->destport, pinfo->destport, NO_ADDR_B|NO_PORT_B);
 
         if (!conv)
             return FALSE;   /* nothing to do with no conversation context */
@@ -294,15 +293,15 @@ proto_register_ib_sdp(void)
         },
         {&hf_ib_sdp_flags_oobpres, {
             "OOB_PRES", "infiniband_sdp.bsdh.oobpres",
-            FT_UINT8, BASE_HEX, NULL, 0x1, "Out-Of-Band Data is present", HFILL}
+            FT_UINT8, BASE_HEX, NULL, 0x01, "Out-Of-Band Data is present", HFILL}
         },
         {&hf_ib_sdp_flags_oob_pend, {
             "OOB_PEND", "infiniband_sdp.bsdh.oobpend",
-            FT_UINT8, BASE_HEX, NULL, 0x2, "Out-Of-Band Data is pending", HFILL}
+            FT_UINT8, BASE_HEX, NULL, 0x02, "Out-Of-Band Data is pending", HFILL}
         },
         {&hf_ib_sdp_flags_reqpipe, {
             "REQ_PIPE", "infiniband_sdp.bsdh.reqpipe",
-            FT_UINT8, BASE_HEX, NULL, 0x4, "Request change to Pipelined Mode", HFILL}
+            FT_UINT8, BASE_HEX, NULL, 0x04, "Request change to Pipelined Mode", HFILL}
         },
         {&hf_ib_sdp_bufs, {
             "Buffers", "infiniband_sdp.bsdh.bufs",
@@ -323,7 +322,7 @@ proto_register_ib_sdp(void)
         /* SDP Hello Header */
         {&hf_ib_sdp_hh, {
             "Hello Header", "infiniband_sdp.hh",
-            FT_NONE, BASE_NONE, NULL, 0x00, NULL, HFILL}
+            FT_NONE, BASE_NONE, NULL, 0x0, NULL, HFILL}
         },
         {&hf_ib_sdp_majv, {
             "Major Protocol Version Number", "infiniband_sdp.hh.majv",
@@ -436,7 +435,7 @@ proto_register_ib_sdp(void)
     proto_register_subtree_array(ett, array_length(ett));
 
     /* Register preferences */
-    ib_sdp_module = prefs_register_protocol(proto_ib_sdp, proto_reg_handoff_ib_sdp);
+    ib_sdp_module = prefs_register_protocol(proto_ib_sdp, NULL);
 
     prefs_register_static_text_preference(ib_sdp_module, "use_decode_as",
         "Heuristic matching preferences removed.  Use Infiniband protocol preferences or Decode As.",

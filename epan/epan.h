@@ -10,7 +10,7 @@
 #ifndef __EPAN_H__
 #define __EPAN_H__
 
-#include <glib.h>
+#include <wireshark.h>
 
 #include <wsutil/feature_list.h>
 #include <epan/tvbuff.h>
@@ -18,7 +18,6 @@
 #include <epan/frame_data.h>
 #include <epan/register.h>
 #include <wiretap/wtap_opttypes.h>
-#include "ws_symbol_export.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -117,7 +116,8 @@ WS_DLL_PUBLIC
 void epan_cleanup(void);
 
 typedef struct {
-	void (*init)(void);
+	void (*init)(void);		/* Called before proto_init() */
+	void (*post_init)(void);	/* Called at the end of epan_init() */
 	void (*dissect_init)(epan_dissect_t *);
 	void (*dissect_cleanup)(epan_dissect_t *);
 	void (*cleanup)(void);

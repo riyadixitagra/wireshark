@@ -30,6 +30,7 @@
 #include "packet-pdcp-lte.h"
 
 #include "packet-mac-nr.h"
+#include "packet-pdcp-nr.h"
 
 void proto_reg_handoff_catapult_dct2000(void);
 void proto_register_catapult_dct2000(void);
@@ -89,6 +90,14 @@ static int hf_catapult_dct2000_carrier_type = -1;
 static int hf_catapult_dct2000_cell_group = -1;
 static int hf_catapult_dct2000_carrier_id = -1;
 
+static int hf_catapult_dct2000_security_mode_params = -1;
+static int hf_catapult_dct2000_uplink_sec_mode = -1;
+static int hf_catapult_dct2000_downlink_sec_mode = -1;
+static int hf_catapult_dct2000_ciphering_algorithm = -1;
+static int hf_catapult_dct2000_ciphering_key = -1;
+static int hf_catapult_dct2000_integrity_algorithm = -1;
+static int hf_catapult_dct2000_integrity_key = -1;
+
 static int hf_catapult_dct2000_lte_ccpri_opcode = -1;
 static int hf_catapult_dct2000_lte_ccpri_status = -1;
 static int hf_catapult_dct2000_lte_ccpri_channel = -1;
@@ -115,6 +124,11 @@ static int hf_catapult_dct2000_rx_timing_deviation = -1;
 static int hf_catapult_dct2000_transport_channel_type = -1;
 static int hf_catapult_dct2000_no_padding_bits = -1;
 
+static int hf_catapult_dct2000_rawtraffic_interface = -1;
+static int hf_catapult_dct2000_rawtraffic_direction = -1;
+static int hf_catapult_dct2000_rawtraffic_pdu = -1;
+
+
 /* Variables used for preferences */
 static gboolean catapult_dct2000_try_ipprim_heuristic = TRUE;
 static gboolean catapult_dct2000_try_sctpprim_heuristic = TRUE;
@@ -128,6 +142,7 @@ static int ett_catapult_dct2000 = -1;
 static int ett_catapult_dct2000_ipprim = -1;
 static int ett_catapult_dct2000_sctpprim = -1;
 static int ett_catapult_dct2000_tty = -1;
+static int ett_catapult_dct2000_security_mode_params = -1;
 
 static expert_field ei_catapult_dct2000_lte_ccpri_status_error = EI_INIT;
 static expert_field ei_catapult_dct2000_error_comment_expert = EI_INIT;
@@ -200,12 +215,6 @@ static const value_string ccpri_opcode_vals[] = {
     { 0,             NULL}
 };
 
-static const value_string ccpri_status_vals[] = {
-    { 0,     "OK"},
-    { 1,     "ERROR"},
-    { 0,     NULL}
-};
-
 static const value_string rlc_rbid_vals[] = {
     { 1,     "DCH1"},
     { 2,     "DCH2"},
@@ -237,12 +246,6 @@ static value_string_ext rlc_rbid_vals_ext = VALUE_STRING_EXT_INIT(rlc_rbid_vals)
 static const value_string ueid_type_vals[] = {
     { 0,     "URNTI"},
     { 1,     "CRNTI"},
-    { 0,     NULL}
-};
-
-static const value_string tx_priority_vals[] = {
-    { 0,     "Normal"},
-    { 1,     "High"},
     { 0,     NULL}
 };
 
@@ -298,6 +301,30 @@ static const value_string carrier_type_vals[] = {
 };
 
 
+static const value_string security_mode_vals[] = {
+    { 0,        "None"},
+    { 1,        "Integrity only"},
+    { 2,        "Ciphering and Integrity"},
+    { 0,     NULL}
+};
+
+static const value_string ciphering_algorithm_vals[] = {
+    { 0,        "EEA0"},
+    { 1,        "EEA1"},
+    { 2,        "EEA2"},
+    { 3,        "EEA3"},
+    { 0,     NULL}
+};
+
+static const value_string integrity_algorithm_vals[] = {
+    { 0,        "EIA0"},
+    { 1,        "EIA1"},
+    { 2,        "EIA2"},
+    { 3,        "EIA3"},
+    { 0,     NULL}
+};
+
+
 #define MAX_OUTHDR_VALUES 32
 
 extern int proto_fp;
@@ -306,6 +333,7 @@ extern int proto_umts_rlc;
 extern int proto_rlc_lte;
 extern int proto_pdcp_lte;
 
+
 static dissector_handle_t mac_lte_handle;
 static dissector_handle_t rlc_lte_handle;
 static dissector_handle_t pdcp_lte_handle;
@@ -313,6 +341,8 @@ static dissector_handle_t catapult_dct2000_handle;
 static dissector_handle_t nrup_handle;
 
 static dissector_handle_t mac_nr_handle;
+
+static dissector_handle_t eth_handle;
 
 static dissector_handle_t look_for_dissector(const char *protocol_name);
 static guint parse_outhdr_string(const guchar *outhdr_string, gint outhdr_length, guint *outhdr_values);
@@ -330,8 +360,6 @@ static void attach_rlc_lte_info(packet_info *pinfo, guint *outhdr_values,
                                 guint outhdr_values_found);
 static void attach_pdcp_lte_info(packet_info *pinfo, guint *outhdr_values,
                                  guint outhdr_values_found);
-
-
 
 
 /* Return the number of bytes used to encode the length field
@@ -855,6 +883,14 @@ static void dissect_rlc_umts(tvbuff_t *tvb, gint offset,
     }
 }
 
+static char* get_key(tvbuff_t*tvb, gint offset)
+{
+    static gchar key[33];
+    for (int n=0; n < 16; n++) {
+        snprintf(&key[n*2], 33-(n*2), "%02x", tvb_get_guint8(tvb, offset+n));
+    }
+    return key;
+}
 
 
 /* Dissect an RRC LTE or NR frame by first parsing the header entries then passing
@@ -1027,10 +1063,103 @@ static void dissect_rrc_lte_nr(tvbuff_t *tvb, gint offset,
         offset++;
     }
     else if (opcode == 0x05) {
-        /* Data_Req_UE_SM - skip SecurityMode Params */
+        /* Data_Req_UE_SM - SecurityMode Params */
+        /* N.B. DRB keys do not get configured here.. */
         offset++;  /* tag */
-        guint8 len = tvb_get_guint8(tvb, offset); /* length */
-        offset += len;
+        guint8 len = tvb_get_guint8(tvb, offset++); /* length */
+
+        /* Uplink Sec Mode */
+        proto_item *sc_ti;
+        proto_tree *sc_tree;
+        sc_ti = proto_tree_add_item(tree, hf_catapult_dct2000_security_mode_params, tvb, offset, len, ENC_NA);
+        sc_tree = proto_item_add_subtree(sc_ti, ett_catapult_dct2000_security_mode_params);
+
+        guint32 uplink_sec_mode;
+        proto_tree_add_item_ret_uint(sc_tree, hf_catapult_dct2000_uplink_sec_mode,
+                                     tvb, offset++, 1, ENC_BIG_ENDIAN, &uplink_sec_mode);
+
+        /* Downlink Sec Mode */
+        guint32 downlink_sec_mode;
+        proto_tree_add_item_ret_uint(sc_tree, hf_catapult_dct2000_downlink_sec_mode,
+                                     tvb, offset++, 1, ENC_BIG_ENDIAN, &downlink_sec_mode);
+
+        if (len > 2) {
+            offset++;  /* tag Should be 0x21 */
+            offset++; /* len */
+
+            tag = tvb_get_guint8(tvb, offset++);
+            if (tag == 0x25) {
+                /* Cell Group Id */
+                offset++;
+                proto_tree_add_item(sc_tree, hf_catapult_dct2000_cell_group,
+                                    tvb, offset, 1, ENC_BIG_ENDIAN);
+            }
+
+            /* Optional cryptParams */
+            if (tag == 0x2) {
+                guint32 cipher_algorithm;
+
+                len = tvb_get_guint8(tvb, offset++);
+
+                /* Cipher algorithm (required) */
+                offset += 2; /* Skip tag and length */
+                proto_tree_add_item_ret_uint(sc_tree, hf_catapult_dct2000_ciphering_algorithm,
+                                             tvb, offset++, 1, ENC_BIG_ENDIAN, &cipher_algorithm);
+
+                /* Ciphering key (optional) */
+                if (len > 3) {
+                    /* Skip tag and length */
+                    offset += 2;
+                    proto_tree_add_item(sc_tree, hf_catapult_dct2000_ciphering_key,
+                                        tvb, offset, 16, ENC_NA);
+                    gchar *key = get_key(tvb, offset);
+
+                    if (!PINFO_FD_VISITED(pinfo)) {
+                        if (lte_or_nr == NR) {
+                            set_pdcp_nr_rrc_ciphering_key(ueid, key, pinfo->num);
+                        }
+                        else {
+                            set_pdcp_lte_rrc_ciphering_key(ueid, key, pinfo->num);
+                        }
+                    }
+                    offset += 16;
+                }
+            }
+            else {
+                offset--;
+            }
+
+            /* Now should be Auth params (required) */
+            guint32 integrity_algorithm;
+            /* Skip tag */
+            offset++;
+
+            len = tvb_get_guint8(tvb, offset++);
+
+            /* Integrity algorithm (required) */
+            offset += 2; /* Skip tag and length */
+            proto_tree_add_item_ret_uint(sc_tree, hf_catapult_dct2000_integrity_algorithm,
+                                         tvb, offset++, 1, ENC_BIG_ENDIAN, &integrity_algorithm);
+
+            /* Integrity key (optional */
+            if (len > 3) {
+                /* Skip tag and length */
+                offset += 2;
+                proto_tree_add_item(sc_tree, hf_catapult_dct2000_integrity_key,
+                                    tvb, offset, 16, ENC_NA);
+                gchar *key = get_key(tvb, offset);
+
+                if (!PINFO_FD_VISITED(pinfo)) {
+                    if (lte_or_nr == NR) {
+                        set_pdcp_nr_rrc_integrity_key(ueid, key, pinfo->num);
+                    }
+                    else {
+                        set_pdcp_lte_rrc_integrity_key(ueid, key, pinfo->num);
+                    }
+                }
+                offset += 16;
+            }
+        }
     }
 
     /* Optional data tag may follow */
@@ -2258,6 +2387,7 @@ hex_from_char(gchar c)
     return 0xff;
 }
 
+
 /*****************************************/
 /* Main dissection function.             */
 /*****************************************/
@@ -2307,10 +2437,10 @@ dissect_catapult_dct2000(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, vo
     /* by the wiretap module                                             */
 
     /* Context Name */
-    context_name = tvb_get_const_stringz(tvb, offset, &context_length);
+    context_name = tvb_get_stringz_enc(pinfo->pool, tvb, offset, &context_length, ENC_ASCII);
     if (dct2000_tree) {
-        proto_tree_add_item(dct2000_tree, hf_catapult_dct2000_context, tvb,
-                            offset, context_length, ENC_ASCII);
+        proto_tree_add_string(dct2000_tree, hf_catapult_dct2000_context, tvb,
+                            offset, context_length, context_name);
     }
     offset += context_length;
 
@@ -2323,7 +2453,7 @@ dissect_catapult_dct2000(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, vo
     offset++;
 
     /* Timestamp in file */
-    timestamp_string = tvb_get_const_stringz(tvb, offset, &timestamp_length);
+    timestamp_string = tvb_get_stringz_enc(pinfo->pool, tvb, offset, &timestamp_length, ENC_ASCII);
     if (dct2000_tree) {
         /* g_ascii_strtod(timestamp_string, NULL)) is much simpler, but *very* slow..
            There will be seconds, a dot, and 4 decimal places.
@@ -2356,10 +2486,10 @@ dissect_catapult_dct2000(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, vo
 
 
     /* DCT2000 protocol name */
-    protocol_name = tvb_get_const_stringz(tvb, offset, &protocol_length);
+    protocol_name = tvb_get_stringz_enc(pinfo->pool, tvb, offset, &protocol_length, ENC_ASCII);
     if (dct2000_tree) {
-        proto_tree_add_item(dct2000_tree, hf_catapult_dct2000_protocol, tvb,
-                            offset, protocol_length, ENC_ASCII);
+        proto_tree_add_string(dct2000_tree, hf_catapult_dct2000_protocol, tvb,
+                            offset, protocol_length, protocol_name);
     }
     is_comment = (strcmp(protocol_name, "comment") == 0);
     if (!is_comment) {
@@ -2369,18 +2499,18 @@ dissect_catapult_dct2000(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, vo
 
 
     /* Protocol Variant */
-    variant_string = tvb_get_const_stringz(tvb, offset, &variant_length);
+    variant_string = tvb_get_stringz_enc(pinfo->pool, tvb, offset, &variant_length, ENC_ASCII);
     if (!is_comment && !is_sprint) {
-        proto_tree_add_item(dct2000_tree, hf_catapult_dct2000_variant, tvb,
-                            offset, variant_length, ENC_ASCII);
+        proto_tree_add_string(dct2000_tree, hf_catapult_dct2000_variant, tvb,
+                            offset, variant_length, variant_string);
     }
     offset += variant_length;
 
     /* Outhdr (shown as string) */
-    outhdr_string = tvb_get_const_stringz(tvb, offset, &outhdr_length);
+    outhdr_string = tvb_get_stringz_enc(pinfo->pool, tvb, offset, &outhdr_length, ENC_ASCII);
     if (!is_comment && !is_sprint && (outhdr_length > 1)) {
-        proto_tree_add_item(dct2000_tree, hf_catapult_dct2000_outhdr, tvb,
-                            offset, outhdr_length, ENC_ASCII);
+        proto_tree_add_string(dct2000_tree, hf_catapult_dct2000_outhdr, tvb,
+                            offset, outhdr_length, outhdr_string);
     }
     offset += outhdr_length;
 
@@ -2838,6 +2968,7 @@ dissect_catapult_dct2000(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, vo
 
                     const char *payload = &start[off+1];
 
+                    /* Pad out to nearest 4 bytes if necessary. */
                     /* Convert data to hex. */
                     #define MAX_NRUP_DATA_LENGTH 200
                     static guint8 nrup_data[MAX_NRUP_DATA_LENGTH];
@@ -2861,6 +2992,77 @@ dissect_catapult_dct2000(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, vo
 
                     /* Call the dissector! */
                     call_dissector_only(nrup_handle, nrup_tvb, pinfo, tree, NULL);
+                }
+
+                /* Read key info from formatted lines */
+                /* e.g. NRPDCP: RRCPRIM:ueId=   1;setThreadAuthKey: RRC id=1 alg 2 key: 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 */
+                if (strstr(string, "setThreadAuthKey:")) {
+                    guint ue_id, id, alg;
+                    if (!PINFO_FD_VISITED(pinfo) && sscanf(string, "NRPDCP: RRCPRIM:ueId=   %u;setThreadAuthKey: RRC id=%u alg %u key: ", &ue_id, &id, &alg) == 3) {
+                        char *key = g_strdup(strstr(string, "key: ")+5);
+                        set_pdcp_nr_rrc_integrity_key(ue_id, key, pinfo->num);
+                        g_free(key);
+                    }
+                    else if (!PINFO_FD_VISITED(pinfo) && sscanf(string, "NRPDCP: RRCPRIM:ueId=   %u;setThreadAuthKey: UP id=%u alg %u key: ", &ue_id, &id, &alg) == 3) {
+                        char *key = g_strdup(strstr(string, "key: ")+5);
+                        set_pdcp_nr_up_integrity_key(ue_id, key, pinfo->num);
+                        g_free(key);
+                    }
+                }
+                else if (strstr(string, "setThreadCryptKey:")) {
+                    guint ue_id, id, alg;
+                    if (!PINFO_FD_VISITED(pinfo) && sscanf(string, "NRPDCP: RRCPRIM:ueId=   %u;setThreadCryptKey: RRC id=%u alg %u key: ", &ue_id, &id, &alg) == 3) {
+                        char *key = g_strdup(strstr(string, "key: ")+5);
+                        set_pdcp_nr_rrc_ciphering_key(ue_id, key, pinfo->num);
+                        g_free(key);
+                    }
+                    else if (!PINFO_FD_VISITED(pinfo) && sscanf(string, "NRPDCP: RRCPRIM:ueId=   %u;setThreadCryptKey: UP id=%u alg %u key: ", &ue_id, &id, &alg) == 3) {
+                        char *key = g_strdup(strstr(string, "key: ")+5);
+                        set_pdcp_nr_up_ciphering_key(ue_id, key, pinfo->num);
+                        g_free(key);
+                    }
+                }
+
+                /* 'raw' (ethernet) frames logged as text comments */
+                int raw_interface;
+                char raw_direction;
+                if (sscanf(string, "RawTraffic: Interface: %d %c $",
+                           &raw_interface, &raw_direction) == 2)
+                {
+                    /* Interface */
+                    proto_tree_add_uint(tree, hf_catapult_dct2000_rawtraffic_interface,
+                                        tvb, 0, 0, raw_interface);
+
+                    /* Direction */
+                    proto_tree_add_uint(tree, hf_catapult_dct2000_rawtraffic_direction,
+                                        tvb, 0, 0, raw_direction == 'r');
+
+                    /* Payload is from $ to end of string */
+                    int data_offset = 0;
+                    for (unsigned int n=0; n < strlen(string); n++) {
+                        if (string[n] == '$') {
+                            data_offset = n;
+                            break;
+                        }
+                    }
+
+                    /* Convert data to hex. */
+                    static guint8 eth_data[36000];
+                    int idx, m;
+                    for (idx=0, m=data_offset+1; idx<36000 && string[m] != '\0'; m+=2, idx++) {
+                        eth_data[idx] = (hex_from_char(string[m]) << 4) + hex_from_char(string[m+1]);
+                    }
+
+                    /* Create tvb */
+                    tvbuff_t *raw_traffic_tvb = tvb_new_real_data(eth_data, idx, idx);
+                    add_new_data_source(pinfo, raw_traffic_tvb, "Raw-Traffic Payload");
+
+                    /* PDU */
+                    proto_tree_add_item(tree, hf_catapult_dct2000_rawtraffic_pdu, raw_traffic_tvb,
+                                        0, tvb_reported_length(raw_traffic_tvb), ENC_NA);
+
+                    /* Call the dissector! */
+                   call_dissector_only(eth_handle, raw_traffic_tvb, pinfo, tree, NULL);
                 }
 
                 return tvb_captured_length(tvb);
@@ -2893,13 +3095,14 @@ dissect_catapult_dct2000(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, vo
                  (strcmp(protocol_name, "rrc_r12_lte") == 0) ||
                  (strcmp(protocol_name, "rrc_r13_lte") == 0) ||
                  (strcmp(protocol_name, "rrc_r15_lte") == 0) ||
+                 (strcmp(protocol_name, "rrc_r16_lte") == 0) ||
                  (strcmp(protocol_name, "rrcpdcpprim_r15_lte") == 0))) {
 
                 dissect_rrc_lte_nr(tvb, offset, pinfo, tree, LTE);
                 return tvb_captured_length(tvb);
             }
-            else if (strcmp(protocol_name, "rrc_r15_5g") == 0) {
-
+            else if ((strcmp(protocol_name, "rrc_r15_5g") == 0) ||
+                     (strcmp(protocol_name, "rrc_r16_5g") == 0)) {
                 dissect_rrc_lte_nr(tvb, offset, pinfo, tree, NR);
                 return tvb_captured_length(tvb);
             }
@@ -3261,6 +3464,8 @@ void proto_reg_handoff_catapult_dct2000(void)
 
     mac_nr_handle = find_dissector("mac-nr");
     nrup_handle = find_dissector("nrup");
+    eth_handle = find_dissector("eth_withoutfcs");
+    nrup_handle = find_dissector("nrup");
 }
 
 /****************************************/
@@ -3486,7 +3691,7 @@ void proto_register_catapult_dct2000(void)
 
         { &hf_catapult_dct2000_ueid,
             { "UE Id",
-              "dct2000.ueid", FT_UINT16, BASE_DEC, NULL, 0x0,
+              "dct2000.ueid", FT_UINT32, BASE_DEC, NULL, 0x0,
               "User Equipment Identifier", HFILL
             }
         },
@@ -3563,6 +3768,49 @@ void proto_register_catapult_dct2000(void)
             }
         },
 
+        { &hf_catapult_dct2000_security_mode_params,
+            { "Security Mode Params",
+              "dct2000.security-mode-params", FT_NONE, BASE_NONE, NULL, 0x0,
+              NULL, HFILL
+            }
+        },
+        { &hf_catapult_dct2000_uplink_sec_mode,
+            { "Uplink Security Mode",
+              "dct2000.uplink-security-mode", FT_UINT8, BASE_DEC, VALS(security_mode_vals), 0x0,
+              NULL, HFILL
+            }
+        },
+        { &hf_catapult_dct2000_downlink_sec_mode,
+            { "Downlink Security Mode",
+              "dct2000.downlink-security-mode", FT_UINT8, BASE_DEC, VALS(security_mode_vals), 0x0,
+              NULL, HFILL
+            }
+        },
+        { &hf_catapult_dct2000_ciphering_algorithm,
+            { "Ciphering Algorithm",
+              "dct2000.ciphering-algorithm", FT_UINT8, BASE_DEC, VALS(ciphering_algorithm_vals), 0x0,
+              NULL, HFILL
+            }
+        },
+        { &hf_catapult_dct2000_ciphering_key,
+            { "Ciphering Key",
+              "dct2000.ciphering-key", FT_BYTES, BASE_NONE, NULL, 0x0,
+              NULL, HFILL
+            }
+        },
+        { &hf_catapult_dct2000_integrity_algorithm,
+            { "Integrity Algorithm",
+              "dct2000.integrity-algorithm", FT_UINT8, BASE_DEC, VALS(integrity_algorithm_vals), 0x0,
+              NULL, HFILL
+            }
+        },
+        { &hf_catapult_dct2000_integrity_key,
+            { "Integrity Key",
+              "dct2000.integrity-key", FT_BYTES, BASE_NONE, NULL, 0x0,
+              NULL, HFILL
+            }
+        },
+
         { &hf_catapult_dct2000_lte_ccpri_opcode,
             { "CCPRI opcode",
               "dct2000.lte.ccpri.opcode", FT_UINT8, BASE_DEC, VALS(ccpri_opcode_vals), 0x0,
@@ -3571,7 +3819,7 @@ void proto_register_catapult_dct2000(void)
         },
         { &hf_catapult_dct2000_lte_ccpri_status,
             { "Status",
-              "dct2000.lte.ccpri.status", FT_UINT8, BASE_DEC, VALS(ccpri_status_vals), 0x0,
+              "dct2000.lte.ccpri.status", FT_BOOLEAN, 8, TFS(&tfs_error_ok), 0x0,
               NULL, HFILL
             }
         },
@@ -3663,7 +3911,7 @@ void proto_register_catapult_dct2000(void)
         },
         { &hf_catapult_dct2000_tx_priority,
             { "Tx Priority",
-              "dct2000.tx-priority", FT_UINT8, BASE_DEC, VALS(tx_priority_vals), 0x0,
+              "dct2000.tx-priority", FT_BOOLEAN, 8, TFS(&tfs_high_normal), 0x0,
               NULL, HFILL
             }
         },
@@ -3690,6 +3938,25 @@ void proto_register_catapult_dct2000(void)
               "dct2000.number-of-padding-bits", FT_UINT8, BASE_DEC, NULL, 0x0,
               NULL, HFILL
             }
+        },
+
+        { &hf_catapult_dct2000_rawtraffic_interface,
+            { "Interface",
+              "dct2000.rawtraffic.interface", FT_UINT8, BASE_DEC, NULL, 0x0,
+              NULL, HFILL
+            }
+        },
+        { &hf_catapult_dct2000_rawtraffic_direction,
+            { "Direction",
+              "dct2000.rawtraffic.direction", FT_UINT8, BASE_DEC, VALS(direction_vals), 0x0,
+              NULL, HFILL
+            }
+        },
+        { &hf_catapult_dct2000_rawtraffic_pdu,
+            { "PDU",
+              "dct2000.rawtraffic.pdu", FT_BYTES, BASE_NONE, NULL, 0x0,
+              NULL, HFILL
+            }
         }
     };
 
@@ -3698,7 +3965,8 @@ void proto_register_catapult_dct2000(void)
         &ett_catapult_dct2000,
         &ett_catapult_dct2000_ipprim,
         &ett_catapult_dct2000_sctpprim,
-        &ett_catapult_dct2000_tty
+        &ett_catapult_dct2000_tty,
+        &ett_catapult_dct2000_security_mode_params
     };
 
     static ei_register_info ei[] = {

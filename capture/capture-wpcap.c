@@ -23,6 +23,7 @@
 #include <ws_attributes.h>
 
 #include "capture/capture-wpcap.h"
+#include <wsutil/feature_list.h>
 
 gboolean has_wpcap = FALSE;
 
@@ -38,9 +39,6 @@ gboolean has_wpcap = FALSE;
 
 #include <wsutil/file_util.h>
 #include <wsutil/ws_assert.h>
-
-/* XXX - yes, I know, I should move cppmagic.h to a generic location. */
-#include "tools/lemon/cppmagic.h"
 
 #define MAX_WIN_IF_NAME_LEN 511
 
@@ -120,7 +118,7 @@ typedef struct {
 	gboolean	optional;
 } symbol_table_t;
 
-#define SYM(x, y)	{ G_STRINGIFY(x) , (gpointer) &CONCAT(p_,x), y }
+#define SYM(x, y)	{ G_STRINGIFY(x) , (gpointer) &G_PASTE(p_,x), y }
 
 void
 load_wpcap(void)
@@ -192,7 +190,7 @@ load_wpcap(void)
 	GModule		*wh; /* wpcap handle */
 	const symbol_table_t	*sym;
 
-	wh = ws_module_open("wpcap.dll", 0);
+	wh = load_wpcap_module();
 
 	if (!wh) {
 		return;
@@ -422,7 +420,7 @@ pcap_open(const char *a, int b, int c, int d, struct pcap_rmtauth *e, char *errb
 }
 
 int
-pcap_findalldevs_ex(const char *a, struct pcap_rmtauth *b, pcap_if_t **c, char *errbuf)
+ws_pcap_findalldevs_ex(const char *a, struct pcap_rmtauth *b, pcap_if_t **c, char *errbuf)
 {
 	int ret;
 	ws_assert(has_wpcap);

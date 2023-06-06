@@ -26,7 +26,7 @@
 #include <ui/qt/utils/color_utils.h>
 #include <ui/qt/widgets/qcustomplot.h>
 #include "progress_frame.h"
-#include "wireshark_application.h"
+#include "main_application.h"
 #include <wsutil/report_message.h>
 
 #include <ui/qt/utils/tango_colors.h> //provides some default colors
@@ -88,6 +88,9 @@ typedef struct _io_graph_settings_t {
 
 static const value_string graph_style_vs[] = {
     { IOGraph::psLine, "Line" },
+    { IOGraph::psDotLine, "Dot Line" },
+    { IOGraph::psStepLine, "Step Line" },
+    { IOGraph::psDotStepLine, "Dot Step Line" },
     { IOGraph::psImpulse, "Impulse" },
     { IOGraph::psBar, "Bar" },
     { IOGraph::psStackedBar, "Stacked Bar" },
@@ -321,6 +324,7 @@ IOGraphDialog::IOGraphDialog(QWidget &parent, CaptureFile &cf, QString displayFi
     datetime_ticker_(new QCPAxisTickerDateTime)
 {
     ui->setupUi(this);
+    ui->hintLabel->setSmallText();
     loadGeometry();
 
     setWindowSubtitle(tr("I/O Graphs"));
@@ -331,12 +335,16 @@ IOGraphDialog::IOGraphDialog(QWidget &parent, CaptureFile &cf, QString displayFi
     ui->deleteToolButton->setStockIcon("list-remove");
     ui->copyToolButton->setStockIcon("list-copy");
     ui->clearToolButton->setStockIcon("list-clear");
+    ui->moveUpwardsToolButton->setStockIcon("list-move-up");
+    ui->moveDownwardsToolButton->setStockIcon("list-move-down");
 
 #ifdef Q_OS_MAC
     ui->newToolButton->setAttribute(Qt::WA_MacSmallSize, true);
     ui->deleteToolButton->setAttribute(Qt::WA_MacSmallSize, true);
     ui->copyToolButton->setAttribute(Qt::WA_MacSmallSize, true);
     ui->clearToolButton->setAttribute(Qt::WA_MacSmallSize, true);
+    ui->moveUpwardsToolButton->setAttribute(Qt::WA_MacSmallSize, true);
+    ui->moveDownwardsToolButton->setAttribute(Qt::WA_MacSmallSize, true);
 #endif
 
     QPushButton *save_bt = ui->buttonBox->button(QDialogButtonBox::Save);
@@ -355,6 +363,8 @@ IOGraphDialog::IOGraphDialog(QWidget &parent, CaptureFile &cf, QString displayFi
     }
 
     ui->automaticUpdateCheckBox->setChecked(prefs.gui_io_graph_automatic_update ? true : false);
+
+    ui->enableLegendCheckBox->setChecked(prefs.gui_io_graph_enable_legend ? true : false);
 
     stat_timer_ = new QTimer(this);
     connect(stat_timer_, SIGNAL(timeout()), this, SLOT(updateStatistics()));
@@ -614,6 +624,8 @@ void IOGraphDialog::syncGraphSettings(int row)
         hint_err_ = iog->configError();
         visible = false;
         retap = false;
+    } else {
+        hint_err_.clear();
     }
 
     iog->setVisible(visible);
@@ -971,7 +983,14 @@ void IOGraphDialog::updateLegend()
             }
         }
     }
-    iop->legend->setVisible(true);
+
+    // Only show legend if the user requested it
+    if (prefs.gui_io_graph_enable_legend) {
+        iop->legend->setVisible(true);
+    }
+    else {
+        iop->legend->setVisible(false);
+    }
 }
 
 QRectF IOGraphDialog::getZoomRanges(QRect zoom_rect)
@@ -1007,9 +1026,9 @@ void IOGraphDialog::graphClicked(QMouseEvent *event)
         // XXX We should find some way to get ioPlot to handle a
         // contextMenuEvent instead.
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0 ,0)
-        ctx_menu_.exec(event->globalPosition().toPoint());
+        ctx_menu_.popup(event->globalPosition().toPoint());
 #else
-        ctx_menu_.exec(event->globalPos());
+        ctx_menu_.popup(event->globalPos());
 #endif
     } else  if (mouse_drags_) {
         if (iop->axisRect()->rect().contains(event->pos())) {
@@ -1033,8 +1052,10 @@ void IOGraphDialog::mouseMoved(QMouseEvent *event)
     QString hint;
     Qt::CursorShape shape = Qt::ArrowCursor;
 
+    // XXX: ElidedLabel doesn't support rich text / HTML, we
+    // used to bold this error
     if (!hint_err_.isEmpty()) {
-        hint += QString("<b>%1</b> ").arg(hint_err_);
+        hint += QString("%1 ").arg(hint_err_);
     }
     if (event) {
         if (event->buttons().testFlag(Qt::LeftButton)) {
@@ -1102,8 +1123,6 @@ void IOGraphDialog::mouseMoved(QMouseEvent *event)
         }
     }
 
-    hint.prepend("<small><i>");
-    hint.append("</i></small>");
     ui->hintLabel->setText(hint);
 }
 
@@ -1288,10 +1307,14 @@ void IOGraphDialog::on_graphUat_currentItemChanged(const QModelIndex &current, c
         ui->deleteToolButton->setEnabled(true);
         ui->copyToolButton->setEnabled(true);
         ui->clearToolButton->setEnabled(true);
+        ui->moveUpwardsToolButton->setEnabled(true);
+        ui->moveDownwardsToolButton->setEnabled(true);
     } else {
         ui->deleteToolButton->setEnabled(false);
         ui->copyToolButton->setEnabled(false);
         ui->clearToolButton->setEnabled(false);
+        ui->moveUpwardsToolButton->setEnabled(false);
+        ui->moveDownwardsToolButton->setEnabled(false);
     }
 }
 
@@ -1361,6 +1384,40 @@ void IOGraphDialog::on_clearToolButton_clicked()
     mouseMoved(NULL);
 }
 
+void IOGraphDialog::on_moveUpwardsToolButton_clicked()
+{
+    const QModelIndex& current = ui->graphUat->currentIndex();
+    if (uat_model_ && current.isValid()) {
+
+        int current_row = current.row();
+        if (current_row > 0){
+            // Swap current row with the one above
+            IOGraph* temp = ioGraphs_[current_row - 1];
+            ioGraphs_[current_row - 1] = ioGraphs_[current_row];
+            ioGraphs_[current_row] = temp;
+
+            uat_model_->moveRow(current_row, current_row - 1);
+        }
+    }
+}
+
+void IOGraphDialog::on_moveDownwardsToolButton_clicked()
+{
+    const QModelIndex& current = ui->graphUat->currentIndex();
+    if (uat_model_ && current.isValid()) {
+
+        int current_row = current.row();
+        if (current_row < uat_model_->rowCount() - 1) {
+            // Swap current row with the one below
+            IOGraph* temp = ioGraphs_[current_row + 1];
+            ioGraphs_[current_row + 1] = ioGraphs_[current_row];
+            ioGraphs_[current_row] = temp;
+
+            uat_model_->moveRow(current_row, current_row + 1);
+        }
+    }
+}
+
 void IOGraphDialog::on_dragRadioButton_toggled(bool checked)
 {
     if (checked) mouse_drags_ = true;
@@ -1394,6 +1451,15 @@ void IOGraphDialog::on_automaticUpdateCheckBox_toggled(bool checked)
     {
         updateStatistics();
     }
+}
+
+void IOGraphDialog::on_enableLegendCheckBox_toggled(bool checked)
+{
+    prefs.gui_io_graph_enable_legend = checked ? TRUE : FALSE;
+
+    prefs_main_write();
+
+    updateLegend();
 }
 
 void IOGraphDialog::on_actionReset_triggered()
@@ -1499,14 +1565,14 @@ void IOGraphDialog::on_actionCrosshairs_triggered()
 
 void IOGraphDialog::on_buttonBox_helpRequested()
 {
-    wsApp->helpTopicAction(HELP_STATS_IO_GRAPH_DIALOG);
+    mainApp->helpTopicAction(HELP_STATS_IO_GRAPH_DIALOG);
 }
 
 // XXX - We have similar code in tcp_stream_dialog and packet_diagram. Should this be a common routine?
 void IOGraphDialog::on_buttonBox_accepted()
 {
     QString file_name, extension;
-    QDir path(wsApp->lastOpenDir());
+    QDir path(mainApp->lastOpenDir());
     QString pdf_filter = tr("Portable Document Format (*.pdf)");
     QString png_filter = tr("Portable Network Graphics (*.png)");
     QString bmp_filter = tr("Windows Bitmap (*.bmp)");
@@ -1524,7 +1590,7 @@ void IOGraphDialog::on_buttonBox_accepted()
     if (!file_closed_) {
         save_file += QString("/%1").arg(cap_file_.fileBaseName());
     }
-    file_name = WiresharkFileDialog::getSaveFileName(this, wsApp->windowTitleString(tr("Save Graph As…")),
+    file_name = WiresharkFileDialog::getSaveFileName(this, mainApp->windowTitleString(tr("Save Graph As…")),
                                              save_file, filter, &extension);
 
     if (file_name.length() > 0) {
@@ -1542,7 +1608,7 @@ void IOGraphDialog::on_buttonBox_accepted()
         }
         // else error dialog?
         if (save_ok) {
-            wsApp->setLastOpenDirFromFilename(file_name);
+            mainApp->setLastOpenDirFromFilename(file_name);
         }
     }
 }
@@ -1590,7 +1656,7 @@ void IOGraphDialog::copyAsCsvClicked()
     QString csv;
     QTextStream stream(&csv, QIODevice::Text);
     makeCsv(stream);
-    wsApp->clipboard()->setText(stream.readAll());
+    mainApp->clipboard()->setText(stream.readAll());
 }
 
 bool IOGraphDialog::saveCsv(const QString &file_name) const
@@ -1658,12 +1724,12 @@ void IOGraph::setFilter(const QString &filter)
     if (!full_filter.isEmpty()) {
         dfilter_t *dfilter;
         bool status;
-        gchar *err_msg;
-        status = dfilter_compile(full_filter.toUtf8().constData(), &dfilter, &err_msg);
+        df_error_t *df_err = NULL;
+        status = dfilter_compile(full_filter.toUtf8().constData(), &dfilter, &df_err);
         dfilter_free(dfilter);
         if (!status) {
-            config_err_ = QString::fromUtf8(err_msg);
-            g_free(err_msg);
+            config_err_ = QString::fromUtf8(df_err->msg);
+            df_error_free(&df_err);
             filter_ = full_filter;
             return;
         }
@@ -1777,6 +1843,23 @@ void IOGraph::setPlotStyle(int style)
     case psLine:
         if (graph_) {
             graph_->setLineStyle(QCPGraph::lsLine);
+        }
+        break;
+    case psDotLine:
+        if (graph_) {
+            graph_->setLineStyle(QCPGraph::lsLine);
+            graph_->setScatterStyle(QCPScatterStyle::ssDisc);
+        }
+        break;
+    case psStepLine:
+        if (graph_) {
+            graph_->setLineStyle(QCPGraph::lsStepLeft);
+        }
+        break;
+    case psDotStepLine:
+        if (graph_) {
+            graph_->setLineStyle(QCPGraph::lsStepLeft);
+            graph_->setScatterStyle(QCPScatterStyle::ssDisc);
         }
         break;
     case psImpulse:
@@ -1927,7 +2010,7 @@ void IOGraph::clearAllData()
 void IOGraph::recalcGraphData(capture_file *cap_file, bool enable_scaling)
 {
     /* Moving average variables */
-    unsigned int mavg_in_average_count = 0, mavg_left = 0, mavg_right = 0;
+    unsigned int mavg_in_average_count = 0, mavg_left = 0;
     unsigned int mavg_to_remove = 0, mavg_to_add = 0;
     double mavg_cumulated = 0;
     QCPAxis *x_axis = nullptr;
@@ -1962,7 +2045,6 @@ void IOGraph::recalcGraphData(capture_file *cap_file, bool enable_scaling)
 
             mavg_cumulated += getItemValue((int)warmup_interval / interval_, cap_file);
             mavg_in_average_count++;
-            mavg_right++;
         }
         mavg_to_add = (unsigned int)warmup_interval;
     }
@@ -1987,8 +2069,6 @@ void IOGraph::recalcGraphData(capture_file *cap_file, bool enable_scaling)
                     mavg_in_average_count++;
                     mavg_cumulated += getItemValue((int)mavg_to_add / interval_, cap_file);
                     mavg_to_add += interval_;
-                } else {
-                    mavg_right--;
                 }
             }
             if (mavg_in_average_count > 0) {
@@ -2182,7 +2262,7 @@ void IOGraph::tapReset(void *iog_ptr)
 }
 
 // "tap_packet" callback for register_tap_listener
-tap_packet_status IOGraph::tapPacket(void *iog_ptr, packet_info *pinfo, epan_dissect_t *edt, const void *)
+tap_packet_status IOGraph::tapPacket(void *iog_ptr, packet_info *pinfo, epan_dissect_t *edt, const void *, tap_flags_t)
 {
     IOGraph *iog = static_cast<IOGraph *>(iog_ptr);
     if (!pinfo || !iog) {
@@ -2249,7 +2329,7 @@ void IOGraph::tapDraw(void *iog_ptr)
 
 static void
 io_graph_init(const char *, void*) {
-    wsApp->emitStatCommandSignal("IOGraph", NULL, NULL);
+    mainApp->emitStatCommandSignal("IOGraph", NULL, NULL);
 }
 
 static stat_tap_ui io_stat_ui = {

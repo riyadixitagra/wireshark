@@ -43,9 +43,7 @@ void proto_register_vp8(void);
 #define BIT_2BYTE_NO_MASK       0xFFFF
 #define BIT_3BYTE_NO_MASK       0xFFFFFF
 #define BIT_EXT_PICTURE_MASK    0x7FFF
-#define BIT_PARTITION_SIZE_MASK 0xE0FFFF
-
-static range_t *temp_dynamic_payload_type_range = NULL;
+#define BIT_PARTITION_SIZE_MASK 0xFFFFE0
 
 static dissector_handle_t vp8_handle;
 
@@ -341,10 +339,7 @@ The first three octets of an encoded VP8 frame are referred to as an
     size2 = tvb_get_guint8(tvb, *offset + 2);
     (*partition1_size) = size0 + (size1*8) + (size2*2048);
     proto_tree_add_uint(vp8_payload_header_tree, hf_vp8_hdr_first_partition_size, tvb, *offset, 3, *partition1_size);
-    (*offset)++;
-    (*offset)++;
-    (*offset)++;
-
+    (*offset) += 3;
 }
 
 static void
@@ -483,7 +478,7 @@ proto_register_vp8(void)
         },
         { &hf_vp8_pld_extended_picture_id,
             { "Extended Picture ID",           "vp8.pld.pictureid",
-            FT_UINT8, BASE_DEC, NULL, BIT_EXT_PICTURE_MASK,
+            FT_UINT16, BASE_DEC, NULL, BIT_EXT_PICTURE_MASK,
             NULL, HFILL }
         },
         { &hf_vp8_pld_tl0picidx,
@@ -523,7 +518,7 @@ proto_register_vp8(void)
         },
         { &hf_vp8_hdr_first_partition_size,
             { "First partition size",           "vp8.hdr.partition_size",
-            FT_UINT8, BASE_DEC, NULL, BIT_PARTITION_SIZE_MASK,
+            FT_UINT24, BASE_DEC, NULL, BIT_PARTITION_SIZE_MASK,
             NULL, HFILL }
         },
         { &hf_vp8_keyframe_start_code,
@@ -571,16 +566,12 @@ proto_register_vp8(void)
     proto_register_field_array(proto_vp8, hf, array_length(hf));
     proto_register_subtree_array(ett, array_length(ett));
 
-    vp8_module = prefs_register_protocol(proto_vp8, proto_reg_handoff_vp8);
+    vp8_module = prefs_register_protocol(proto_vp8, NULL);
 
     expert_vp8 = expert_register_protocol(proto_vp8);
     expert_register_field_array(expert_vp8, ei, array_length(ei));
 
-    prefs_register_range_preference(vp8_module, "dynamic.payload.type",
-                            "vp8 dynamic payload types",
-                            "Dynamic payload types which will be interpreted as vp8"
-                            "; Values must be in the range 1 - 127",
-                            &temp_dynamic_payload_type_range, 127);
+    prefs_register_obsolete_preference(vp8_module, "dynamic.payload.type");
 
     vp8_handle = register_dissector("vp8", dissect_vp8, proto_vp8);
 }
@@ -588,20 +579,9 @@ proto_register_vp8(void)
 void
 proto_reg_handoff_vp8(void)
 {
-    static range_t  *dynamic_payload_type_range = NULL;
-    static gboolean  vp8_prefs_initialized      = FALSE;
+    dissector_add_string("rtp_dyn_payload_type" , "VP8", vp8_handle);
 
-    if (!vp8_prefs_initialized) {
-        dissector_add_string("rtp_dyn_payload_type" , "VP8", vp8_handle);
-        vp8_prefs_initialized = TRUE;
-    } else {
-        dissector_delete_uint_range("rtp.pt", dynamic_payload_type_range, vp8_handle);
-        wmem_free(wmem_epan_scope(), dynamic_payload_type_range);
-    }
-
-    dynamic_payload_type_range = range_copy(wmem_epan_scope(), temp_dynamic_payload_type_range);
-    range_remove_value(wmem_epan_scope(), &dynamic_payload_type_range, 0);
-    dissector_add_uint_range("rtp.pt", dynamic_payload_type_range, vp8_handle);
+    dissector_add_uint_range_with_preference("rtp.pt", "", vp8_handle);
 }
 
 /*

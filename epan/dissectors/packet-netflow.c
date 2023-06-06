@@ -113,7 +113,7 @@
  *
  * December 2015: uhei:  Add Barracuda NGFirewall extensions
  * used documentation found at:
- * https://techlib.barracuda.com/NG61/ConfigAuditReportingIPFIX
+ * https://campus.barracuda.com/download/pdf/article/41116166
  *
  * December 2017: uhei
  * Updated IEs from https://www.iana.org/assignments/ipfix/ipfix.xhtml
@@ -133,6 +133,8 @@
 #include <epan/to_str.h>
 #include <epan/expert.h>
 #include <epan/addr_resolv.h>
+#include <epan/conversation.h>
+#include <epan/proto_data.h>
 #include <wsutil/str_util.h>
 #include "packet-tcp.h"
 #include "packet-udp.h"
@@ -140,6 +142,8 @@
 
 void proto_register_netflow(void);
 void proto_reg_handoff_netflow(void);
+
+static int dissect_tcp_netflow(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void* data);
 
 #if 0
 #define ipfix_debug(...) ws_warning(__VA_ARGS__)
@@ -1688,6 +1692,34 @@ static const value_string v10_template_types_ixia[] = {
     {  281, "TCP Application Response Time (us)"},
     {  282, "TCP Count of Retransmitted Packets"},
     {  283, "Connection Average Round Trip Time (us)"},
+    {  284, "UDP Average Response Time (us)"},
+    {  285, "Time to complete a QUIC Handshake (us)"},
+    {  286, "QUIC Network RTT (us)"},
+    {  287, "QUIC RTT for Application Packets (us)"},
+    {  288, "The Name of the Matched Filter"},
+    {  289, "GTP IMSI"},
+    {  290, "GTP ULI SAI LAC"},
+    {  291, "GTP ULI RAI RAC"},
+    {  292, "GTP ULI TAC"},
+    {  293, "GTP ULI ECGI E NODEB ID"},
+    {  294, "GTP ULI CELL ID"},
+    {  295, "GTP ULI LAC"},
+    {  296, "GTP ULI MCC"},
+    {  297, "GTP ULI MNC"},
+    {  298, "GTP MSISDN"},
+    {  299, "GTP IMEI"},
+    {  300, "GTP RAT Type"},
+    {  301, "GTP Endpoint GSM Generation"},
+    {  302, "GTP Uplink TEID"},
+    {  303, "GTP Downlink TEID"},
+    {  304, "GTP Uplink Tunnel IPv4 Address"},
+    {  305, "GTP Downlink Tunnel IPv4 Address"},
+    {  306, "GTP Uplink Tunnel IPv6 Address"},
+    {  307, "GTP Downlink Tunnel IPv6 Address"},
+    {  308, "GTP Uplink QCI/QFI"},
+    {  309, "GTP Downlink QCI/QFI"},
+    {  310, "GTP Uplink APN/DNN"},
+    {  311, "GTP Downlink APN/DNN"},
     { 0, NULL }
 };
 static value_string_ext v10_template_types_ixia_ext = VALUE_STRING_EXT_INIT(v10_template_types_ixia);
@@ -3190,7 +3222,7 @@ static int      hf_pie_ntop_num_pkts_ttl_96_128        = -1;
 static int      hf_pie_ntop_num_pkts_ttl_128_160       = -1;
 static int      hf_pie_ntop_num_pkts_ttl_160_192       = -1;
 static int      hf_pie_ntop_num_pkts_ttl_192_224       = -1;
-static int      hf_pie_ntop_num_pkts_ttl_224_225       = -1;
+static int      hf_pie_ntop_num_pkts_ttl_224_255       = -1;
 static int      hf_pie_ntop_gtpv1_rai_lac              = -1;
 static int      hf_pie_ntop_gtpv1_rai_rac              = -1;
 static int      hf_pie_ntop_gtpv1_uli_mcc              = -1;
@@ -3476,6 +3508,30 @@ static int      hf_pie_ixia_udpAppResponseTime          = -1;
 static int      hf_pie_ixia_quicConnSetupTime           = -1;
 static int      hf_pie_ixia_quicConnRTT                 = -1;
 static int      hf_pie_ixia_quicAppResponseTime         = -1;
+static int      hf_pie_ixia_matchedFilterName           = -1;
+static int      hf_pie_ixia_gtp_IMSI                    = -1;
+static int      hf_pie_ixia_gtp_ULI_SAI_SAC             = -1;
+static int      hf_pie_ixia_gtp_ULI_RAI_RAC             = -1;
+static int      hf_pie_ixia_gtp_ULI_TAC                 = -1;
+static int      hf_pie_ixia_gtp_ULI_ECGI_E_NODEB_ID     = -1;
+static int      hf_pie_ixia_gtp_ULI_CELL_ID             = -1;
+static int      hf_pie_ixia_gtp_ULI_LAC                 = -1;
+static int      hf_pie_ixia_gtp_ULI_MCC                 = -1;
+static int      hf_pie_ixia_gtp_ULI_MNC                 = -1;
+static int      hf_pie_ixia_gtp_MSISDN                  = -1;
+static int      hf_pie_ixia_gtp_IMEI                    = -1;
+static int      hf_pie_ixia_gtp_RAT_type                = -1;
+static int      hf_pie_ixia_gtp_ep_gen                  = -1;
+static int      hf_pie_ixia_gtp_up_TEID                 = -1;
+static int      hf_pie_ixia_gtp_down_TEID               = -1;
+static int      hf_pie_ixia_gtp_up_ipv4_addr            = -1;
+static int      hf_pie_ixia_gtp_down_ipv4_addr          = -1;
+static int      hf_pie_ixia_gtp_up_ipv6_addr            = -1;
+static int      hf_pie_ixia_gtp_down_ipv6_addr          = -1;
+static int      hf_pie_ixia_gtp_up_QCI_QFI              = -1;
+static int      hf_pie_ixia_gtp_down_QCI_QFI            = -1;
+static int      hf_pie_ixia_gtp_up_APN_DNN              = -1;
+static int      hf_pie_ixia_gtp_down_APN_DNN            = -1;
 
 static int      hf_pie_netscaler                                         = -1;
 static int      hf_pie_netscaler_roundtriptime                           = -1;
@@ -4069,17 +4125,24 @@ typedef struct netflow_domain_state_t {
     guint32 current_frame_number;
 } netflow_domain_state_t;
 
-static wmem_map_t *netflow_sequence_analysis_domain_hash = NULL;
-
-/* Frame number -> domain state */
-static wmem_map_t *netflow_sequence_analysis_result_hash = NULL;
-
 /* On first pass, check ongoing sequence of observation domain, and only store a result
    if the sequence number is not as expected */
 static void store_sequence_analysis_info(guint32 domain_id, guint32 seqnum, unsigned int version, guint32 new_flows,
                                          packet_info *pinfo)
 {
     /* Find current domain info */
+    /* XXX: "Each SCTP Stream counts sequence numbers separately," but
+     * SCTP conversations are per association. This is correct for TCP
+     * connections and UDP sessions, though.
+     */
+    conversation_t *conv = find_conversation_pinfo(pinfo, 0);
+    if (conv == NULL) {
+        return;
+    }
+    wmem_map_t *netflow_sequence_analysis_domain_hash = conversation_get_proto_data(conv, proto_netflow);
+    if (netflow_sequence_analysis_domain_hash == NULL) {
+        return;
+    }
     netflow_domain_state_t *domain_state = (netflow_domain_state_t *)wmem_map_lookup(netflow_sequence_analysis_domain_hash,
                                                                                          GUINT_TO_POINTER(domain_id));
     if (domain_state == NULL) {
@@ -4098,7 +4161,7 @@ static void store_sequence_analysis_info(guint32 domain_id, guint32 seqnum, unsi
         *result_state = *domain_state;
 
         /* Add into result table for current frame number */
-        wmem_map_insert(netflow_sequence_analysis_result_hash, GUINT_TO_POINTER(pinfo->num), result_state);
+        p_add_proto_data(wmem_file_scope(), pinfo, proto_netflow, 0, result_state);
     }
 
     /* Update domain info for the next frame to consult.
@@ -4114,8 +4177,7 @@ static void show_sequence_analysis_info(guint32 domain_id, guint32 seqnum,
                                         proto_item *flow_sequence_ti, proto_tree *tree)
 {
     /* Look for info stored for this frame */
-    netflow_domain_state_t *state = (netflow_domain_state_t *)wmem_map_lookup(netflow_sequence_analysis_result_hash,
-                                                                                  GUINT_TO_POINTER(pinfo->num));
+    netflow_domain_state_t *state = (netflow_domain_state_t *)p_get_proto_data(wmem_file_scope(), pinfo, proto_netflow, 0);
     if (state != NULL) {
         proto_item *ti;
 
@@ -9374,7 +9436,7 @@ dissect_v9_v10_pdu_data(tvbuff_t *tvb, packet_info *pinfo, proto_tree *pdutree, 
 
         case (NTOP_BASE + 341):           /* NUM_PKTS_TTL_224_255 */
         case ((VENDOR_NTOP << 16) | 341): /* NUM_PKTS_TTL_224_255 */
-            ti = proto_tree_add_item(pdutree, hf_pie_ntop_num_pkts_ttl_224_225,
+            ti = proto_tree_add_item(pdutree, hf_pie_ntop_num_pkts_ttl_224_255,
                                      tvb, offset, length, ENC_BIG_ENDIAN);
             break;
 
@@ -10740,7 +10802,7 @@ dissect_v9_v10_pdu_data(tvbuff_t *tvb, packet_info *pinfo, proto_tree *pdutree, 
             ti = proto_tree_add_item(pdutree, hf_pie_ixia_conn_avg_rtt,
                                      tvb, offset, length, ENC_BIG_ENDIAN);
             break;
-	case ((VENDOR_IXIA << 16) | 284):
+        case ((VENDOR_IXIA << 16) | 284):
             ti = proto_tree_add_item(pdutree, hf_pie_ixia_udpAppResponseTime,
                                      tvb, offset, length, ENC_BIG_ENDIAN);
             break;
@@ -10755,6 +10817,102 @@ dissect_v9_v10_pdu_data(tvbuff_t *tvb, packet_info *pinfo, proto_tree *pdutree, 
         case ((VENDOR_IXIA << 16) | 287):
             ti = proto_tree_add_item(pdutree, hf_pie_ixia_quicAppResponseTime,
                                      tvb, offset, length, ENC_BIG_ENDIAN);
+            break;
+        case ((VENDOR_IXIA << 16) | 288):
+            ti = proto_tree_add_item(pdutree, hf_pie_ixia_matchedFilterName,
+                                     tvb, offset, length, ENC_ASCII);
+            break;
+        case ((VENDOR_IXIA << 16) | 289):
+            ti = proto_tree_add_item(pdutree, hf_pie_ixia_gtp_IMSI,
+                                     tvb, offset, length, ENC_BIG_ENDIAN);
+            break;
+        case ((VENDOR_IXIA << 16) | 290):
+            ti = proto_tree_add_item(pdutree, hf_pie_ixia_gtp_ULI_SAI_SAC,
+                                     tvb, offset, length, ENC_BIG_ENDIAN);
+            break;
+        case ((VENDOR_IXIA << 16) | 291):
+            ti = proto_tree_add_item(pdutree, hf_pie_ixia_gtp_ULI_RAI_RAC,
+                                     tvb, offset, length, ENC_BIG_ENDIAN);
+            break;
+        case ((VENDOR_IXIA << 16) | 292):
+            ti = proto_tree_add_item(pdutree, hf_pie_ixia_gtp_ULI_TAC,
+                                     tvb, offset, length, ENC_BIG_ENDIAN);
+            break;
+        case ((VENDOR_IXIA << 16) | 293):
+            ti = proto_tree_add_item(pdutree, hf_pie_ixia_gtp_ULI_ECGI_E_NODEB_ID,
+                                     tvb, offset, length, ENC_BIG_ENDIAN);
+            break;
+        case ((VENDOR_IXIA << 16) | 294):
+            ti = proto_tree_add_item(pdutree, hf_pie_ixia_gtp_ULI_CELL_ID,
+                                     tvb, offset, length, ENC_BIG_ENDIAN);
+            break;
+        case ((VENDOR_IXIA << 16) | 295):
+            ti = proto_tree_add_item(pdutree, hf_pie_ixia_gtp_ULI_LAC,
+                                     tvb, offset, length, ENC_BIG_ENDIAN);
+            break;
+        case ((VENDOR_IXIA << 16) | 296):
+            ti = proto_tree_add_item(pdutree, hf_pie_ixia_gtp_ULI_MCC,
+                                     tvb, offset, length, ENC_BIG_ENDIAN);
+            break;
+        case ((VENDOR_IXIA << 16) | 297):
+            ti = proto_tree_add_item(pdutree, hf_pie_ixia_gtp_ULI_MNC,
+                                     tvb, offset, length, ENC_BIG_ENDIAN);
+            break;
+        case ((VENDOR_IXIA << 16) | 298):
+            ti = proto_tree_add_item(pdutree, hf_pie_ixia_gtp_MSISDN,
+                                     tvb, offset, length, ENC_BIG_ENDIAN);
+            break;
+        case ((VENDOR_IXIA << 16) | 299):
+            ti = proto_tree_add_item(pdutree, hf_pie_ixia_gtp_IMEI,
+                                     tvb, offset, length, ENC_BIG_ENDIAN);
+            break;
+        case ((VENDOR_IXIA << 16) | 300):
+            ti = proto_tree_add_item(pdutree, hf_pie_ixia_gtp_RAT_type,
+                                     tvb, offset, length, ENC_BIG_ENDIAN);
+            break;
+        case ((VENDOR_IXIA << 16) | 301):
+            ti = proto_tree_add_item(pdutree, hf_pie_ixia_gtp_ep_gen,
+                                     tvb, offset, length, ENC_BIG_ENDIAN);
+            break;
+        case ((VENDOR_IXIA << 16) | 302):
+            ti = proto_tree_add_item(pdutree, hf_pie_ixia_gtp_up_TEID,
+                                     tvb, offset, length, ENC_BIG_ENDIAN);
+            break;
+        case ((VENDOR_IXIA << 16) | 303):
+            ti = proto_tree_add_item(pdutree, hf_pie_ixia_gtp_down_TEID,
+                                     tvb, offset, length, ENC_BIG_ENDIAN);
+            break;
+        case ((VENDOR_IXIA << 16) | 304):
+            ti = proto_tree_add_item(pdutree, hf_pie_ixia_gtp_up_ipv4_addr,
+                                     tvb, offset, length, ENC_BIG_ENDIAN);
+            break;
+        case ((VENDOR_IXIA << 16) | 305):
+            ti = proto_tree_add_item(pdutree, hf_pie_ixia_gtp_down_ipv4_addr,
+                                     tvb, offset, length, ENC_BIG_ENDIAN);
+            break;
+        case ((VENDOR_IXIA << 16) | 306):
+            ti = proto_tree_add_item(pdutree, hf_pie_ixia_gtp_up_ipv6_addr,
+                                     tvb, offset, length, ENC_NA);
+            break;
+        case ((VENDOR_IXIA << 16) | 307):
+            ti = proto_tree_add_item(pdutree, hf_pie_ixia_gtp_down_ipv6_addr,
+                                     tvb, offset, length, ENC_NA);
+            break;
+        case ((VENDOR_IXIA << 16) | 308):
+            ti = proto_tree_add_item(pdutree, hf_pie_ixia_gtp_up_QCI_QFI,
+                                     tvb, offset, length, ENC_BIG_ENDIAN);
+            break;
+        case ((VENDOR_IXIA << 16) | 309):
+            ti = proto_tree_add_item(pdutree, hf_pie_ixia_gtp_down_QCI_QFI,
+                                     tvb, offset, length, ENC_BIG_ENDIAN);
+            break;
+        case ((VENDOR_IXIA << 16) | 310):
+            ti = proto_tree_add_item(pdutree, hf_pie_ixia_gtp_up_APN_DNN,
+                                     tvb, offset, length, ENC_ASCII);
+            break;
+        case ((VENDOR_IXIA << 16) | 311):
+            ti = proto_tree_add_item(pdutree, hf_pie_ixia_gtp_down_APN_DNN,
+                                     tvb, offset, length, ENC_ASCII);
             break;
             /* END Ixia Communications */
 
@@ -12160,7 +12318,7 @@ dissect_v9_v10_pdu_data(tvbuff_t *tvb, packet_info *pinfo, proto_tree *pdutree, 
             if (length == 2){
                 proto_tree_add_item_ret_uint (juniper_resilincy_tree, hf_pie_juniper_cpid_16bit,
                                                     tvb, offset, length, ENC_BIG_ENDIAN, &cpid);
-                proto_item_append_text (juniper_resilincy_tree, ": %s", val_to_str_ext(cpid, &v10_juniper_cpid_ext, " "));
+                proto_item_append_text (juniper_resilincy_tree, ": %s", val_to_str_ext_const(cpid, &v10_juniper_cpid_ext, " "));
 
                 ti = proto_tree_add_item_ret_uint (juniper_resilincy_tree, hf_pie_juniper_cpdesc_16bit,
                                                     tvb, offset, length, ENC_BIG_ENDIAN, &cpdesc);
@@ -12168,7 +12326,7 @@ dissect_v9_v10_pdu_data(tvbuff_t *tvb, packet_info *pinfo, proto_tree *pdutree, 
             else if (length == 4){
                 proto_tree_add_item_ret_uint (juniper_resilincy_tree, hf_pie_juniper_cpid_32bit,
                                                     tvb, offset, length, ENC_BIG_ENDIAN, &cpid);
-                proto_item_append_text (juniper_resilincy_tree, ": %s", val_to_str_ext(cpid, &v10_juniper_cpid_ext, " "));
+                proto_item_append_text (juniper_resilincy_tree, ": %s", val_to_str_ext_const(cpid, &v10_juniper_cpid_ext, " "));
 
                 ti = proto_tree_add_item_ret_uint (juniper_resilincy_tree, hf_pie_juniper_cpdesc_32bit,
                                                     tvb, offset, length, ENC_BIG_ENDIAN, &cpdesc);
@@ -12185,18 +12343,33 @@ dissect_v9_v10_pdu_data(tvbuff_t *tvb, packet_info *pinfo, proto_tree *pdutree, 
 
         default:  /* Unknown Field ID */
             if ((hdrinfo_p->vspec == 9) || (pen == REVPEN)) {
-                ti = proto_tree_add_bytes_format_value(pdutree, hf_cflow_unknown_field_type,
-                                                       tvb, offset, length, NULL,
-                                                       "Type %u: Value (hex bytes): %s",
-                                                       masked_type,
-                                                       tvb_bytes_to_str_punct(pinfo->pool, tvb, offset, length, ' '));
+                if (length > 0) {
+                    ti = proto_tree_add_bytes_format_value(pdutree, hf_cflow_unknown_field_type,
+                                                           tvb, offset, length, NULL,
+                                                           "Type %u: Value (hex bytes): %s",
+                                                           masked_type,
+                                                           tvb_bytes_to_str_punct(pinfo->pool, tvb, offset, length, ' '));
+                } else {
+                    ti = proto_tree_add_bytes_format_value(pdutree, hf_cflow_unknown_field_type,
+                                                           tvb, offset, length, NULL,
+                                                           "Type %u",
+                                                           masked_type);
+                }
             } else { /* v10 PEN */
-                ti = proto_tree_add_bytes_format_value(pdutree, hf_ipfix_enterprise_private_entry,
-                                                       tvb, offset, length, NULL,
-                                                       "(%s) Type %u: Value (hex bytes): %s",
-                                                       pen_str ? pen_str : "(null)",
-                                                       masked_type,
-                                                       tvb_bytes_to_str_punct(pinfo->pool, tvb, offset, length, ' '));
+                if (length > 0) {
+                    ti = proto_tree_add_bytes_format_value(pdutree, hf_ipfix_enterprise_private_entry,
+                                                           tvb, offset, length, NULL,
+                                                           "(%s) Type %u: Value (hex bytes): %s",
+                                                           pen_str ? pen_str : "(null)",
+                                                           masked_type,
+                                                           tvb_bytes_to_str_punct(pinfo->pool, tvb, offset, length, ' '));
+                } else {
+                    ti = proto_tree_add_bytes_format_value(pdutree, hf_ipfix_enterprise_private_entry,
+                                                           tvb, offset, length, NULL,
+                                                           "(%s) Type %u",
+                                                           pen_str ? pen_str : "(null)",
+                                                           masked_type);
+                }
             }
             break;
 
@@ -12571,6 +12744,14 @@ dissect_v9_v10_data_template(tvbuff_t *tvb, packet_info *pinfo, proto_tree *pdut
                              hdrinfo_t *hdrinfo_p, guint16 flowset_id _U_)
 {
     int remaining;
+
+    conversation_t *conv = find_or_create_conversation(pinfo);
+    wmem_map_t *netflow_sequence_analysis_domain_hash = (wmem_map_t *)conversation_get_proto_data(conv, proto_netflow);
+    if (netflow_sequence_analysis_domain_hash == NULL) {
+        netflow_sequence_analysis_domain_hash = wmem_map_new(wmem_file_scope(), g_direct_hash, g_direct_equal);
+        conversation_add_proto_data(conv, proto_netflow, netflow_sequence_analysis_domain_hash);
+    }
+
     proto_item_append_text(pdutree, " (Data Template): ");
     col_append_fstr(pinfo->cinfo, COL_INFO, " [Data-Template:");
 
@@ -13311,7 +13492,7 @@ proto_register_netflow(void)
         {&hf_cflow_ipv4_router_sc,
          {"ipv4RouterSc", "cflow.ipv4_router_sc",
           FT_IPv4, BASE_NONE, NULL, 0x0,
-          "ipv4 Router Shortcur", HFILL}
+          "ipv4 Router Shortcut", HFILL}
         },
         {&hf_cflow_srcprefix,
          {"SrcPrefix", "cflow.srcprefix",
@@ -17105,8 +17286,8 @@ proto_register_netflow(void)
           NULL, HFILL}
         },
         /* ntop, 35632 / 341 */
-        {&hf_pie_ntop_num_pkts_ttl_224_225,
-         {"# packets with TTL > 224 and <= 255", "cflow.pie.ntop.num_pkts_ttl_224_225",
+        {&hf_pie_ntop_num_pkts_ttl_224_255,
+         {"# packets with TTL > 224 and <= 255", "cflow.pie.ntop.num_pkts_ttl_224_255",
           FT_UINT32, BASE_DEC, NULL, 0x0,
           NULL, HFILL}
         },
@@ -18859,28 +19040,196 @@ proto_register_netflow(void)
         {&hf_pie_ixia_udpAppResponseTime,
          {"UDP Average Application Response Time (us)", "cflow.pie.ixia.udpAppResponseTime",
          FT_UINT32, BASE_DEC, NULL, 0x0,
-         NULL, HFILL}
+         "Average UDP Application Response Time (us)", HFILL}
         },
 
         /* ixia, 3054 / 285 */
         {&hf_pie_ixia_quicConnSetupTime,
          {"Time to complete a QUIC Handshake (us)", "cflow.pie.ixia.quicConnectionSetupTime",
          FT_UINT32, BASE_DEC, NULL, 0x0,
-         NULL, HFILL}
+         "QUIC Handshake Completion Time", HFILL}
         },
 
         /* ixia, 3054 / 286 */
         {&hf_pie_ixia_quicConnRTT,
          {"QUIC Network RTT (us)", "cflow.pie.ixia.quicConnectionRTT",
          FT_UINT32, BASE_DEC, NULL, 0x0,
-         NULL, HFILL}
+         "QUIC Network Round Trip Time", HFILL}
         },
 
         /* ixia, 3054 / 287 */
         {&hf_pie_ixia_quicAppResponseTime,
          {"QUIC RTT for application packets (us)", "cflow.pie.ixia.quicAppResponseTime",
          FT_UINT32, BASE_DEC, NULL, 0x0,
-         NULL, HFILL}
+         "QUIC Round Trip Time for Application Packets", HFILL}
+        },
+
+        /* ixia, 3054 / 288 */
+        {&hf_pie_ixia_matchedFilterName,
+         {"Matched Filter Name", "cflow.pie.ixia.matchedFilterName",
+          FT_STRING, BASE_NONE, NULL, 0x0,
+          "The Name of the Matched Filter", HFILL}
+        },
+
+        /* ixia, 3054 / 289 */
+        {&hf_pie_ixia_gtp_IMSI,
+         {"GTP IMSI", "cflow.pie.ixia.gtp-IMSI",
+          FT_UINT64, BASE_DEC, NULL, 0x0,
+          "Mobile Session GTP IMSI", HFILL}
+        },
+
+        /* ixia, 3054 / 290 */
+        {&hf_pie_ixia_gtp_ULI_SAI_SAC,
+         {"GTP ULI SAI SAC", "cflow.pie.ixia.gtpULI-SAI-SAC",
+          FT_UINT16, BASE_DEC, NULL, 0x0,
+          "Mobile Session GTP ULI SAI SAC", HFILL}
+        },
+
+        /* ixia, 3054 / 291 */
+        {&hf_pie_ixia_gtp_ULI_RAI_RAC,
+         {"GTP ULI RAI RAC", "cflow.pie.ixia.gtpULI-RAI-RAC",
+          FT_UINT16, BASE_DEC, NULL, 0x0,
+          "Mobile Session GTP ULI RAI RAC", HFILL}
+        },
+
+        /* ixia, 3054 / 292 */
+        {&hf_pie_ixia_gtp_ULI_TAC,
+         {"GTP ULI TAI TAC", "cflow.pie.ixia.gtpULI-TAC",
+          FT_UINT16, BASE_DEC, NULL, 0x0,
+          "Mobile Session GTP ULI TAC", HFILL}
+        },
+
+        /* ixia, 3054 / 293 */
+        {&hf_pie_ixia_gtp_ULI_ECGI_E_NODEB_ID,
+         {"GTP ULI ECGI E NODEB ID", "cflow.pie.ixia.gtpULI-ECGI-E-NODEB-ID",
+          FT_UINT32, BASE_DEC, NULL, 0x0,
+          "Mobile Session GTP ULI ECGI E NODEB ID", HFILL}
+        },
+
+        /* ixia, 3054 / 294 */
+        {&hf_pie_ixia_gtp_ULI_CELL_ID,
+         {"GTP CGI CELL ID", "cflow.pie.ixia.gtpULI-CELL-ID",
+          FT_UINT32, BASE_DEC, NULL, 0x0,
+          "Mobile Session GTP CELL ID", HFILL}
+        },
+
+        /* ixia, 3054 / 295 */
+        {&hf_pie_ixia_gtp_ULI_LAC,
+         {"GTP CGI LAC", "cflow.pie.ixia.gtpULI-LAC",
+          FT_UINT16, BASE_DEC, NULL, 0x0,
+          "Mobile Session GTP LAC", HFILL}
+        },
+
+        /* ixia, 3054 / 296 */
+        {&hf_pie_ixia_gtp_ULI_MCC,
+         {"GTP ULI MCC", "cflow.pie.ixia.gtpULI-MCC",
+          FT_UINT16, BASE_DEC, NULL, 0x0,
+          "Mobile Session GTP ULI MCC", HFILL}
+        },
+
+        /* ixia, 3054 / 297 */
+        {&hf_pie_ixia_gtp_ULI_MNC,
+         {"GTP ULI MNC", "cflow.pie.ixia.gtpULI-MNC",
+          FT_UINT16, BASE_DEC, NULL, 0x0,
+          "Mobile Session GTP ULI MNC", HFILL}
+        },
+
+        /* ixia, 3054 / 298 */
+        {&hf_pie_ixia_gtp_MSISDN,
+         {"GTP MSISDN", "cflow.pie.ixia.gtp-MSISDN",
+          FT_UINT64, BASE_DEC, NULL, 0x0,
+          "Mobile Session GTP MSISDN", HFILL}
+        },
+
+        /* ixia, 3054 / 299 */
+        {&hf_pie_ixia_gtp_IMEI,
+         {"GTP IMEI", "cflow.pie.ixia.gtp-IMEI",
+          FT_UINT64, BASE_DEC, NULL, 0x0,
+          "Mobile Session GTP IMEI", HFILL}
+        },
+
+        /* ixia, 3054 / 300 */
+        {&hf_pie_ixia_gtp_RAT_type,
+         {"GTP RAT Type", "cflow.pie.ixia.gtp-RAT-type",
+          FT_UINT8, BASE_DEC, NULL, 0x0,
+          "Mobile Session Radio Access Technology Type", HFILL}
+        },
+
+        /* ixia, 3054 / 301 */
+        {&hf_pie_ixia_gtp_ep_gen,
+         {"GTP Endpoint Generation", "cflow.pie.ixia.gtp-ep-gen",
+          FT_UINT8, BASE_DEC, NULL, 0x0,
+          "Mobile Session Endpoint GSM Generation", HFILL}
+        },
+
+        /* ixia, 3054 / 302 */
+        {&hf_pie_ixia_gtp_up_TEID,
+         {"GTP Uplink TEID", "cflow.pie.ixia.gtp-uplink-TEID",
+          FT_UINT32, BASE_DEC, NULL, 0x0,
+          "Mobile Session Uplink Tunnel Endpoint ID", HFILL}
+        },
+
+        /* ixia, 3054 / 303 */
+        {&hf_pie_ixia_gtp_down_TEID,
+         {"GTP Downlink TEID", "cflow.pie.ixia.gtp-downlink-TEID",
+          FT_UINT32, BASE_DEC, NULL, 0x0,
+          "Mobile Session Downlink Tunnel Endpoint ID", HFILL}
+        },
+
+        /* ixia, 3054 / 304 */
+        {&hf_pie_ixia_gtp_up_ipv4_addr,
+         {"GTP Uplink Tunnel IPv4 Address", "cflow.pie.ixia.gtp-uplink-tun-ipv4",
+          FT_IPv4, BASE_NONE, NULL, 0x0,
+          "Mobile Session Uplink Tunnel IPv4 Address", HFILL}
+        },
+
+        /* ixia, 3054 / 305 */
+        {&hf_pie_ixia_gtp_down_ipv4_addr,
+         {"GTP Downlink Tunnel IPv4 Address", "cflow.pie.ixia.gtp-downlink-tun-ipv4",
+          FT_IPv4, BASE_NONE, NULL, 0x0,
+          "Mobile Session Downlink Tunnel IPv4 Address", HFILL}
+        },
+
+        /* ixia, 3054 / 306 */
+        {&hf_pie_ixia_gtp_up_ipv6_addr,
+         {"GTP Uplink Tunnel IPv6 Address", "cflow.pie.ixia.gtp-uplink-tun-ipv6",
+          FT_IPv6, BASE_NONE, NULL, 0x0,
+          "Mobile Session Uplink Tunnel IPv6 Address", HFILL}
+        },
+
+        /* ixia, 3054 / 307 */
+        {&hf_pie_ixia_gtp_down_ipv6_addr,
+         {"GTP Downlink Tunnel IPv6 Address", "cflow.pie.ixia.gtp-downlink-tun-ipv6",
+          FT_IPv6, BASE_NONE, NULL, 0x0,
+          "Mobile Session Downlink Tunnel IPv6 Address", HFILL}
+        },
+
+        /* ixia, 3054 / 308 */
+        {&hf_pie_ixia_gtp_up_QCI_QFI,
+         {"GTP Uplink QCI/QFI", "cflow.pie.ixia.gtp-uplink-QCI-QFI",
+          FT_UINT8, BASE_DEC, NULL, 0x0,
+          "Mobile Session Uplink QCI or QFI", HFILL}
+        },
+
+        /* ixia, 3054 / 309 */
+        {&hf_pie_ixia_gtp_down_QCI_QFI,
+         {"GTP Downlink QCI/QFI", "cflow.pie.ixia.gtp-downlink-QCI-QFI",
+          FT_UINT8, BASE_DEC, NULL, 0x0,
+          "Mobile Session Downlink QCI or QFI", HFILL}
+        },
+
+        /* ixia, 3054 / 310 */
+        {&hf_pie_ixia_gtp_up_APN_DNN,
+         {"GTP Uplink APN/DNN", "cflow.pie.ixia.gtp-uplink-APN-DNN",
+          FT_STRING, BASE_NONE, NULL, 0x0,
+          "Mobile Session Uplink Access Point Name or Data Network Name", HFILL}
+        },
+
+        /* ixia, 3054 / 311 */
+        {&hf_pie_ixia_gtp_down_APN_DNN,
+         {"GTP Downlink APN/DNN", "cflow.pie.ixia.gtp-downlink-APN-DNN",
+          FT_STRING, BASE_NONE, NULL, 0x0,
+          "Mobile Session Downlink Access Point Name or Data Network Name", HFILL}
         },
 
         /* Netscaler root (a hidden item to allow filtering) */
@@ -20011,31 +20360,31 @@ proto_register_netflow(void)
         /* Niagara Networks, 47729 / 101 */
         {&hf_pie_niagara_networks_sslserverversion,
          {"SslServerVersion", "cflow.pie.niagaranetworks.sslserverversion",
-          FT_UINT16, BASE_HEX, NULL, 0X0,
+          FT_UINT16, BASE_HEX, NULL, 0x0,
           NULL, HFILL}
         },
         /* Niagara Networks, 47729 / 102 */
         {&hf_pie_niagara_networks_sslserverversiontext,
          {"SslServerVersionText", "cflow.pie.niagaranetworks.sslserverversiontext",
-          FT_STRING, BASE_NONE, NULL, 0X0,
+          FT_STRING, BASE_NONE, NULL, 0x0,
           NULL, HFILL}
         },
         /* Niagara Networks, 47729 / 103 */
         {&hf_pie_niagara_networks_sslservercipher,
          {"SslServerCipher", "cflow.pie.niagaranetworks.sslservercipher",
-          FT_UINT16, BASE_HEX, NULL, 0X0,
+          FT_UINT16, BASE_HEX, NULL, 0x0,
           NULL, HFILL}
         },
         /* Niagara Networks, 47729 / 104 */
         {&hf_pie_niagara_networks_sslserverciphertext,
          {"SslServerCipherText", "cflow.pie.niagaranetworks.sslserverciphertext",
-          FT_STRING, BASE_NONE, NULL, 0X0,
+          FT_STRING, BASE_NONE, NULL, 0x0,
           NULL, HFILL}
         },
         /* Niagara Networks, 47729 / 105 */
         {&hf_pie_niagara_networks_sslconnectionencryptiontype,
          {"SslConnectionEncryptionType", "cflow.pie.niagaranetworks.sslconnectionencryptiontype",
-          FT_STRING, BASE_NONE, NULL, 0X0,
+          FT_STRING, BASE_NONE, NULL, 0x0,
           NULL, HFILL}
         },
         /* Niagara Networks, 47729 / 106 */
@@ -20047,31 +20396,31 @@ proto_register_netflow(void)
         /* Niagara Networks, 47729 / 107 */
         {&hf_pie_niagara_networks_sslserversessionid,
          {"SslServerSessionId", "cflow.pie.niagaranetworks.sslserversessionid",
-          FT_BYTES, BASE_NONE, NULL, 0X0,
+          FT_BYTES, BASE_NONE, NULL, 0x0,
           NULL, HFILL}
         },
         /* Niagara Networks, 47729 / 108 */
         {&hf_pie_niagara_networks_sslcertificateissuer,
          {"SslCertificateIssuer", "cflow.pie.niagaranetworks.sslcertificateissuer",
-          FT_STRING, BASE_NONE, NULL, 0X0,
+          FT_STRING, BASE_NONE, NULL, 0x0,
           NULL, HFILL}
         },
         /* Niagara Networks, 47729 / 109 */
         {&hf_pie_niagara_networks_sslcertificateissuername,
          {"SslCertificateIssuerName", "cflow.pie.niagaranetworks.sslcertificateissuername",
-          FT_STRING, BASE_NONE, NULL, 0X0,
+          FT_STRING, BASE_NONE, NULL, 0x0,
           NULL, HFILL}
         },
         /* Niagara Networks, 47729 / 110 */
         {&hf_pie_niagara_networks_sslcertificatesubject,
          {"SslCertificateSubject", "cflow.pie.niagaranetworks.sslcertificatesubject",
-          FT_STRING, BASE_NONE, NULL, 0X0,
+          FT_STRING, BASE_NONE, NULL, 0x0,
           NULL, HFILL}
         },
         /* Niagara Networks, 47729 / 111 */
         {&hf_pie_niagara_networks_sslcertificatesubjectname,
          {"SslCertificateSubjectName", "cflow.pie.niagaranetworks.sslcertificatesubjectname",
-          FT_STRING, BASE_NONE, NULL, 0X0,
+          FT_STRING, BASE_NONE, NULL, 0x0,
           NULL, HFILL}
         },
         /* Niagara Networks, 47729 / 112 */
@@ -20781,7 +21130,7 @@ proto_register_netflow(void)
        /* Juniper Networks, 2636 / 137 */
         {&hf_pie_juniper_cpdesc_16bit,
          {"Juniper CPID Value", "cflow.pie.juniper.resiliency.cpdesc",
-          FT_UINT16, BASE_DEC, NULL, 0X03FF,
+          FT_UINT16, BASE_DEC, NULL, 0x03FF,
           NULL, HFILL}
         },
        /* Juniper Networks, 2636 / 137 */
@@ -20793,7 +21142,7 @@ proto_register_netflow(void)
        /* Juniper Networks, 2636 / 137 */
         {&hf_pie_juniper_cpdesc_32bit,
          {"Juniper CPID Value", "cflow.pie.juniper.resiliency.cpdesc",
-          FT_UINT32, BASE_DEC, NULL, 0X03FFFFFF,
+          FT_UINT32, BASE_DEC, NULL, 0x03FFFFFF,
           NULL, HFILL}
         },
 
@@ -20894,6 +21243,8 @@ proto_register_netflow(void)
     expert_module_t* expert_netflow;
 
     proto_netflow = proto_register_protocol("Cisco NetFlow/IPFIX", "CFLOW", "cflow");
+    netflow_handle = register_dissector("netflow", dissect_netflow, proto_netflow);
+    netflow_tcp_handle = register_dissector("netflow_tcp", dissect_tcp_netflow, proto_netflow);
 
     register_dissector("cflow", dissect_netflow, proto_netflow);
 
@@ -20933,8 +21284,6 @@ proto_register_netflow(void)
     prefs_register_bool_preference(netflow_module, "desegment", "Reassemble Netflow v10 messages spanning multiple TCP segments.", "Whether the Netflow/Ipfix dissector should reassemble messages spanning multiple TCP segments.  To use this option, you must also enable \"Allow subdissectors to reassemble TCP streams\" in the TCP protocol settings.", &netflow_preference_desegment);
 
     v9_v10_tmplt_table = wmem_map_new_autoreset(wmem_epan_scope(), wmem_file_scope(), v9_v10_tmplt_table_hash, v9_v10_tmplt_table_equal);
-    netflow_sequence_analysis_domain_hash = wmem_map_new_autoreset(wmem_epan_scope(), wmem_file_scope(), g_direct_hash, g_direct_equal);
-    netflow_sequence_analysis_result_hash = wmem_map_new_autoreset(wmem_epan_scope(), wmem_file_scope(), g_direct_hash, g_direct_equal);
 }
 
 static guint
@@ -20989,12 +21338,10 @@ proto_reg_handoff_netflow(void)
     static range_t  *netflow_ports;
     static range_t  *ipfix_ports;
 
-    /* Find eth_handle used for IE315*/
-    eth_handle = find_dissector ("eth_withoutfcs");
-
     if (!netflow_prefs_initialized) {
-        netflow_handle = create_dissector_handle(dissect_netflow, proto_netflow);
-        netflow_tcp_handle = create_dissector_handle(dissect_tcp_netflow, proto_netflow);
+        /* Find eth_handle used for IE315*/
+        eth_handle = find_dissector ("eth_withoutfcs");
+
         netflow_prefs_initialized = TRUE;
         dissector_add_uint("wtap_encap", WTAP_ENCAP_RAW_IPFIX, netflow_handle);
         dissector_add_uint_range_with_preference("tcp.port", IPFIX_UDP_PORTS, netflow_tcp_handle);

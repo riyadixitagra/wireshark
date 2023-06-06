@@ -23,7 +23,7 @@
 
 #include "byte_view_tab.h"
 #include "proto_tree.h"
-#include "wireshark_application.h"
+#include "main_application.h"
 
 #include <ui/qt/utils/field_information.h>
 #include <QTreeWidgetItemIterator>
@@ -83,7 +83,7 @@ PacketDialog::PacketDialog(QWidget &parent, CaptureFile &cf, frame_data *fdata) 
         // ElidedLabel doesn't support rich text / HTML
         col_parts << QString("%1: %2")
                      .arg(get_column_title(i))
-                     .arg(cap_file_.capFile()->cinfo.columns[i].col_data);
+                     .arg(get_column_text(&cap_file_.capFile()->cinfo, i));
     }
     col_info_ = col_parts.join(" " UTF8_MIDDLE_DOT " ");
 
@@ -97,7 +97,7 @@ PacketDialog::PacketDialog(QWidget &parent, CaptureFile &cf, frame_data *fdata) 
     }
     ui->chkShowByteView->setCheckState(state);
 
-    connect(wsApp, SIGNAL(zoomMonospaceFont(QFont)),
+    connect(mainApp, SIGNAL(zoomMonospaceFont(QFont)),
             proto_tree_, SLOT(setMonospaceFont(QFont)));
 
     connect(byte_view_tab_, SIGNAL(fieldSelected(FieldInformation *)),
@@ -135,7 +135,7 @@ void PacketDialog::captureFileClosing()
 
 void PacketDialog::on_buttonBox_helpRequested()
 {
-    wsApp->helpTopicAction(HELP_NEW_PACKET_DIALOG);
+    mainApp->helpTopicAction(HELP_NEW_PACKET_DIALOG);
 }
 
 void PacketDialog::setHintText(FieldInformation * finfo)

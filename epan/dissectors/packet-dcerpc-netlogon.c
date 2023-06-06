@@ -6802,7 +6802,6 @@ netlogon_dissect_netrserverauthenticate023_reply(tvbuff_t *tvb, int offset,
             debugprintf("Found %d passwords \n",list_size);
             if( flags & NETLOGON_FLAG_AES )
             {
-#if GCRYPT_VERSION_NUMBER >= 0x010800 /* 1.8.0 */
                 guint8 salt_buf[16] = { 0 };
                 guint8 sha256[HASH_SHA2_256_LENGTH];
                 guint64 calculated_cred;
@@ -6872,7 +6871,6 @@ netlogon_dissect_netrserverauthenticate023_reply(tvbuff_t *tvb, int offset,
                         }
                     }
                 }
-#endif
             } else if ( flags & NETLOGON_FLAG_STRONGKEY ) {
                 guint8 zeros[4] = { 0 };
                 guint8 md5[HASH_MD5_LENGTH];
@@ -7669,27 +7667,27 @@ static int dissect_secchan_nl_auth_message(tvbuff_t *tvb, int offset,
     /* DNS domain name */
     if (messageflags&0x00000004) {
         int old_offset=offset;
-        char str[256];
+        char *str;
 
-        offset=dissect_mscldap_string(tvb, offset, str, 255, FALSE);
+        offset=dissect_mscldap_string(tvb, offset, 255, &str);
         proto_tree_add_string(subtree, hf_netlogon_secchan_nl_dns_domain, tvb, old_offset, offset-old_offset, str);
     }
 
     /* DNS host name */
     if (messageflags&0x00000008) {
         int old_offset=offset;
-        char str[256];
+        char *str;
 
-        offset=dissect_mscldap_string(tvb, offset, str, 255, FALSE);
+        offset=dissect_mscldap_string(tvb, offset, 255, &str);
         proto_tree_add_string(subtree, hf_netlogon_secchan_nl_dns_host, tvb, old_offset, offset-old_offset, str);
     }
 
     /* NetBios host name (UTF8) */
     if (messageflags&0x00000010) {
         int old_offset=offset;
-        char str[256];
+        char *str;
 
-        offset=dissect_mscldap_string(tvb, offset, str, 255, FALSE);
+        offset=dissect_mscldap_string(tvb, offset, 255, &str);
         proto_tree_add_string(subtree, hf_netlogon_secchan_nl_nb_host_utf8, tvb, old_offset, offset-old_offset, str);
     }
 
@@ -7851,12 +7849,14 @@ static int hf_netlogon_secchan_verf_nonce = -1;
 
 static const value_string sign_algs[] = {
     { 0x0077, "HMAC-MD5"},
+    { 0x0013, "HMAC-SHA256"},
     { 0, NULL}
 };
 
 static const value_string seal_algs[] = {
     { 0xFFFF, "Not Encrypted"},
     { 0x007A, "RC4"},
+    { 0x001A, "AES-128"},
     { 0, NULL}
 };
 
@@ -7877,7 +7877,6 @@ static int get_seal_key(const guint8 *session_key,int key_len,guint8* seal_key)
 
 }
 
-#if GCRYPT_VERSION_NUMBER >= 0x010800 /* 1.8.0 */
 static guint64 uncrypt_sequence_aes(guint8* session_key,guint64 checksum,guint64 enc_seq,unsigned char is_server _U_)
 {
     gcry_error_t err;
@@ -7920,7 +7919,6 @@ static guint64 uncrypt_sequence_aes(guint8* session_key,guint64 checksum,guint64
     gcry_cipher_close(cipher_hd);
     return enc_seq;
 }
-#endif
 
 static guint64 uncrypt_sequence_strong(guint8* session_key,guint64 checksum,guint64 enc_seq,unsigned char is_server _U_)
 {
@@ -7958,11 +7956,9 @@ static guint64 uncrypt_sequence_strong(guint8* session_key,guint64 checksum,guin
 
 static guint64 uncrypt_sequence(guint32 flags, guint8* session_key,guint64 checksum,guint64 enc_seq,unsigned char is_server _U_)
 {
-#if GCRYPT_VERSION_NUMBER >= 0x010800 /* 1.8.0 */
     if (flags & NETLOGON_FLAG_AES) {
         return uncrypt_sequence_aes(session_key, checksum, enc_seq, is_server);
     }
-#endif
 
     if (flags & NETLOGON_FLAG_STRONGKEY) {
         return uncrypt_sequence_strong(session_key, checksum, enc_seq, is_server);
@@ -7971,7 +7967,6 @@ static guint64 uncrypt_sequence(guint32 flags, guint8* session_key,guint64 check
     return 0;
 }
 
-#if GCRYPT_VERSION_NUMBER >= 0x010800 /* 1.8.0 */
 static gcry_error_t prepare_decryption_cipher_aes(netlogon_auth_vars *vars,
                                                   gcry_cipher_hd_t *_cipher_hd)
 {
@@ -8010,7 +8005,6 @@ static gcry_error_t prepare_decryption_cipher_aes(netlogon_auth_vars *vars,
     *_cipher_hd = cipher_hd;
     return 0;
 }
-#endif
 
 static gcry_error_t prepare_decryption_cipher_strong(netlogon_auth_vars *vars,
                                                      gcry_cipher_hd_t *_cipher_hd)
@@ -8057,11 +8051,9 @@ static gcry_error_t prepare_decryption_cipher(netlogon_auth_vars *vars,
 {
     *_cipher_hd = NULL;
 
-#if GCRYPT_VERSION_NUMBER >= 0x010800 /* 1.8.0 */
     if (vars->flags & NETLOGON_FLAG_AES) {
         return prepare_decryption_cipher_aes(vars, _cipher_hd);
     }
-#endif
 
     if (vars->flags & NETLOGON_FLAG_STRONGKEY) {
         return prepare_decryption_cipher_strong(vars, _cipher_hd);
@@ -8962,14 +8954,14 @@ proto_register_dcerpc_netlogon(void)
 #endif
 
         { &hf_netlogon_neg_flags_40000000,
-          { "Authenticated RPC supported", "ntlmssp.neg_flags.na8000000", FT_BOOLEAN, 32, TFS(&tfs_set_notset), NETLOGON_FLAG_40000000, NULL, HFILL }},
+          { "Authenticated RPC supported", "ntlmssp.neg_flags.na4000000", FT_BOOLEAN, 32, TFS(&tfs_set_notset), NETLOGON_FLAG_40000000, NULL, HFILL }},
 
         { &hf_netlogon_neg_flags_20000000,
-          { "Authenticated RPC via lsass supported", "ntlmssp.neg_flags.na8000000", FT_BOOLEAN, 32, TFS(&tfs_set_notset), NETLOGON_FLAG_20000000, "rpc via lsass", HFILL }},
+          { "Authenticated RPC via lsass supported", "ntlmssp.neg_flags.na2000000", FT_BOOLEAN, 32, TFS(&tfs_set_notset), NETLOGON_FLAG_20000000, "rpc via lsass", HFILL }},
 
 #if 0
         { &hf_netlogon_neg_flags_10000000,
-          { "Not used 10000000", "ntlmssp.neg_flags.na8000000", FT_BOOLEAN, 32, TFS(&tfs_set_notset), NETLOGON_FLAG_10000000, "Not used", HFILL }},
+          { "Not used 10000000", "ntlmssp.neg_flags.na1000000", FT_BOOLEAN, 32, TFS(&tfs_set_notset), NETLOGON_FLAG_10000000, "Not used", HFILL }},
 #endif
 
 #if 0

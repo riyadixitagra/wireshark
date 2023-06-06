@@ -39,6 +39,8 @@
 
 void proto_register_collectd(void);
 
+static dissector_handle_t collectd_handle;
+
 typedef struct value_data_s {
 	const guint8 *host;
 	gint host_off;
@@ -213,7 +215,7 @@ collectd_stats_tree_init (stats_tree *st)
 
 static tap_packet_status
 collectd_stats_tree_packet (stats_tree *st, packet_info *pinfo _U_,
-			    epan_dissect_t *edt _U_, const void *user_data)
+			    epan_dissect_t *edt _U_, const void *user_data, tap_flags_t flags _U_)
 {
 	const tap_data_t *td;
 	string_counter_t *sc;
@@ -1469,13 +1471,12 @@ void proto_register_collectd(void)
 	expert_register_field_array(expert_collectd, ei, array_length(ei));
 
 	tap_collectd = register_tap ("collectd");
+
+	collectd_handle = register_dissector("collectd", dissect_collectd, proto_collectd);
 }
 
 void proto_reg_handoff_collectd (void)
 {
-	dissector_handle_t collectd_handle;
-
-	collectd_handle = create_dissector_handle(dissect_collectd, proto_collectd);
 	dissector_add_uint_with_preference("udp.port", UDP_PORT_COLLECTD, collectd_handle);
 
 	collectd_stats_tree_register ();

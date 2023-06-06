@@ -379,7 +379,7 @@ socks_udp_dissector(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void* d
 static void
 new_udp_conversation( socks_hash_entry_t *hash_info, packet_info *pinfo){
 
-    conversation_t *conversation = conversation_new( pinfo->num, &pinfo->src, &pinfo->dst, ENDPOINT_UDP,
+    conversation_t *conversation = conversation_new( pinfo->num, &pinfo->src, &pinfo->dst, CONVERSATION_UDP,
             hash_info->udp_port, hash_info->port, 0);
 
     DISSECTOR_ASSERT( conversation);
@@ -1047,7 +1047,7 @@ dissect_socks(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *data) {
             return 0;
 
         conversation = conversation_new(pinfo->num, &pinfo->src, &pinfo->dst,
-                                        conversation_pt_to_endpoint_type(pinfo->ptype), pinfo->srcport, pinfo->destport, 0);
+                                        conversation_pt_to_conversation_type(pinfo->ptype), pinfo->srcport, pinfo->destport, 0);
     }
 
     hash_info = (socks_hash_entry_t *)conversation_get_proto_data(conversation,proto_socks);
@@ -1357,6 +1357,10 @@ proto_register_socks( void){
 
     proto_register_field_array(proto_socks, hf, array_length(hf));
     proto_register_subtree_array(ett, array_length(ett));
+
+    socks_udp_handle = register_dissector_with_description("socks_udp", "SOCKS over UDP", socks_udp_dissector, proto_socks);
+    socks_handle = register_dissector_with_description("socks_tcp", "SOCKS over TCP", dissect_socks, proto_socks);
+    socks_handle_tls = register_dissector_with_description("socks_tls", "SOCKS over TLS", dissect_socks_tls, proto_socks);
 }
 
 
@@ -1364,9 +1368,6 @@ void
 proto_reg_handoff_socks(void) {
 
     /* dissector install routine */
-    socks_udp_handle = create_dissector_handle(socks_udp_dissector, proto_socks);
-    socks_handle = create_dissector_handle(dissect_socks, proto_socks);
-    socks_handle_tls = register_dissector("SOCKS over TLS", dissect_socks_tls, proto_socks);
 
     dissector_add_uint_with_preference("tcp.port", TCP_PORT_SOCKS, socks_handle);
 

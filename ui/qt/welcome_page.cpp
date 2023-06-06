@@ -16,14 +16,14 @@
 #include "ui/capture_globals.h"
 #include "ui/urls.h"
 
-#include "ui/version_info.h"
+#include "wsutil/version_info.h"
 
 #include "welcome_page.h"
 #include <ui_welcome_page.h>
 #include <ui/qt/utils/tango_colors.h>
 #include <ui/qt/utils/color_utils.h>
 #include <ui/qt/utils/qt_ui_utils.h>
-#include "wireshark_application.h"
+#include "main_application.h"
 
 #include <QClipboard>
 #include <QDate>
@@ -59,6 +59,8 @@ WelcomePage::WelcomePage(QWidget *parent) :
 
     welcome_ui_->captureFilterComboBox->setEnabled(false);
 
+    welcome_ui_->mainWelcomeBanner->setText(tr("Welcome to %1").arg(mainApp->applicationName()));
+
     updateStyleSheets();
 
 
@@ -73,9 +75,9 @@ WelcomePage::WelcomePage(QWidget *parent) :
     connect(recent_files_, SIGNAL(customContextMenuRequested(QPoint)),
             this, SLOT(showRecentContextMenu(QPoint)));
 
-    connect(wsApp, SIGNAL(updateRecentCaptureStatus(const QString &, qint64, bool)), this, SLOT(updateRecentCaptures()));
-    connect(wsApp, SIGNAL(appInitialized()), this, SLOT(appInitialized()));
-    connect(wsApp, SIGNAL(localInterfaceListChanged()), this, SLOT(interfaceListChanged()));
+    connect(mainApp, SIGNAL(updateRecentCaptureStatus(const QString &, qint64, bool)), this, SLOT(updateRecentCaptures()));
+    connect(mainApp, SIGNAL(appInitialized()), this, SLOT(appInitialized()));
+    connect(mainApp, SIGNAL(localInterfaceListChanged()), this, SLOT(interfaceListChanged()));
     connect(welcome_ui_->interfaceFrame, SIGNAL(itemSelectionChanged()),
             welcome_ui_->captureFilterComboBox, SIGNAL(interfacesChanged()));
     connect(welcome_ui_->interfaceFrame, SIGNAL(typeSelectionChanged()),
@@ -270,7 +272,7 @@ void WelcomePage::updateRecentCaptures() {
         selectedFilename = rfItem->data(Qt::UserRole).toString();
     }
 
-    if (wsApp->recentItems().count() == 0) {
+    if (mainApp->recentItems().count() == 0) {
        // Recent menu has been cleared, remove all recent files.
        while (recent_files_->count()) {
           delete recent_files_->item(0);
@@ -278,7 +280,7 @@ void WelcomePage::updateRecentCaptures() {
     }
 
     int rfRow = 0;
-    foreach (recent_item_status *ri, wsApp->recentItems()) {
+    foreach (recent_item_status *ri, mainApp->recentItems()) {
         itemLabel = ri->filename;
 
         if (rfRow >= recent_files_->count()) {
@@ -369,25 +371,26 @@ void WelcomePage::showRecentContextMenu(QPoint pos)
     QListWidgetItem *li = recent_files_->itemAt(pos);
     if (!li) return;
 
-    QMenu recent_ctx_menu;
+    QMenu *recent_ctx_menu = new QMenu(this);
+    recent_ctx_menu->setAttribute(Qt::WA_DeleteOnClose);
 
     QString cf_path = li->data(Qt::UserRole).toString();
 
-    QAction *show_action = recent_ctx_menu.addAction(show_in_str_);
+    QAction *show_action = recent_ctx_menu->addAction(show_in_str_);
     show_action->setData(cf_path);
     connect(show_action, SIGNAL(triggered(bool)), this, SLOT(showRecentFolder()));
 
-    QAction *copy_action = recent_ctx_menu.addAction(tr("Copy file path"));
+    QAction *copy_action = recent_ctx_menu->addAction(tr("Copy file path"));
     copy_action->setData(cf_path);
     connect(copy_action, SIGNAL(triggered(bool)), this, SLOT(copyRecentPath()));
 
-    recent_ctx_menu.addSeparator();
+    recent_ctx_menu->addSeparator();
 
-    QAction *remove_action = recent_ctx_menu.addAction(tr("Remove from list"));
+    QAction *remove_action = recent_ctx_menu->addAction(tr("Remove from list"));
     remove_action->setData(cf_path);
     connect(remove_action, SIGNAL(triggered(bool)), this, SLOT(removeRecentPath()));
 
-    recent_ctx_menu.exec(recent_files_->mapToGlobal(pos));
+    recent_ctx_menu->popup(recent_files_->mapToGlobal(pos));
 }
 
 void WelcomePage::showRecentFolder()
@@ -409,7 +412,7 @@ void WelcomePage::copyRecentPath()
     QString cf_path = ria->data().toString();
     if (cf_path.isEmpty()) return;
 
-    wsApp->clipboard()->setText(cf_path);
+    mainApp->clipboard()->setText(cf_path);
 }
 
 void WelcomePage::removeRecentPath()
@@ -420,12 +423,12 @@ void WelcomePage::removeRecentPath()
     QString cf_path = ria->data().toString();
     if (cf_path.isEmpty()) return;
 
-    wsApp->removeRecentItem(cf_path);
+    mainApp->removeRecentItem(cf_path);
 }
 
 void WelcomePage::on_captureLabel_clicked()
 {
-    wsApp->doTriggerMenuItem(WiresharkApplication::CaptureOptionsDialog);
+    mainApp->doTriggerMenuItem(MainApplication::CaptureOptionsDialog);
 }
 
 void WelcomePage::on_helpLabel_clicked()
@@ -534,5 +537,5 @@ void WelcomePage::updateStyleSheets()
 
 void WelcomePage::on_recentLabel_clicked()
 {
-    wsApp->doTriggerMenuItem(WiresharkApplication::FileOpenDialog);
+    mainApp->doTriggerMenuItem(MainApplication::FileOpenDialog);
 }

@@ -75,9 +75,6 @@ static gboolean ip_tso_supported = TRUE;
 /* Use heuristics to determine subdissector */
 static gboolean try_heuristic_first = FALSE;
 
-/* Look up addresses via mmdbresolve */
-static gboolean ip_use_geoip = TRUE;
-
 /* Interpret the reserved flag as security flag (RFC 3514) */
 static gboolean ip_security_flag = FALSE;
 
@@ -505,48 +502,50 @@ static const char* ip_conv_get_filter_type(conv_item_t* conv, conv_filter_type_e
 static ct_dissector_info_t ip_ct_dissector_info = {&ip_conv_get_filter_type};
 
 static tap_packet_status
-ip_conversation_packet(void *pct, packet_info *pinfo, epan_dissect_t *edt _U_, const void *vip)
+ip_conversation_packet(void *pct, packet_info *pinfo, epan_dissect_t *edt _U_, const void *vip, tap_flags_t flags)
 {
     conv_hash_t *hash = (conv_hash_t*) pct;
+    hash->flags = flags;
     const ws_ip4 *iph=(const ws_ip4 *)vip;
 
-    add_conversation_table_data(hash, &iph->ip_src, &iph->ip_dst, 0, 0, 1, pinfo->fd->pkt_len, &pinfo->rel_ts, &pinfo->abs_ts, &ip_ct_dissector_info, ENDPOINT_NONE);
+    add_conversation_table_data(hash, &iph->ip_src, &iph->ip_dst, 0, 0, 1, pinfo->fd->pkt_len, &pinfo->rel_ts, &pinfo->abs_ts, &ip_ct_dissector_info, CONVERSATION_NONE);
 
     return TAP_PACKET_REDRAW;
 }
 
-static const char* ip_host_get_filter_type(hostlist_talker_t* host, conv_filter_type_e filter)
+static const char* ip_endpoint_get_filter_type(endpoint_item_t* endpoint, conv_filter_type_e filter)
 {
-    if ((filter == CONV_FT_ANY_ADDRESS) && (host->myaddress.type == AT_IPv4))
+    if ((filter == CONV_FT_ANY_ADDRESS) && (endpoint->myaddress.type == AT_IPv4))
         return "ip.addr";
 
     return CONV_FILTER_INVALID;
 }
 
-static hostlist_dissector_info_t ip_host_dissector_info = {&ip_host_get_filter_type};
+static et_dissector_info_t ip_endpoint_dissector_info = {&ip_endpoint_get_filter_type};
 
 static tap_packet_status
-ip_hostlist_packet(void *pit, packet_info *pinfo, epan_dissect_t *edt _U_, const void *vip)
+ip_endpoint_packet(void *pit, packet_info *pinfo, epan_dissect_t *edt _U_, const void *vip, tap_flags_t flags)
 {
     conv_hash_t *hash = (conv_hash_t*) pit;
+    hash->flags = flags;
     const ws_ip4 *iph=(const ws_ip4 *)vip;
 
     /* Take two "add" passes per packet, adding for each direction, ensures that all
     packets are counted properly (even if address is sending to itself)
-    XXX - this could probably be done more efficiently inside hostlist_table */
-    add_hostlist_table_data(hash, &iph->ip_src, 0, TRUE, 1, pinfo->fd->pkt_len, &ip_host_dissector_info, ENDPOINT_NONE);
-    add_hostlist_table_data(hash, &iph->ip_dst, 0, FALSE, 1, pinfo->fd->pkt_len, &ip_host_dissector_info, ENDPOINT_NONE);
+    XXX - this could probably be done more efficiently inside endpoint_table */
+    add_endpoint_table_data(hash, &iph->ip_src, 0, TRUE, 1, pinfo->fd->pkt_len, &ip_endpoint_dissector_info, ENDPOINT_NONE);
+    add_endpoint_table_data(hash, &iph->ip_dst, 0, FALSE, 1, pinfo->fd->pkt_len, &ip_endpoint_dissector_info, ENDPOINT_NONE);
     return TAP_PACKET_REDRAW;
 }
 
 static gboolean
-ip_filter_valid(packet_info *pinfo)
+ip_filter_valid(packet_info *pinfo, void *user_data _U_)
 {
     return proto_is_frame_protocol(pinfo->layers, "ip");
 }
 
 static gchar*
-ip_build_filter(packet_info *pinfo)
+ip_build_filter(packet_info *pinfo, void *user_data _U_)
 {
     return ws_strdup_printf("ip.addr eq %s and ip.addr eq %s",
                 address_to_str(pinfo->pool, &pinfo->net_src),
@@ -1583,7 +1582,7 @@ dissect_ip_options(tvbuff_t *tvb, int offset, guint length,
       if (option_dissector == NULL) {
         name = wmem_strdup_printf(pinfo->pool, "Unknown (0x%02x)", opt);
       } else {
-        name = dissector_handle_get_short_name(option_dissector);
+        name = dissector_handle_get_protocol_short_name(option_dissector);
       }
 
       /* Option has a length. Is it in the packet? */
@@ -2039,7 +2038,8 @@ dissect_ip_v4(tvbuff_t *tvb, packet_info *pinfo, proto_tree *parent_tree, void* 
         ett_ip_flags, ip_flags, ENC_BIG_ENDIAN, BMT_NO_FALSE | BMT_NO_TFS | BMT_NO_INT);
   }
 
-  tf = proto_tree_add_uint(ip_tree, hf_ip_frag_offset, tvb, offset + 6, 2, (iph->ip_off & IP_OFFSET)*8);
+  tf = proto_tree_add_uint_format_value(ip_tree, hf_ip_frag_offset, tvb, offset + 6, 2,
+                                        iph->ip_off, "%u", (iph->ip_off & IP_OFFSET) * 8);
 
   iph->ip_ttl = tvb_get_guint8(tvb, offset + 8);
   ttl_item = proto_tree_add_item(ip_tree, hf_ip_ttl, tvb, offset + 8, 1, ENC_BIG_ENDIAN);
@@ -2220,7 +2220,7 @@ dissect_ip_v4(tvbuff_t *tvb, packet_info *pinfo, proto_tree *parent_tree, void* 
       proto_item_set_hidden(item);
     }
 
-    if (ip_use_geoip) {
+    if (gbl_resolv_flags.maxmind_geoip) {
       add_geoip_info(ip_tree, pinfo, tvb, offset, src32, dst32);
     }
   }
@@ -2610,7 +2610,7 @@ proto_register_ip(void)
 
     { &hf_ip_flags,
       { "Flags", "ip.flags", FT_UINT8, BASE_HEX,
-        NULL, 0x0, "Flags (3 bits)", HFILL }},
+        NULL, 0xE0, "Flags (3 bits)", HFILL }},
 
     { &hf_ip_flags_sf,
       { "Security flag", "ip.flags.sf", FT_BOOLEAN, 8,
@@ -2989,10 +2989,8 @@ proto_register_ip(void)
     "Support packet-capture from IP TSO-enabled hardware",
     "Whether to correct for TSO-enabled (TCP segmentation offload) hardware "
     "captures, such as spoofing the IP packet length", &ip_tso_supported);
-  prefs_register_bool_preference(ip_module, "use_geoip",
-    "Enable IPv4 geolocation",
-    "Whether to look up IP addresses in each MaxMind database we have loaded",
-    &ip_use_geoip);
+
+  prefs_register_obsolete_preference(ip_module, "use_geoip");
   prefs_register_bool_preference(ip_module, "security_flag" ,
     "Interpret Reserved flag as Security flag (RFC 3514)",
     "Whether to interpret the originally reserved flag as security flag",
@@ -3001,6 +2999,10 @@ proto_register_ip(void)
     "Try heuristic sub-dissectors first",
     "Try to decode a packet using an heuristic sub-dissector before using a sub-dissector registered to a specific port",
     &try_heuristic_first);
+
+  prefs_register_static_text_preference(ip_module, "text_use_geoip",
+    "IP geolocation settings can be changed in the Name Resolution preferences",
+    "IP geolocation settings can be changed in the Name Resolution preferences");
 
   ip_handle = register_dissector("ip", dissect_ip, proto_ip);
   reassembly_table_register(&ip_reassembly_table,
@@ -3011,8 +3013,8 @@ proto_register_ip(void)
   exported_pdu_tap = register_export_pdu_tap_with_encap("IP", WTAP_ENCAP_RAW_IP);
 
   register_decode_as(&ip_da);
-  register_conversation_table(proto_ip, TRUE, ip_conversation_packet, ip_hostlist_packet);
-  register_conversation_filter("ip", "IPv4", ip_filter_valid, ip_build_filter);
+  register_conversation_table(proto_ip, TRUE, ip_conversation_packet, ip_endpoint_packet);
+  register_conversation_filter("ip", "IPv4", ip_filter_valid, ip_build_filter, NULL);
 
   ip_cap_handle = register_capture_dissector("ip", capture_ip, proto_ip);
 
@@ -3066,7 +3068,7 @@ proto_reg_handoff_ip(void)
   dissector_add_uint("pwach.channel_type", PW_ACH_TYPE_IPV4, ip_handle);
   dissector_add_uint("mcc.proto", PW_ACH_TYPE_IPV4, ip_handle);
   dissector_add_uint("sflow_245.header_protocol", SFLOW_245_HEADER_IPv4, ip_handle);
-  dissector_add_uint("l2tp.pw_type", L2TPv3_PROTOCOL_IP, ip_handle);
+  dissector_add_uint("l2tp.pw_type", L2TPv3_PW_IP, ip_handle);
   dissector_add_for_decode_as_with_preference("udp.port", ip_handle);
   dissector_add_for_decode_as("pcli.payload", ip_handle);
   dissector_add_uint("wtap_encap", WTAP_ENCAP_RAW_IP4, ip_handle);

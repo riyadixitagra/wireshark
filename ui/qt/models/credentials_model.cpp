@@ -20,9 +20,14 @@ CredentialsModel::CredentialsModel(QObject *parent)
 {
 }
 
+CredentialsModel::~CredentialsModel()
+{
+    clear();
+}
+
 int CredentialsModel::rowCount(const QModelIndex &) const
 {
-    return credentials_.count();
+    return static_cast<int>(credentials_.count());
 }
 
 int CredentialsModel::columnCount(const QModelIndex &) const

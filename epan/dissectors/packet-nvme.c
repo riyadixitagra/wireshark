@@ -1192,7 +1192,7 @@ nvme_add_data_tr_off(struct nvme_q_ctx *q_ctx, guint32 off, guint32 frame_num)
     wmem_tree_key_t cmd_key[2];
 
     nvme_build_done_frame_key(cmd_key, NULL, &frame_num);
-    wmem_tree_insert32_array(q_ctx->data_offsets, cmd_key, (void*)(guint64)off);
+    wmem_tree_insert32_array(q_ctx->data_offsets, cmd_key, GUINT_TO_POINTER(off));
 }
 
 guint32
@@ -1201,7 +1201,7 @@ nvme_lookup_data_tr_off(struct nvme_q_ctx *q_ctx, guint32 frame_num)
     wmem_tree_key_t cmd_key[2];
 
     nvme_build_done_frame_key(cmd_key, NULL, &frame_num);
-    return (guint32)(guint64)wmem_tree_lookup32_array(q_ctx->data_offsets, cmd_key);
+    return GPOINTER_TO_UINT(wmem_tree_lookup32_array(q_ctx->data_offsets, cmd_key));
 }
 
 void
@@ -2828,7 +2828,7 @@ static void dissect_nvme_get_logpage_telemetry_resp(proto_item *ti, tvbuff_t *cm
     if (off <= 10 && (12 - off) <= len)
         proto_tree_add_item(grp, hf_nvme_get_logpage_telemetry_da2lb, cmd_tvb, 10-off, 2, ENC_LITTLE_ENDIAN);
     if (off <= 12 && (14 - off) <= len)
-        proto_tree_add_item(grp, hf_nvme_get_logpage_telemetry_da3lb, cmd_tvb, 12-off, 3, ENC_LITTLE_ENDIAN);
+        proto_tree_add_item(grp, hf_nvme_get_logpage_telemetry_da3lb, cmd_tvb, 12-off, 2, ENC_LITTLE_ENDIAN);
     if (off <= 14 && (372 - off) <= len)
         proto_tree_add_item(grp, hf_nvme_get_logpage_telemetry_rsvd1, cmd_tvb, 14-off, 368, ENC_NA);
     if (off <= 382 && (383 - off) <= len)
@@ -2948,7 +2948,7 @@ static void dissect_nvme_get_logpage_pred_lat_resp(proto_item *ti, tvbuff_t *cmd
     if (off <= 136 && (144 - off) <= len)
         proto_tree_add_item(grp, hf_nvme_get_logpage_pred_lat_dtwin_we,  cmd_tvb, 136-off, 8, ENC_LITTLE_ENDIAN);
     if (off <= 144 && (152 - off) <= len)
-        proto_tree_add_item(grp, hf_nvme_get_logpage_pred_lat_dtwin_te,  cmd_tvb, 144-off, 152, ENC_LITTLE_ENDIAN);
+        proto_tree_add_item(grp, hf_nvme_get_logpage_pred_lat_dtwin_te,  cmd_tvb, 144-off, 8, ENC_LITTLE_ENDIAN);
     poff = (off <= 152) ? (152 - off) : 0;
     if (poff > len)
         return;
@@ -4119,7 +4119,7 @@ dissect_nvmeof_cqe_status_8B(proto_tree *cqe_tree, tvbuff_t *cqe_tvb,
 
 const gchar *get_nvmeof_cmd_string(guint8 fctype)
 {
-    return val_to_str(fctype, fctype_tbl, "Unknown Fabric Command");
+    return val_to_str_const(fctype, fctype_tbl, "Unknown Fabric Command");
 }
 
 static void dissect_nvme_cqe_common(tvbuff_t *nvme_tvb, proto_tree *cqe_tree, guint off, gboolean nvmeof);
@@ -4143,7 +4143,7 @@ dissect_nvmeof_fabric_cqe(tvbuff_t *nvme_tvb, packet_info *pinfo,
                             (fctype == NVME_FCTYPE_PROP_GET) ? "Get" : "Set",
                             val_to_str_const(cmd->cmd_ctx.fabric_cmd.prop_get.offset, prop_offset_tbl, "Unknown Property"));
 
-    proto_item_append_text(ti, " (For Cmd: %s)", val_to_str(fctype, fctype_tbl, "Unknown Cmd"));
+    proto_item_append_text(ti, " (For Cmd: %s)", val_to_str_const(fctype, fctype_tbl, "Unknown Cmd"));
 
     cqe_tree = proto_item_add_subtree(ti, ett_data);
 
@@ -7164,7 +7164,7 @@ proto_register_nvme(void)
         },
         { &hf_nvme_get_logpage_errinf_ns,
             { "Namespace ID", "nvme.cmd.get_logpage.errinf.nsid",
-               FT_UINT16, BASE_HEX, NULL, 0x0, NULL, HFILL}
+               FT_UINT32, BASE_HEX, NULL, 0x0, NULL, HFILL}
         },
         { &hf_nvme_get_logpage_errinf_vsi,
             { "Namespace ID", "nvme.cmd.get_logpage.errinf.vsi",
@@ -7598,7 +7598,7 @@ proto_register_nvme(void)
         },
         { &hf_nvme_get_logpage_telemetry_rsvd0,
             { "Reserved", "nvme.cmd.get_logpage.telemetry.rsvd0",
-               FT_UINT8, BASE_HEX, NULL, 0x0, NULL, HFILL}
+               FT_UINT32, BASE_HEX, NULL, 0x0, NULL, HFILL}
         },
         { &hf_nvme_get_logpage_telemetry_ieee,
             { "IEEE OUI Identifier (IEEE)", "nvme.cmd.get_logpage.telemetry.ieee",

@@ -30,7 +30,7 @@
 #include "wsutil/filesystem.h"
 
 #include <ui_import_text_dialog.h>
-#include "wireshark_application.h"
+#include "main_application.h"
 #include <ui/qt/utils/qt_ui_utils.h>
 #include "ui/qt/widgets/wireshark_file_dialog.h"
 
@@ -76,7 +76,7 @@ ImportTextDialog::ImportTextDialog(QWidget *parent) :
     int file_type_subtype;
 
     ti_ui_->setupUi(this);
-    setWindowTitle(wsApp->windowTitleString(tr("Import From Hex Dump")));
+    setWindowTitle(mainApp->windowTitleString(tr("Import From Hex Dump")));
     memset(&import_info_, 0, sizeof(import_info_));
 
     import_button_ = ti_ui_->buttonBox->button(QDialogButtonBox::Open);
@@ -185,7 +185,7 @@ ImportTextDialog::~ImportTextDialog()
 
 void ImportTextDialog::loadSettingsFile()
 {
-    QFileInfo fileInfo(QString(get_profile_dir(get_profile_name(), FALSE)), QString(SETTINGS_FILE));
+    QFileInfo fileInfo(gchar_free_to_qstring(get_profile_dir(get_profile_name(), FALSE)), QString(SETTINGS_FILE));
     QFile loadFile(fileInfo.filePath());
 
     if (!fileInfo.exists() || !fileInfo.isFile()) {
@@ -202,7 +202,7 @@ void ImportTextDialog::loadSettingsFile()
 
 void ImportTextDialog::saveSettingsFile()
 {
-    QFileInfo fileInfo(QString(get_profile_dir(get_profile_name(), FALSE)), QString(SETTINGS_FILE));
+    QFileInfo fileInfo(gchar_free_to_qstring(get_profile_dir(get_profile_name(), FALSE)), QString(SETTINGS_FILE));
     QFile saveFile(fileInfo.filePath());
 
     if (fileInfo.exists() && !fileInfo.isFile()) {
@@ -536,6 +536,10 @@ int ImportTextDialog::exec() {
     }
   cleanup_wtap:
     /* g_free checks for null */
+    wtap_block_array_free(params.shb_hdrs);
+    if (params.idb_inf != NULL) {
+        wtap_block_array_free(params.idb_inf->interface_data);
+    }
     g_free(params.idb_inf);
     g_free(tmp);
     g_free((gpointer) import_info_.payload);
@@ -627,7 +631,7 @@ void ImportTextDialog::on_textFileBrowseButton_clicked()
         }
     }
 
-    QString file_name = WiresharkFileDialog::getOpenFileName(this, wsApp->windowTitleString(tr("Import Text File")), open_dir);
+    QString file_name = WiresharkFileDialog::getOpenFileName(this, mainApp->windowTitleString(tr("Import Text File")), open_dir);
     ti_ui_->textFileLineEdit->setText(file_name);
 }
 
@@ -642,7 +646,7 @@ bool ImportTextDialog::checkDateTimeFormat(const QString &time_format)
      * probably better */
     if (time_format == "ISO") {
         ret = true;
-    } else while ((idx = time_format.indexOf("%", idx)) != -1) {
+    } else while ((idx = static_cast<int>(time_format.indexOf("%", idx))) != -1) {
         idx++;
         if ((idx == time_format.size()) || !valid_code.contains(time_format[idx])) {
             return false;
@@ -780,7 +784,12 @@ void ImportTextDialog::enableFieldWidgets(bool enable_direction_input, bool enab
 void ImportTextDialog::on_dataEncodingComboBox_currentIndexChanged(int index)
 {
     QVariant val = ti_ui_->dataEncodingComboBox->itemData(index);
-    if (val != QVariant::Invalid) {
+#if (QT_VERSION >= QT_VERSION_CHECK(6, 0, 0))
+    if (val.canConvert<int>())
+#else
+    if (val != QVariant::Invalid)
+#endif
+    {
         // data_encoding_ok = true;
         import_info_.regex.encoding = (enum data_encoding) val.toUInt();
         switch (import_info_.regex.encoding) {
@@ -921,8 +930,12 @@ void ImportTextDialog::enableHeaderWidgets(uint encapsulation) {
 void ImportTextDialog::on_encapComboBox_currentIndexChanged(int index)
 {
     QVariant val = ti_ui_->encapComboBox->itemData(index);
-
-    if (val != QVariant::Invalid) {
+#if (QT_VERSION >= QT_VERSION_CHECK(6, 0, 0))
+    if (val.canConvert<int>())
+#else
+    if (val != QVariant::Invalid)
+#endif
+    {
         import_info_.encapsulation = val.toUInt();
     } else {
         import_info_.encapsulation = WTAP_ENCAP_UNKNOWN;
@@ -981,7 +994,7 @@ void ImportTextDialog::checkAddress(SyntaxLineEdit *le, bool &ok_enabled, const 
     if (addr_str.length() < 1) {
         *val_ptr = 0;
     } else {
-        conv_ok = ws_inet_pton4(addr_str.toLocal8Bit().data(), (ws_in4_addr*)val_ptr);
+        conv_ok = ws_inet_pton4(addr_str.toUtf8().data(), (ws_in4_addr*)val_ptr);
         if (conv_ok) {
             syntax_state= SyntaxLineEdit::Valid;
         } else {
@@ -1004,7 +1017,7 @@ void ImportTextDialog::checkIPv6Address(SyntaxLineEdit *le, bool &ok_enabled, co
     if (addr_str.length() < 1) {
         *val_ptr = {{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
     } else {
-        conv_ok = ws_inet_pton6(addr_str.toLocal8Bit().data(), (ws_in6_addr*)val_ptr);
+        conv_ok = ws_inet_pton6(addr_str.toUtf8().data(), (ws_in6_addr*)val_ptr);
         if (conv_ok) {
             syntax_state= SyntaxLineEdit::Valid;
         } else {
@@ -1075,5 +1088,5 @@ void ImportTextDialog::on_maxLengthLineEdit_textChanged(const QString &max_frame
 
 void ImportTextDialog::on_buttonBox_helpRequested()
 {
-    wsApp->helpTopicAction(HELP_IMPORT_DIALOG);
+    mainApp->helpTopicAction(HELP_IMPORT_DIALOG);
 }

@@ -12,14 +12,15 @@
 #include "capture_file_properties_dialog.h"
 #include <ui_capture_file_properties_dialog.h>
 
+#include "ui/simple_dialog.h"
 #include "ui/summary.h"
 
 #include "wsutil/str_util.h"
 #include "wsutil/utf8_entities.h"
-#include "ui/version_info.h"
+#include "wsutil/version_info.h"
 
 #include <ui/qt/utils/qt_ui_utils.h>
-#include "wireshark_application.h"
+#include "main_application.h"
 
 #include <QPushButton>
 #include <QScrollBar>
@@ -172,11 +173,6 @@ QString CaptureFilePropertiesDialog::summaryToHtml()
     out << table_row_begin
         << table_vheader_tmpl.arg(tr("Hash (SHA256)"))
         << table_data_tmpl.arg(summary.file_sha256)
-        << table_row_end;
-
-    out << table_row_begin
-        << table_vheader_tmpl.arg(tr("Hash (RIPEMD160)"))
-        << table_data_tmpl.arg(summary.file_rmd160)
         << table_row_end;
 
     out << table_row_begin
@@ -604,7 +600,7 @@ void CaptureFilePropertiesDialog::changeEvent(QEvent* event)
 
 void CaptureFilePropertiesDialog::on_buttonBox_helpRequested()
 {
-    wsApp->helpTopicAction(HELP_STATS_SUMMARY_DIALOG);
+    mainApp->helpTopicAction(HELP_STATS_SUMMARY_DIALOG);
 }
 
 void CaptureFilePropertiesDialog::on_buttonBox_accepted()
@@ -616,6 +612,20 @@ void CaptureFilePropertiesDialog::on_buttonBox_accepted()
     if (wtap_dump_can_write(cap_file_.capFile()->linktypes, WTAP_COMMENT_PER_SECTION))
     {
         gchar *str = qstring_strdup(ui->commentsTextEdit->toPlainText());
+
+        /*
+         * Make sure this would fit in a pcapng option.
+         *
+         * XXX - 65535 is the maximum size for an option in pcapng;
+         * what if another capture file format supports larger
+         * comments?
+         */
+        if (strlen(str) > 65535) {
+            /* It doesn't fit.  Tell the user and give up. */
+            simple_dialog(ESD_TYPE_ERROR, ESD_BTN_OK,
+                          "That comment is too large to save in a capture file.");
+            return;
+        }
         cf_update_section_comment(cap_file_.capFile(), str);
         emit captureCommentChanged();
         fillDetails();

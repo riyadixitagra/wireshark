@@ -57,7 +57,7 @@ drange_node_from_str(const char *range_str, char **err_ptr)
 {
     const char *str;
     char *endptr;
-    gint32 lower, upper;
+    gint32 lower, upper = 0;
     drange_node_end_t end = DRANGE_NODE_END_T_UNINITIALIZED;
     drange_node *dn;
     gboolean ok;
@@ -74,7 +74,7 @@ drange_node_from_str(const char *range_str, char **err_ptr)
     str = range_str;
     if (*str == ':') {
         lower = 0;
-        str++;
+        /* Do not advance 'str' here. */
     }
     else {
         if (!drange_str_to_gint32(str, &lower, &endptr, err_ptr))
@@ -243,7 +243,7 @@ drange_node_set_to_the_end(drange_node* drnode)
 
 /* drange constructor */
 drange_t *
-drange_new(void)
+drange_new(drange_node* drnode)
 {
     drange_t * new_drange;
     new_drange = g_new(drange_t,1);
@@ -252,6 +252,10 @@ drange_new(void)
     new_drange->total_length = 0;
     new_drange->min_start_offset = G_MAXINT;
     new_drange->max_start_offset = G_MININT;
+
+    if (drnode)
+            drange_append_drange_node(new_drange, drnode);
+
     return new_drange;
 }
 
@@ -269,7 +273,7 @@ drange_new_from_list(GSList *list)
 {
     drange_t    *new_drange;
 
-    new_drange = drange_new();
+    new_drange = drange_new(NULL);
     g_slist_foreach(list, drange_append_wrapper, new_drange);
     return new_drange;
 }
@@ -283,7 +287,7 @@ drange_dup(drange_t *org)
     if (!org)
         return NULL;
 
-    new_drange = drange_new();
+    new_drange = drange_new(NULL);
     for (p = org->range_list; p; p = p->next) {
         drange_node *drnode = (drange_node *)p->data;
         drange_append_drange_node(new_drange, drange_node_dup(drnode));
@@ -355,31 +359,30 @@ drange_foreach_drange_node(drange_t * dr, GFunc func, gpointer funcdata)
     g_slist_foreach(dr->range_list,func,funcdata);
 }
 
-static void
-_sprint_drange_node(GString *repr, drange_node *rn)
+char *
+drange_node_tostr(const drange_node *rn)
 {
     if (rn->ending == DRANGE_NODE_END_T_TO_THE_END)
-        g_string_append_printf(repr, "%d:",
-                            rn->start_offset);
+        return ws_strdup_printf("%d:", rn->start_offset);
     else if(rn->ending == DRANGE_NODE_END_T_OFFSET)
-        g_string_append_printf(repr, "%d-%d",
-                            rn->start_offset, rn->end_offset);
+        return ws_strdup_printf("%d-%d", rn->start_offset, rn->end_offset);
     else if (rn->ending == DRANGE_NODE_END_T_LENGTH)
-        g_string_append_printf(repr, "%d:%d",
-                            rn->start_offset, rn->length);
+        return ws_strdup_printf("%d:%d", rn->start_offset, rn->length);
     else
-        g_string_append_printf(repr, "%d/%d/%d/U",
-                            rn->start_offset, rn->length, rn->end_offset);
+        return ws_strdup_printf("%d/%d/%d/U", rn->start_offset, rn->length, rn->end_offset);
 }
 
 char *
-drange_tostr(drange_t *dr)
+drange_tostr(const drange_t *dr)
 {
     GString *repr = g_string_new("");
     GSList *range_list = dr->range_list;
+    char *s;
 
     while (range_list) {
-        _sprint_drange_node(repr, (drange_node *)(range_list->data));
+        s = drange_node_tostr(range_list->data);
+        g_string_append(repr, s);
+        g_free(s);
         range_list = g_slist_next(range_list);
         if (range_list != NULL) {
             g_string_append_c(repr, ',');

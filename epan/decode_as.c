@@ -97,19 +97,19 @@ static void
 decode_proto_add_to_list (const gchar *table_name, gpointer value, gpointer user_data)
 {
     struct decode_as_default_populate* populate = (struct decode_as_default_populate*)user_data;
-    const gchar     *proto_name;
+    const gchar     *dissector_description;
     gint       i;
     dissector_handle_t handle;
 
 
     handle = (dissector_handle_t)value;
-    proto_name = dissector_handle_get_short_name(handle);
+    dissector_description = dissector_handle_get_description(handle);
 
     i = dissector_handle_get_protocol_index(handle);
     if (i >= 0 && !proto_is_protocol_enabled(find_protocol_by_id(i)))
         return;
 
-    populate->add_to_list(table_name, proto_name, value, populate->ui_element);
+    populate->add_to_list(table_name, dissector_description, value, populate->ui_element);
 }
 
 void decode_as_default_populate_list(const gchar *table_name, decode_as_add_to_list_func add_to_list, gpointer ui_element)
@@ -150,31 +150,27 @@ gboolean decode_as_default_reset(const gchar *name, gconstpointer pattern)
 
 gboolean decode_as_default_change(const gchar *name, gconstpointer pattern, gconstpointer handle, const gchar *list_name _U_)
 {
-    const dissector_handle_t* dissector = (const dissector_handle_t*)handle;
-    if (dissector != NULL) {
-        switch (get_dissector_table_selector_type(name)) {
-        case FT_UINT8:
-        case FT_UINT16:
-        case FT_UINT24:
-        case FT_UINT32:
-            dissector_change_uint(name, GPOINTER_TO_UINT(pattern), *dissector);
-            return TRUE;
-        case FT_NONE:
-            dissector_change_payload(name, *dissector);
-            return TRUE;
-        case FT_STRING:
-        case FT_STRINGZ:
-        case FT_UINT_STRING:
-        case FT_STRINGZPAD:
-        case FT_STRINGZTRUNC:
-            dissector_change_string(name, (!pattern)?"":(const gchar *) pattern, *dissector);
-            return TRUE;
-        default:
-            return FALSE;
-        };
-
+    const dissector_handle_t dissector = (const dissector_handle_t)handle;
+    switch (get_dissector_table_selector_type(name)) {
+    case FT_UINT8:
+    case FT_UINT16:
+    case FT_UINT24:
+    case FT_UINT32:
+        dissector_change_uint(name, GPOINTER_TO_UINT(pattern), dissector);
+        return TRUE;
+    case FT_NONE:
+        dissector_change_payload(name, dissector);
+        return TRUE;
+    case FT_STRING:
+    case FT_STRINGZ:
+    case FT_UINT_STRING:
+    case FT_STRINGZPAD:
+    case FT_STRINGZTRUNC:
+        dissector_change_string(name, (!pattern)?"":(const gchar *) pattern, dissector);
+        return TRUE;
+    default:
         return FALSE;
-    }
+    };
 
     return TRUE;
 }
@@ -248,23 +244,24 @@ read_set_decode_as_entries(gchar *key, const gchar *value,
                     }
 
                     /* Now apply the value data back to dissector table preference */
-                    proto_name = proto_get_protocol_filter_name(dissector_handle_get_protocol_index(handle));
-                    module = prefs_find_module(proto_name);
-                    pref_value = prefs_find_preference(module, values[0]);
-                    if (pref_value != NULL) {
-                        gboolean replace = FALSE;
-                        if (g_hash_table_lookup(processed_entries, proto_name) == NULL) {
-                            /* First decode as entry for this protocol, ranges may be replaced */
-                            replace = TRUE;
+                    if (handle != NULL) {
+                        proto_name = proto_get_protocol_filter_name(dissector_handle_get_protocol_index(handle));
+                        module = prefs_find_module(proto_name);
+                        pref_value = prefs_find_preference(module, values[0]);
+                        if (pref_value != NULL) {
+                            gboolean replace = FALSE;
+                            if (g_hash_table_lookup(processed_entries, proto_name) == NULL) {
+                                /* First decode as entry for this protocol, ranges may be replaced */
+                                replace = TRUE;
 
-                            /* Remember we've processed this protocol */
-                            g_hash_table_insert(processed_entries, (gpointer)proto_name, (gpointer)proto_name);
+                                /* Remember we've processed this protocol */
+                                g_hash_table_insert(processed_entries, (gpointer)proto_name, (gpointer)proto_name);
+                            }
+
+                            prefs_add_decode_as_value(pref_value, (guint)long_value, replace);
+                            module->prefs_changed_flags |= prefs_get_effect_flags(pref_value);
                         }
-
-                        prefs_add_decode_as_value(pref_value, (guint)long_value, replace);
-                        module->prefs_changed_flags |= prefs_get_effect_flags(pref_value);
                     }
-
                 }
             }
             if (is_valid) {
@@ -311,18 +308,18 @@ decode_as_write_entry (const gchar *table_name, ftenum_t selector_type,
 {
     GList **decode_as_rows_list = (GList **)user_data;
     dissector_handle_t current, initial;
-    const gchar *current_proto_name, *initial_proto_name, *decode_as_row;
+    const gchar *current_dissector_name, *initial_dissector_name, *decode_as_row;
 
     current = dtbl_entry_get_handle((dtbl_entry_t *)value);
     if (current == NULL)
-        current_proto_name = DECODE_AS_NONE;
+        current_dissector_name = DECODE_AS_NONE;
     else
-        current_proto_name = dissector_handle_get_short_name(current);
+        current_dissector_name = dissector_handle_get_description(current);
     initial = dtbl_entry_get_initial_handle((dtbl_entry_t *)value);
     if (initial == NULL)
-        initial_proto_name = DECODE_AS_NONE;
+        initial_dissector_name = DECODE_AS_NONE;
     else
-        initial_proto_name = dissector_handle_get_short_name(initial);
+        initial_dissector_name = dissector_handle_get_description(initial);
 
     switch (selector_type) {
 
@@ -342,8 +339,8 @@ decode_as_write_entry (const gchar *table_name, ftenum_t selector_type,
          */
         decode_as_row = ws_strdup_printf(
             DECODE_AS_ENTRY ": %s,%u,%s,%s\n",
-            table_name, GPOINTER_TO_UINT(key), initial_proto_name,
-            current_proto_name);
+            table_name, GPOINTER_TO_UINT(key), initial_dissector_name,
+            current_dissector_name);
         break;
     case FT_NONE:
         /*
@@ -353,8 +350,8 @@ decode_as_write_entry (const gchar *table_name, ftenum_t selector_type,
          */
         decode_as_row = ws_strdup_printf(
             DECODE_AS_ENTRY ": %s,0,%s,%s\n",
-            table_name, initial_proto_name,
-            current_proto_name);
+            table_name, initial_dissector_name,
+            current_dissector_name);
         break;
 
     case FT_STRING:
@@ -364,8 +361,8 @@ decode_as_write_entry (const gchar *table_name, ftenum_t selector_type,
     case FT_STRINGZTRUNC:
         decode_as_row = ws_strdup_printf(
             DECODE_AS_ENTRY ": %s,%s,%s,%s\n",
-            table_name, (gchar *)key, initial_proto_name,
-            current_proto_name);
+            table_name, (gchar *)key, initial_dissector_name,
+            current_dissector_name);
         break;
 
     default:
@@ -412,11 +409,12 @@ save_decode_as_entries(gchar** err)
         return -1;
     }
 
-    fputs("# \"Decode As\" entries file for Wireshark " VERSION ".\n"
+    fprintf(da_file, "# \"Decode As\" entries file for %s " VERSION ".\n"
         "#\n"
         "# This file is regenerated each time \"Decode As\" preferences\n"
-        "# are saved within Wireshark. Making manual changes should be safe,\n"
-        "# however.\n", da_file);
+        "# are saved within %s. Making manual changes should be safe,\n"
+        "# however.\n",
+        get_configuration_namespace(), get_configuration_namespace());
 
     dissector_all_tables_foreach_changed(decode_as_write_entry, &decode_as_rows_list);
 

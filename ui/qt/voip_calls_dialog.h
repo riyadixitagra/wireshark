@@ -89,7 +89,7 @@ private:
     static VoipCallsDialog *pinstance_voip_;
     static VoipCallsDialog *pinstance_sip_;
     bool all_flows_;
-    static std::mutex mutex_;
+    static std::mutex init_mutex_;
 
     Ui::VoipCallsDialog *ui;
     VoipCallsInfoModel *call_infos_model_;
@@ -108,7 +108,7 @@ private:
 
     // Tap callbacks
     static void tapReset(void *tapinfo_ptr);
-    static tap_packet_status tapPacket(void *tapinfo_ptr, packet_info *pinfo, epan_dissect_t *, const void *data);
+    static tap_packet_status tapPacket(void *tapinfo_ptr, packet_info *pinfo, epan_dissect_t *, const void *data, tap_flags_t flags);
     static void tapDraw(void *tapinfo_ptr);
     static gint compareCallNums(gconstpointer a, gconstpointer b);
 
@@ -133,7 +133,7 @@ private slots:
     void on_buttonBox_helpRequested();
     void updateWidgets();
     void captureEvent(CaptureEvent e);
-    void on_displayFilterCheckBox_toggled(bool checked);
+    void displayFilterCheckBoxToggled(bool checked);
     void on_actionSelectAll_triggered();
     void on_actionSelectInvert_triggered();
     void on_actionSelectNone_triggered();

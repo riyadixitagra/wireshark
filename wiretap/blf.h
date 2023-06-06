@@ -1,6 +1,7 @@
 /** @file
  *
- * BLF file format decoder for the Wiretap library.
+ * Binary Log File (BLF) file format from Vector Informatik decoder
+ * for the Wiretap library.
  *
  * Copyright (c) 2021-2022 by Dr. Lars Voelker <lars.voelker@technica-engineering.de>
  *
@@ -23,6 +24,9 @@ wtap_open_return_val blf_open(wtap *wth, int *err, gchar **err_info);
 
 
 #define BLF_HEADER_TYPE_DEFAULT                   1
+#define BLF_HEADER_TYPE_2                         2
+#define BLF_HEADER_TYPE_3                         3
+
 
 #define BLF_COMPRESSION_NONE                      0
 #define BLF_COMPRESSION_ZLIB                      2
@@ -83,6 +87,27 @@ typedef struct blf_logobjectheader {
     guint16 object_version;
     guint64 object_timestamp;
 } blf_logobjectheader_t;
+
+#define BLF_TS_STATUS_ORIG_TS_VALID     0x01
+#define BLF_TS_STATUS_SW_TS             0x02
+#define BLF_TS_STATUS_PROTO_SPECIFIC    0x10
+
+typedef struct blf_logobjectheader2 {
+    guint32 flags;
+    guint8  timestamp_status;
+    guint8  res1;
+    guint16 object_version;
+    guint64 object_timestamp;
+    guint64 original_timestamp;
+} blf_logobjectheader2_t;
+
+typedef struct blf_logobjectheader3 {
+    guint32 flags;
+    guint16 static_size;
+    guint16 object_version;
+    guint64 object_timestamp;
+} blf_logobjectheader3_t;
+
 
 #define BLF_DIR_RX    0
 #define BLF_DIR_TX    1
@@ -206,6 +231,70 @@ typedef struct blf_canfdmessage64 {
     guint8  extDataOffset;
     guint32 crc;
 } blf_canfdmessage64_t;
+
+
+/* see https://bitbucket.org/tobylorenz/vector_blf/src/master/src/Vector/BLF/CanErrorFrame.h */
+
+typedef struct blf_canerror {
+    guint16  channel;
+    guint16  length;
+} blf_canerror_t;
+
+
+/* see https://bitbucket.org/tobylorenz/vector_blf/src/master/src/Vector/BLF/CanErrorFrameExt.h */
+
+#define BLF_CANERROREXT_FLAG_SJA                   0x01
+#define BLF_CANERROREXT_FLAG_CANCORE               0x02
+#define BLF_CANERROREXT_EXTECC_TX                  0x1000
+#define BLF_CANERROREXT_EXTECC_NOT_ACK             0x2000
+#define BLF_CANERROREXT_ECC_MEANING_BIT_ERROR      0x0
+#define BLF_CANERROREXT_ECC_MEANING_FORM_ERROR     0x1
+#define BLF_CANERROREXT_ECC_MEANING_STUFF_ERROR    0x2
+#define BLF_CANERROREXT_ECC_MEANING_OTHER_ERROR    0x3
+#define BLF_CANERROREXT_ECC_MEANING_CRC_ERROR      0x4
+#define BLF_CANERROREXT_ECC_MEANING_ACKDEL_ERROR   0x5
+#define BLF_CANERROREXT_ECC_MEANING_OTHER_ERROR2   0x6
+#define BLF_CANERROREXT_ECC_MEANING_NACK_ERROR     0x7
+#define BLF_CANERROREXT_ECC_MEANING_OVERLOAD       0x8
+#define BLF_CANERROREXT_ECC_FDF_BIT_ERROR          0x9
+
+typedef struct blf_canerrorext {
+    guint16 channel;
+    guint16 length;
+    guint32 flags;
+    guint8  ecc;
+    guint8  position;
+    guint8  dlc;
+    guint8  reserved1;
+    guint32 frameLength_in_ns;
+    guint32 id;
+    guint16 errorCodeExt;
+    guint16 reserved2;
+} blf_canerrorext_t;
+
+
+/* see https://bitbucket.org/tobylorenz/vector_blf/src/master/src/Vector/BLF/CanFdErrorFrame64.h */
+
+typedef struct blf_canfderror64 {
+    guint8  channel;
+    guint8  dlc;
+    guint8  validDataBytes;
+    guint8  ecc;
+    guint16 flags;
+    guint16 errorCodeExt;
+    guint16 extFlags;
+    guint8  extDataOffset;
+    guint8  reserved1;
+    guint32 id;
+    guint32 frameLength_in_ns;
+    guint32 btrCfgArb;
+    guint32 btrCfgData;
+    guint32 timeOffsetBrsNs;
+    guint32 timeOffsetCrcDelNs;
+    guint32 crc;
+    guint16 errorPosition;
+    guint16 reserved2;
+} blf_canfderror64_t;
 
 
 /* see https://bitbucket.org/tobylorenz/vector_blf/src/master/src/Vector/BLF/FlexRayData.h */

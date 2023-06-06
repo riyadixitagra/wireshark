@@ -14,6 +14,7 @@
 #include <epan/ipv4.h>
 #include <epan/addr_and_mask.h>
 #include <epan/addr_resolv.h>
+#include <wsutil/bits_count_ones.h>
 
 static void
 set_uinteger(fvalue_t *fv, guint32 value)
@@ -98,8 +99,18 @@ val_from_literal(fvalue_t *fv, const char *s, gboolean allow_partial_value _U_, 
 static char *
 val_to_repr(wmem_allocator_t *scope, const fvalue_t *fv, ftrepr_t rtype _U_, int field_display _U_)
 {
+	char buf[WS_INET_ADDRSTRLEN];
+	char *repr;
+
 	guint32	ipv4_net_order = g_htonl(fv->value.ipv4.addr);
-	return ip_to_str(scope, (guint8*)&ipv4_net_order);
+	ip_to_str_buf((guint8*)&ipv4_net_order, buf, sizeof(buf));
+
+	if (fv->value.ipv4.nmask != 0 && fv->value.ipv4.nmask != 0xffffffff)
+		repr = wmem_strdup_printf(scope, "%s/%d", buf, ws_count_ones(fv->value.ipv4.nmask));
+	else
+		repr = wmem_strdup(scope, buf);
+
+	return repr;
 }
 
 
@@ -109,8 +120,8 @@ val_to_repr(wmem_allocator_t *scope, const fvalue_t *fv, ftrepr_t rtype _U_, int
  * So, for example, w.x.y.z/32 eq w.x.y.0/24 is TRUE.
  */
 
-static int
-cmp_order(const fvalue_t *fv_a, const fvalue_t *fv_b)
+static enum ft_result
+cmp_order(const fvalue_t *fv_a, const fvalue_t *fv_b, int *cmp)
 {
 	guint32		addr_a, addr_b, nmask;
 
@@ -118,8 +129,10 @@ cmp_order(const fvalue_t *fv_a, const fvalue_t *fv_b)
 	addr_a = fv_a->value.ipv4.addr & nmask;
 	addr_b = fv_b->value.ipv4.addr & nmask;
 	if (addr_a == addr_b)
-		return 0;
-	return addr_a < addr_b ? -1 : 1;
+		*cmp = 0;
+	else
+		*cmp = addr_a < addr_b ? -1 : 1;
+	return FT_OK;
 }
 
 static enum ft_result
@@ -139,6 +152,14 @@ slice(fvalue_t *fv, GByteArray *bytes, guint offset, guint length)
 	g_byte_array_append(bytes, data, length);
 }
 
+static guint
+ipv4_hash(const fvalue_t *fv)
+{
+	gint64 val1 = fv->value.ipv4.addr;
+	gint64 val2 = fv->value.ipv4.nmask;
+	return g_int64_hash(&val1) ^ g_int64_hash(&val2);
+}
+
 static gboolean
 is_zero(const fvalue_t *fv_a)
 {
@@ -155,11 +176,15 @@ ftype_register_ipv4(void)
 		"IPv4 address",			/* pretty_name */
 		4,				/* wire_size */
 		NULL,				/* new_value */
+		NULL,				/* copy_value */
 		NULL,				/* free_value */
 		val_from_literal,		/* val_from_literal */
 		NULL,				/* val_from_string */
 		NULL,				/* val_from_charconst */
 		val_to_repr,			/* val_to_string_repr */
+
+		NULL,				/* val_to_uinteger64 */
+		NULL,				/* val_to_sinteger64 */
 
 		{ .set_value_uinteger = set_uinteger },	/* union set_value */
 		{ .get_value_uinteger = value_get },	/* union get_value */
@@ -168,13 +193,37 @@ ftype_register_ipv4(void)
 		NULL,				/* cmp_contains */
 		NULL,				/* cmp_matches */
 
+		ipv4_hash,
 		is_zero,
+		NULL,
 		NULL,
 		slice,
 		bitwise_and,
+		NULL,				/* unary_minus */
+		NULL,				/* add */
+		NULL,				/* subtract */
+		NULL,				/* multiply */
+		NULL,				/* divide */
+		NULL,				/* modulo */
 	};
 
 	ftype_register(FT_IPv4, &ipv4_type);
+}
+
+void
+ftype_register_pseudofields_ipv4(int proto)
+{
+	static int hf_ft_ipv4;
+
+	static hf_register_info hf_ftypes[] = {
+		{ &hf_ft_ipv4,
+		    { "FT_IPv4", "_ws.ftypes.ipv4",
+			FT_IPv4, BASE_NONE, NULL, 0x00,
+			NULL, HFILL }
+		},
+	};
+
+	proto_register_field_array(proto, hf_ftypes, array_length(hf_ftypes));
 }
 
 /*

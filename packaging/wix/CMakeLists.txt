@@ -61,22 +61,13 @@ file(TO_NATIVE_PATH "${CMAKE_SOURCE_DIR}" TOP_SRC_DIR)
 # STAGING_DIR depends on the build configuration so we pass it
 # on the command line below.
 file(TO_NATIVE_PATH "${CMAKE_BINARY_DIR}/docbook" DOCBOOK_DIR)
-if(WIRESHARK_TARGET_PLATFORM STREQUAL "win32")
-	set(TARGET_MACHINE x86)
-elseif(WIRESHARK_TARGET_PLATFORM STREQUAL "win64")
-	set(TARGET_MACHINE x64)
-else()
-	message(FATAL_ERROR "Your mysterious moon-man architecture \"${WIRESHARK_TARGET_PLATFORM}\" frightens and confuses us.")
-endif()
-
-set(PRODUCT_VERSION ${PROJECT_MAJOR_VERSION}.${PROJECT_MINOR_VERSION}.${PROJECT_PATCH_VERSION}.${PROJECT_BUILD_VERSION})
 
 # To do:
 # - Sync the various version names between CMake and Wix.
-# - Set CMakeLists.txt version strings in tools/make-version.pl
+# - Set CMakeLists.txt version strings in tools/make-version.py
 # - Add a VERSION_EXTRA cmake option
 set (VERSION "${PROJECT_VERSION}")
-set (PRODUCT_VERSION=${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_MICRO}.${VERSION_BUILD})
+set(PRODUCT_VERSION ${PROJECT_MAJOR_VERSION}.${PROJECT_MINOR_VERSION}.${PROJECT_PATCH_VERSION}.${PROJECT_BUILD_VERSION})
 
 # Use the merge module that comes with our version of Visual Studio
 if(MSVC_VERSION GREATER_EQUAL 1930)
@@ -92,7 +83,7 @@ endif()
 # Starting with Visual Studio 2019 merge modules are deprecated but
 # are available as an individual component.
 # https://docs.microsoft.com/en-us/visualstudio/releases/2019/release-notes#-deprecations
-set(MERGE_MODULE "Microsoft_${MSVC_CRT_VERSION}_CRT_${TARGET_MACHINE}.msm")
+set(MERGE_MODULE "Microsoft_${MSVC_CRT_VERSION}_CRT_${WIRESHARK_TARGET_PROCESSOR_ARCHITECTURE}.msm")
 set (PF86_ENV "ProgramFiles(x86)")
 
 set(VC_TOOLS_MERGE_MODULES_DIR)
@@ -108,7 +99,7 @@ find_path(MERGE_MODULE_DIR ${MERGE_MODULE}
 		"$ENV{PROGRAMFILES}/Common Files/Merge Modules"
 	NO_DEFAULT_PATH
 )
-file(TO_NATIVE_PATH "${MERGE_MODULE_DIR}/Microsoft_${MSVC_CRT_VERSION}_CRT_${TARGET_MACHINE}.msm" MSM_NATIVE_PATH)
+file(TO_NATIVE_PATH "${MERGE_MODULE_DIR}/Microsoft_${MSVC_CRT_VERSION}_CRT_${WIRESHARK_TARGET_PROCESSOR_ARCHITECTURE}.msm" MSM_NATIVE_PATH)
 message(STATUS "Using ${MSM_NATIVE_PATH} for the WiX installer")
 
 # DependentComponents.wxi. Can be created at configure time.
@@ -140,6 +131,7 @@ foreach(_dll ${CARES_DLL} ${PCRE2_DLL} ${GCRYPT_DLLS}
 		${LZ4_DLL} ${NGHTTP2_DLL} ${SBC_DLL} ${SMI_DLL} ${SNAPPY_DLL}
 		${SPANDSP_DLL} ${BCG729_DLL} ${LIBXML2_DLLS} ${WINSPARKLE_DLL}
 		${ZLIB_DLL} ${BROTLI_DLLS} ${ZSTD_DLL} ${ILBC_DLL} ${OPUS_DLL}
+		${SPEEXDSP_DLL}
 		# Required for mmdbresolve
 		${MAXMINDDB_DLL}
 	)
@@ -179,6 +171,7 @@ foreach(_dll ${CARES_DLL} ${PCRE2_DLL} ${GCRYPT_DLLS}
 		${LZ4_DLL} ${NGHTTP2_DLL} ${SBC_DLL} ${SMI_DLL} ${SNAPPY_DLL}
 		${SPANDSP_DLL} ${BCG729_DLL} ${LIBXML2_DLLS} ${WINSPARKLE_DLL}
 		${ZLIB_DLL} ${BROTLI_DLLS} ${ZSTD_DLL} ${ILBC_DLL} ${OPUS_DLL}
+		${SPEEXDSP_DLL}
 		# mmdbresolve
 		${MAXMINDDB_DLL}
 	)
@@ -209,7 +202,7 @@ endif()
 set(WIX_CANDLE_DEFINES
 	-v
 	-sw1076
-	-dPlatform=${TARGET_MACHINE}
+	-dPlatform=${WIRESHARK_TARGET_PROCESSOR_ARCHITECTURE}
 	-dWiresharkName=${CMAKE_PROJECT_NAME}
 	-dWiresharkVersion=${PRODUCT_VERSION}
 	-dWiresharkMajorVersion=${PROJECT_MAJOR_VERSION}
@@ -226,7 +219,7 @@ set(WIX_CANDLE_DEFINES
 	-dVCRedistDir=${MERGE_MODULE_DIR}
 	${d_smi_dir}
 	${d_mmdbresolve_exe}
-	-arch ${TARGET_MACHINE}
+	-arch ${WIRESHARK_TARGET_PROCESSOR_ARCHITECTURE}
 	-ext WixUIExtension
 	-I${CMAKE_SOURCE_DIR}/packaging/wix
 	-out ${CMAKE_CURRENT_BINARY_DIR}/
@@ -236,7 +229,7 @@ set(WIX_CANDLE_DEFINES
 # The NSIS CMakeFile sets the program name + version slightly differently.
 set(WIX_LIGHT_DEFINES
 	-v
-	-out ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_PROJECT_NAME}-${WIRESHARK_TARGET_PLATFORM}-${PROJECT_VERSION}.msi
+	-out ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_PROJECT_NAME}-${PROJECT_VERSION}-${WIRESHARK_TARGET_PROCESSOR_ARCHITECTURE}.msi
 	-sw1076
 	-ext WixUIExtension
 	-loc ${CMAKE_CURRENT_SOURCE_DIR}/StringOverrides.wxl
@@ -315,16 +308,17 @@ macro( ADD_WIX_PACKAGE_TARGET )
 		)
 
 		# Build WiX package dependencies. We build the package in
-		# two stages so that wix_package below doesn't trigger any
+		# two stages so that wireshark_wix below doesn't trigger any
 		# dependencies that might clobber any signed executables.
-		add_custom_target(wix_package_prep
+		# XXX Rename this to wireshark_wix_prep
+		add_custom_target(wireshark_wix_prep
 			DEPENDS
 				${WIX_FILES}
 				copy_data_files
 				user_guide_html
 				faq_html
 		)
-		set_target_properties(wix_package_prep PROPERTIES
+		set_target_properties(wireshark_wix_prep PROPERTIES
 			FOLDER "Packaging"
 			EXCLUDE_FROM_DEFAULT_BUILD True
 		)
@@ -332,7 +326,8 @@ macro( ADD_WIX_PACKAGE_TARGET )
 		# Dump the installer into
 		# ${CMAKE_CURRENT_SOURCE_DIR}/packaging/wix
 		# Note that executables and DLLs *must* be built separately
-		add_custom_target(wix_package
+		# XXX Rename this to wireshark_wix
+		add_custom_target(wireshark_wix
 			COMMAND ${WIX_CANDLE_EXECUTABLE} ${WIX_CANDLE_DEFINES}
 				$<$<CONFIG:Debug>:-dBUNDLE_DEBUG_DLLS>
 				${WIX_SOURCE_FILES}
@@ -341,7 +336,7 @@ macro( ADD_WIX_PACKAGE_TARGET )
 			COMMAND ${WIX_LIGHT_EXECUTABLE} ${WIX_LIGHT_DEFINES} ${WIX_OUT_FILES}
 			WORKING_DIRECTORY ${_wix_binary_dir}
 		)
-		set_target_properties(wix_package PROPERTIES
+		set_target_properties(wireshark_wix PROPERTIES
 			FOLDER "Packaging"
 			EXCLUDE_FROM_DEFAULT_BUILD True
 		)
@@ -360,5 +355,5 @@ set(CLEAN_FILES
 	QtTranslation.wxs
 	#NEWS.txt
 	#user-guide.chm
-	wireshark-$(WIRESHARK_TARGET_PLATFORM)-$(VERSION).exe
+	wireshark-${VERSION}-${WIRESHARK_TARGET_PLATFORM}.msi
 )

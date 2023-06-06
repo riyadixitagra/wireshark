@@ -28,8 +28,8 @@
         <translation>复制版本信息到剪贴板</translation>
     </message>
     <message>
-        <source>Copy To Clipboard</source>
-        <translation>复制到剪贴板</translation>
+        <source>Copy to Clipboard</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Authors</source>
@@ -729,6 +729,14 @@
         <translation>将字节显示为十六进制</translation>
     </message>
     <message>
+        <source>…as decimal</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>…as octal</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>…as bits</source>
         <translation type="unfinished"></translation>
     </message>
@@ -974,7 +982,7 @@
     </message>
     <message>
         <source>Hash (RIPEMD160)</source>
-        <translation>哈希 (RIPEMD160)</translation>
+        <translation type="vanished">哈希 (RIPEMD160)</translation>
     </message>
     <message>
         <source>Hash (SHA1)</source>
@@ -1560,6 +1568,18 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation>实时更新分组列表</translation>
     </message>
     <message>
+        <source>Interval between updates (ms)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;How often the capture notifies the GUI of new packets. Affects how often the GUI updates and the granularity of timers.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The interval between new packet updates. Affects how often the GUI updates and the granularity of timers.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Keep the packet list scrolled to the bottom while capturing.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;在捕获进行时，保持分组列表滚动到底部。&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
@@ -1675,11 +1695,11 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     </message>
     <message>
         <source>Your coloring rules file contains unknown rules</source>
-        <translation>您的着色规则文件包含未知规则</translation>
+        <translation type="vanished">您的着色规则文件包含未知规则</translation>
     </message>
     <message>
         <source>Wireshark doesn&apos;t recognize one or more of your coloring rules. They have been disabled.</source>
-        <translation>Wireshark 无法识别您的一个或多个着色规则。它们已被禁用。</translation>
+        <translation type="vanished">Wireshark 无法识别您的一个或多个着色规则。它们已被禁用。</translation>
     </message>
 </context>
 <context>
@@ -1728,6 +1748,14 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation>发生:</translation>
     </message>
     <message>
+        <source>Resolve Names:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;p&gt;Show human-readable strings instead of raw values for fields. Only applicable to custom columns with fields that have value strings.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Missing fields.</source>
         <translation>缺少字段。</translation>
     </message>
@@ -1760,6 +1788,14 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     </message>
     <message>
         <source>Field Occurrence</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resolved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&lt;html&gt;Show human-readable strings instead of raw values for fields. Only applicable to custom columns with fields that have value strings.&lt;/html&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1803,6 +1839,81 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     <message>
         <source>Copy filter text to the clipboard.</source>
         <translation>复制过滤器文本到剪贴板。</translation>
+    </message>
+</context>
+<context>
+    <name>ConversationDataModel</name>
+    <message>
+        <source>Address A</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Port A</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Address B</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Port B</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Packets</source>
+        <translation type="unfinished">分组</translation>
+    </message>
+    <message>
+        <source>Bytes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stream ID</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Packets A </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bytes A </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Packets B </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bytes B </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Abs Start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rel Start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duration</source>
+        <translation type="unfinished">持续时间</translation>
+    </message>
+    <message>
+        <source>Bits/s A </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bits/s B </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Total Packets</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Percent Filtered</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -1925,6 +2036,14 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     <message>
         <source>Copy packet bytes as a stream of hex.</source>
         <translation>将分组字节复制为十六进制流。</translation>
+    </message>
+    <message>
+        <source>…as a Base64 String</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy packet bytes as a base64 encoded string.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>…as Raw Binary</source>
@@ -2088,7 +2207,7 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     </message>
     <message>
         <source>Invalid filter: </source>
-        <translation>无效的过滤器：</translation>
+        <translation type="unfinished">无效的过滤器：</translation>
     </message>
     <message>
         <source>Save this filter</source>
@@ -2140,6 +2259,22 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation>关系</translation>
     </message>
     <message>
+        <source>By default order comparisons and contains/matches/in relations are true if any value matches. The quantifier &quot;all&quot; can be used to apply the test to all values in a frame.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Quantifier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Any</source>
+        <translation type="unfinished">任何</translation>
+    </message>
+    <message>
+        <source>All</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Match against this value.</source>
         <translation>匹配对应此值。</translation>
     </message>
@@ -2185,6 +2320,17 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     </message>
 </context>
 <context>
+    <name>DissectorSyntaxLineEdit</name>
+    <message>
+        <source>Dissector entry</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enter a dissector %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>DissectorTablesDialog</name>
     <message>
         <source>Dialog</source>
@@ -2210,8 +2356,8 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation>字符串</translation>
     </message>
     <message>
-        <source>Dissector</source>
-        <translation>解析器</translation>
+        <source>Dissector Description</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Integer</source>
@@ -2313,6 +2459,73 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     </message>
 </context>
 <context>
+    <name>EndpointDataModel</name>
+    <message>
+        <source>Address</source>
+        <translation type="unfinished">地址</translation>
+    </message>
+    <message>
+        <source>Port</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Packets</source>
+        <translation type="unfinished">分组</translation>
+    </message>
+    <message>
+        <source>Bytes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tx Packets</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tx Bytes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rx Packets</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rx Bytes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Country</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>City</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Latitude</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Longitude</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>AS Number</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>AS Organization</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Total Packets</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Percent Filtered</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>EndpointDialog</name>
     <message>
         <source>Map</source>
@@ -2332,14 +2545,6 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     </message>
     <message>
         <source>Map file error</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>No endpoints available to map</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Unable to create temporary file</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3053,19 +3258,19 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation>个人 Lua 插件</translation>
     </message>
     <message>
-        <source>lua scripts</source>
-        <translation>lua 脚本</translation>
-    </message>
-    <message>
         <source>Global Lua Plugins</source>
         <translation>全局 Lua 插件</translation>
     </message>
     <message>
-        <source>Extcap Plugins search path</source>
-        <translation>Extcap 插件搜索路径</translation>
+        <source>Lua scripts</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Personal Extcap path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>external capture (extcap) plugins</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3107,6 +3312,13 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     <message>
         <source>Typical Files</source>
         <translation>典型文件</translation>
+    </message>
+</context>
+<context>
+    <name>FollowStreamAction</name>
+    <message>
+        <source>%1 Stream</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -3219,29 +3431,7 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation>请确保您已选中一个 %1 分组。</translation>
     </message>
     <message>
-        <source>QUIC streams not found on the selected packet.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message numerus="yes">
-        <source>%Ln total sub stream(s).</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>Total number of QUIC connections: %Ln</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>Max QUIC Stream ID for the selected connection: %Ln</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>No streams</source>
+        <source>%1 stream not found on the selected packet.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3264,14 +3454,16 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <source>[Stream output truncated]</source>
         <translation>[流输出被截断]</translation>
     </message>
-    <message>
-        <source>A transport or network layer header is needed.</source>
-        <translation>需要传输层或网络层头部。</translation>
-    </message>
     <message numerus="yes">
         <source>%Ln total stream(s).</source>
         <translation>
             <numerusform>%Ln 全部流。</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Max sub stream ID for the selected stream: %Ln</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
         </translation>
     </message>
     <message>
@@ -3638,6 +3830,14 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation>清除所有图形。</translation>
     </message>
     <message>
+        <source>Move this graph upwards.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move this graph downwards.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Mouse</source>
         <translation>鼠标</translation>
     </message>
@@ -3670,7 +3870,11 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation>对数刻度</translation>
     </message>
     <message>
-        <source>Automatic Update</source>
+        <source>Automatic update</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enable legend</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4491,7 +4695,7 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     </message>
     <message>
         <source>Dissector</source>
-        <translation type="unfinished">解析器</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>The IP protocol ID for each frame</source>
@@ -4698,6 +4902,10 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     </message>
     <message>
         <source>Start capture</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hide Interface</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -5678,6 +5886,14 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Maximum number of cached rows (affects sorting)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If more than this many rows are displayed, then sorting by columns that require packet dissection will be disabled. Increasing this number increases memory consumption by caching column values.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Enable mouse-over colorization</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6164,14 +6380,6 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation type="unfinished">导入</translation>
     </message>
     <message>
-        <source>from zip file</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>from directory</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Export</source>
         <translation type="unfinished">导出</translation>
     </message>
@@ -6263,11 +6471,19 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation>无分组</translation>
     </message>
     <message>
-        <source>selected personal profile</source>
+        <source>From Zip File...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>all personal profiles</source>
+        <source>From Directory...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Selected Personal Profile...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All Personal Profiles...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -6283,2146 +6499,6 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation type="obsolete">
             <numerusform>%n interface shown, %1 hidden</numerusform>
         </translation>
-    </message>
-</context>
-<context>
-    <name>MainWindow</name>
-    <message>
-        <source>Wireshark</source>
-        <translation>Wireshark</translation>
-    </message>
-    <message>
-        <source>Go to packet</source>
-        <translation>转到分组</translation>
-    </message>
-    <message>
-        <source>Cancel</source>
-        <translation>取消</translation>
-    </message>
-    <message>
-        <source>File Set</source>
-        <translation>文件集合</translation>
-    </message>
-    <message>
-        <source>Export Packet Dissections</source>
-        <translation>导出分组解析结果</translation>
-    </message>
-    <message>
-        <source>Export Objects</source>
-        <translation>导出对象</translation>
-    </message>
-    <message>
-        <source>&amp;Zoom</source>
-        <translation>缩放(&amp;Z)</translation>
-    </message>
-    <message>
-        <source>&amp;Time Display Format</source>
-        <translation>时间显示格式(&amp;T)</translation>
-    </message>
-    <message>
-        <source>Copy</source>
-        <translation>复制</translation>
-    </message>
-    <message>
-        <source>Manual pages</source>
-        <translation>说明文档</translation>
-    </message>
-    <message>
-        <source>Apply as Filter</source>
-        <translation>作为过滤器应用</translation>
-    </message>
-    <message>
-        <source>Prepare as Filter</source>
-        <translation>准备作为过滤器</translation>
-    </message>
-    <message>
-        <source>SCTP</source>
-        <translation>SCTP</translation>
-    </message>
-    <message>
-        <source>TCP Stream Graphs</source>
-        <translation>TCP 流图形</translation>
-    </message>
-    <message>
-        <source>BACnet</source>
-        <translation>BACnet</translation>
-    </message>
-    <message>
-        <source>HTTP</source>
-        <translation>HTTP</translation>
-    </message>
-    <message>
-        <source>&amp;File</source>
-        <translation>文件(&amp;F)</translation>
-    </message>
-    <message>
-        <source>&amp;Capture</source>
-        <translation>捕获(&amp;C)</translation>
-    </message>
-    <message>
-        <source>&amp;Help</source>
-        <translation>帮助(&amp;H)</translation>
-    </message>
-    <message>
-        <source>&amp;Go</source>
-        <translation>跳转(&amp;G)</translation>
-    </message>
-    <message>
-        <source>&amp;View</source>
-        <translation>视图(&amp;V)</translation>
-    </message>
-    <message>
-        <source>&amp;Analyze</source>
-        <translation>分析(&amp;A)</translation>
-    </message>
-    <message>
-        <source>Follow</source>
-        <translation>追踪流</translation>
-    </message>
-    <message>
-        <source>&amp;Statistics</source>
-        <translation>统计(&amp;S)</translation>
-    </message>
-    <message>
-        <source>29West</source>
-        <translation>29West</translation>
-    </message>
-    <message>
-        <source>Topics</source>
-        <translation>主题</translation>
-    </message>
-    <message>
-        <source>Queues</source>
-        <translation>队列</translation>
-    </message>
-    <message>
-        <source>UIM</source>
-        <translation>UIM</translation>
-    </message>
-    <message>
-        <source>Telephon&amp;y</source>
-        <translation>电话(&amp;Y)</translation>
-    </message>
-    <message>
-        <source>RTSP</source>
-        <translation>RTSP</translation>
-    </message>
-    <message>
-        <source>&amp;Edit</source>
-        <translation>编辑(&amp;E)</translation>
-    </message>
-    <message>
-        <source>Packet Comments</source>
-        <translation type="unfinished">分组注释</translation>
-    </message>
-    <message>
-        <source>Main Toolbar</source>
-        <translation>主工具栏</translation>
-    </message>
-    <message>
-        <source>Display Filter Toolbar</source>
-        <translation>显示过滤器工具栏</translation>
-    </message>
-    <message>
-        <source>Open a capture file</source>
-        <translation>打开已保存的捕获文件</translation>
-    </message>
-    <message>
-        <source>Quit Wireshark</source>
-        <translation>退出 Wireshark</translation>
-    </message>
-    <message>
-        <source>&amp;Start</source>
-        <translation>开始(&amp;S)</translation>
-    </message>
-    <message>
-        <source>Start capturing packets</source>
-        <translation>开始捕获分组</translation>
-    </message>
-    <message>
-        <source>S&amp;top</source>
-        <translation>停止(&amp;T)</translation>
-    </message>
-    <message>
-        <source>Stop capturing packets</source>
-        <translation>停止捕获分组</translation>
-    </message>
-    <message>
-        <source>No files found</source>
-        <translation>未找到文件</translation>
-    </message>
-    <message>
-        <source>&amp;Contents</source>
-        <translation>内容(&amp;C)</translation>
-    </message>
-    <message>
-        <source>Wireshark Filter</source>
-        <translation>Wireshark 过滤器</translation>
-    </message>
-    <message>
-        <source>TShark</source>
-        <translation>TShark</translation>
-    </message>
-    <message>
-        <source>Rawshark</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Dumpcap</source>
-        <translation>Dumpcap</translation>
-    </message>
-    <message>
-        <source>Mergecap</source>
-        <translation>Mergecap</translation>
-    </message>
-    <message>
-        <source>Editcap</source>
-        <translation>Editcap</translation>
-    </message>
-    <message>
-        <source>Text2pcap</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Website</source>
-        <translation>网站</translation>
-    </message>
-    <message>
-        <source>Downloads</source>
-        <translation>下载</translation>
-    </message>
-    <message>
-        <source>Wiki</source>
-        <translation>Wiki</translation>
-    </message>
-    <message>
-        <source>Sample Captures</source>
-        <translation>捕获示例</translation>
-    </message>
-    <message>
-        <source>&amp;About Wireshark</source>
-        <translation>关于 Wireshark (&amp;A)</translation>
-    </message>
-    <message>
-        <source>Ask (Q&amp;&amp;A)</source>
-        <translation>提问 (问答平台)</translation>
-    </message>
-    <message>
-        <source>Next Packet</source>
-        <translation>下一分组</translation>
-    </message>
-    <message>
-        <source>Go to the next packet</source>
-        <translation>转到下一分组</translation>
-    </message>
-    <message>
-        <source>Previous Packet</source>
-        <translation>前一分组</translation>
-    </message>
-    <message>
-        <source>Go to the previous packet</source>
-        <translation>转到前一分组</translation>
-    </message>
-    <message>
-        <source>First Packet</source>
-        <translation>首个分组</translation>
-    </message>
-    <message>
-        <source>Go to the first packet</source>
-        <translation>转到首个分组</translation>
-    </message>
-    <message>
-        <source>Last Packet</source>
-        <translation>最新分组</translation>
-    </message>
-    <message>
-        <source>Go to the last packet</source>
-        <translation>转到最新分组</translation>
-    </message>
-    <message>
-        <source>E&amp;xpand Subtrees</source>
-        <translation>展开子树(&amp;X)</translation>
-    </message>
-    <message>
-        <source>Expand the current packet detail</source>
-        <translation>展开当前分组详情</translation>
-    </message>
-    <message>
-        <source>&amp;Expand All</source>
-        <translation>展开全部(&amp;E)</translation>
-    </message>
-    <message>
-        <source>Expand packet details</source>
-        <translation>展开分组详情</translation>
-    </message>
-    <message>
-        <source>Collapse &amp;All</source>
-        <translation>收起全部(&amp;A)</translation>
-    </message>
-    <message>
-        <source>Collapse all packet details</source>
-        <translation>收起所有分组详情</translation>
-    </message>
-    <message>
-        <source>Go to specified packet</source>
-        <translation>转到特定分组</translation>
-    </message>
-    <message>
-        <source>Merge one or more files</source>
-        <translation>合并一或多个文件</translation>
-    </message>
-    <message>
-        <source>Import a file</source>
-        <translation>导入文件</translation>
-    </message>
-    <message>
-        <source>&amp;Save</source>
-        <translation>保存(&amp;S)</translation>
-    </message>
-    <message>
-        <source>Save as a different file</source>
-        <translation>另存为不同的文件</translation>
-    </message>
-    <message>
-        <source>Export specified packets</source>
-        <translation>导出指定分组</translation>
-    </message>
-    <message>
-        <source>Export TLS Session Keys…</source>
-        <translation>导出 TLS 会话密钥…</translation>
-    </message>
-    <message>
-        <source>List Files</source>
-        <translation>列出文件</translation>
-    </message>
-    <message>
-        <source>Next File</source>
-        <translation>下一文件</translation>
-    </message>
-    <message>
-        <source>Previous File</source>
-        <translation>上一文件</translation>
-    </message>
-    <message>
-        <source>&amp;Reload</source>
-        <translation>重新加载(&amp;R)</translation>
-    </message>
-    <message>
-        <source>Options</source>
-        <translation>选项</translation>
-    </message>
-    <message>
-        <source>Capture options</source>
-        <translation>捕获选项</translation>
-    </message>
-    <message>
-        <source>Capture filters</source>
-        <translation>捕获过滤器</translation>
-    </message>
-    <message>
-        <source>Refresh Interfaces</source>
-        <translation>刷新接口列表</translation>
-    </message>
-    <message>
-        <source>Refresh interfaces</source>
-        <translation>刷新接口列表</translation>
-    </message>
-    <message>
-        <source>&amp;Restart</source>
-        <translation>重新开始(&amp;R)</translation>
-    </message>
-    <message>
-        <source>Restart current capture</source>
-        <translation>重新开始当前捕获</translation>
-    </message>
-    <message>
-        <source>As &amp;CSV…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>As &quot;C&quot; &amp;Arrays…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>As P&amp;SML XML…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>As P&amp;DML XML…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>As &amp;JSON…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Description</source>
-        <translation>描述</translation>
-    </message>
-    <message>
-        <source>Field Name</source>
-        <translation>字段名称</translation>
-    </message>
-    <message>
-        <source>Value</source>
-        <translation>值</translation>
-    </message>
-    <message>
-        <source>As Filter</source>
-        <translation>作为过滤器</translation>
-    </message>
-    <message>
-        <source>Close this capture file</source>
-        <translation>关闭捕获文件</translation>
-    </message>
-    <message>
-        <source>Packet:</source>
-        <translation>分组:</translation>
-    </message>
-    <message>
-        <source>Interface Toolbars</source>
-        <translation>接口工具栏</translation>
-    </message>
-    <message>
-        <source>Colorize Conversation</source>
-        <translation>对话着色</translation>
-    </message>
-    <message>
-        <source>Internals</source>
-        <translation>内部</translation>
-    </message>
-    <message>
-        <source>Additional Toolbars</source>
-        <translation>额外工具栏</translation>
-    </message>
-    <message>
-        <source>Conversation Filter</source>
-        <translation>对话过滤器</translation>
-    </message>
-    <message>
-        <source>Reliable Server Pooling (RSerPool)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>SOME/IP</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Osmux</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>&amp;Tools</source>
-        <oldsource>Tools</oldsource>
-        <translation>工具(&amp;T)</translation>
-    </message>
-    <message>
-        <source>Wireless Toolbar</source>
-        <translation>无线工具栏</translation>
-    </message>
-    <message>
-        <source>Help contents</source>
-        <translation>帮助内容</translation>
-    </message>
-    <message>
-        <source>FAQs</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Next Packet in Conversation</source>
-        <translation>对话中的下一个分组</translation>
-    </message>
-    <message>
-        <source>Go to the next packet in this conversation</source>
-        <translation>转至此对话中的下一个分组</translation>
-    </message>
-    <message>
-        <source>Previous Packet in Conversation</source>
-        <translation>对话中的上一个分组</translation>
-    </message>
-    <message>
-        <source>Go to the previous packet in this conversation</source>
-        <translation>转至此对话中的上一个分组</translation>
-    </message>
-    <message>
-        <source>Next Packet In History</source>
-        <translation>历史中的下一个分组</translation>
-    </message>
-    <message>
-        <source>Go to the next packet in your selection history</source>
-        <translation>转至您的选定历史中的下一个分组</translation>
-    </message>
-    <message>
-        <source>Previous Packet In History</source>
-        <translation>历史中的上一个分组</translation>
-    </message>
-    <message>
-        <source>Go to the previous packet in your selection history</source>
-        <translation>转至您的选定历史中的上一个分组</translation>
-    </message>
-    <message>
-        <source>Collapse Subtrees</source>
-        <translation>折叠子树</translation>
-    </message>
-    <message>
-        <source>Collapse the current packet detail</source>
-        <translation>折叠当前分组详细信息</translation>
-    </message>
-    <message>
-        <source>Go to Packet…</source>
-        <translation>转至分组…</translation>
-    </message>
-    <message>
-        <source>&amp;Merge…</source>
-        <translation>合并(&amp;M)…</translation>
-    </message>
-    <message>
-        <source>&amp;Import from Hex Dump…</source>
-        <translation>从 Hex 转储导入(&amp;I)…</translation>
-    </message>
-    <message>
-        <source>Save this capture file</source>
-        <translation>保存捕获文件</translation>
-    </message>
-    <message>
-        <source>Save &amp;As…</source>
-        <translation>另存为(&amp;A)…</translation>
-    </message>
-    <message>
-        <source>Export Specified Packets…</source>
-        <translation>导出特定分组…</translation>
-    </message>
-    <message>
-        <source>Export Packet &amp;Bytes…</source>
-        <translation>导出分组字节流(&amp;B)…</translation>
-    </message>
-    <message>
-        <source>&amp;Print…</source>
-        <translation>打印(&amp;P)…</translation>
-    </message>
-    <message>
-        <source>Reload this file</source>
-        <translation>重新加载文件</translation>
-    </message>
-    <message>
-        <source>Reload as File Format/Capture</source>
-        <translation>重新载入为文件格式/捕获</translation>
-    </message>
-    <message>
-        <source>Copy this item&apos;s description</source>
-        <translation>复制此项的描述</translation>
-    </message>
-    <message>
-        <source>Copy this item&apos;s field name</source>
-        <translation>复制此项的字段名称</translation>
-    </message>
-    <message>
-        <source>Copy this item&apos;s value</source>
-        <translation>复制此项的值</translation>
-    </message>
-    <message>
-        <source>Copy this item as a display filter</source>
-        <translation>复制此项为显示过滤器</translation>
-    </message>
-    <message>
-        <source>Apply as Column</source>
-        <translation>应用为列</translation>
-    </message>
-    <message>
-        <source>Create a packet list column from the selected field.</source>
-        <translation>从选择的字段创建分组列表列。</translation>
-    </message>
-    <message>
-        <source>Find a packet</source>
-        <translation>查找一个分组</translation>
-    </message>
-    <message>
-        <source>Find the next packet</source>
-        <translation>查找下一分组</translation>
-    </message>
-    <message>
-        <source>Find the previous packet</source>
-        <translation>查找上一分组</translation>
-    </message>
-    <message>
-        <source>&amp;Mark/Unmark Packet(s)</source>
-        <oldsource>&amp;Mark/Unmark Packet</oldsource>
-        <translation>标记/取消标记 分组(&amp;M)</translation>
-    </message>
-    <message>
-        <source>Mark All Displayed</source>
-        <translation>标记所有显示的分组</translation>
-    </message>
-    <message>
-        <source>Mark all displayed packets</source>
-        <translation>标记所有已经显示的分组</translation>
-    </message>
-    <message>
-        <source>Unmark all displayed packets</source>
-        <translation>取消标记所有已经显示的分组</translation>
-    </message>
-    <message>
-        <source>Next Mark</source>
-        <translation>下一标记</translation>
-    </message>
-    <message>
-        <source>Go to the next marked packet</source>
-        <translation>转到下一个已标记的分组</translation>
-    </message>
-    <message>
-        <source>Previous Mark</source>
-        <translation>前一标记</translation>
-    </message>
-    <message>
-        <source>Go to the previous marked packet</source>
-        <translation>转到前一个已标记的分组</translation>
-    </message>
-    <message>
-        <source>&amp;Ignore/Unignore Packet(s)</source>
-        <oldsource>&amp;Ignore/Unignore Packet</oldsource>
-        <translation>忽略/取消忽略 分组(&amp;I)</translation>
-    </message>
-    <message>
-        <source>Ignore All Displayed</source>
-        <translation>忽略所有显示的分组</translation>
-    </message>
-    <message>
-        <source>Ignore all displayed packets</source>
-        <translation>忽略所有已经显示的分组</translation>
-    </message>
-    <message>
-        <source>Set/Unset Time Reference</source>
-        <translation>设置/取消设置 时间参考</translation>
-    </message>
-    <message>
-        <source>Set or unset a time reference for this packet</source>
-        <translation>设置或取消设置该分组的时间参考</translation>
-    </message>
-    <message>
-        <source>Unset All Time References</source>
-        <translation>取消设置所有时间参考</translation>
-    </message>
-    <message>
-        <source>Remove all time references</source>
-        <translation>移除所有时间参考</translation>
-    </message>
-    <message>
-        <source>Next Time Reference</source>
-        <translation>下一时间参考</translation>
-    </message>
-    <message>
-        <source>Go to the next time reference</source>
-        <translation>转到下一个时间参考</translation>
-    </message>
-    <message>
-        <source>Previous Time Reference</source>
-        <translation>前一时间参考</translation>
-    </message>
-    <message>
-        <source>Go to the previous time reference</source>
-        <translation>转到前一时间参考</translation>
-    </message>
-    <message>
-        <source>Shift or change packet timestamps</source>
-        <translation>平移或更改分组时间戳</translation>
-    </message>
-    <message>
-        <source>Delete All Packet Comments</source>
-        <translation>删除所有分组注释</translation>
-    </message>
-    <message>
-        <source>Remove all packet comments in the capture file</source>
-        <translation>删除捕获文件中的所有分组注释</translation>
-    </message>
-    <message>
-        <source>&amp;Configuration Profiles…</source>
-        <translation>配置文件(&amp;C)…</translation>
-    </message>
-    <message>
-        <source>Configuration profiles</source>
-        <translation>配置文件</translation>
-    </message>
-    <message>
-        <source>Manage your configuration profiles</source>
-        <translation>管理配置文件</translation>
-    </message>
-    <message>
-        <source>Manage Wireshark&apos;s preferences</source>
-        <translation>管理 Wireshark 的首选项设置</translation>
-    </message>
-    <message>
-        <source>Capture File Properties</source>
-        <translation>捕获文件属性</translation>
-    </message>
-    <message>
-        <source>Capture file properties</source>
-        <translation>捕获文件属性</translation>
-    </message>
-    <message>
-        <source>&amp;Protocol Hierarchy</source>
-        <translation>协议分级(&amp;P)</translation>
-    </message>
-    <message>
-        <source>Show a summary of protocols present in the capture file.</source>
-        <translation>显示捕获文件中存在协议的概要。</translation>
-    </message>
-    <message>
-        <source>Capinfos</source>
-        <translation>捕获信息</translation>
-    </message>
-    <message>
-        <source>Reordercap</source>
-        <translation>Reordercap</translation>
-    </message>
-    <message>
-        <source>Time Sequence (Stevens)</source>
-        <translation>时间序列 (Stevens)</translation>
-    </message>
-    <message>
-        <source>TCP time sequence graph (Stevens)</source>
-        <translation>TCP 时间序列图 (Stevens)</translation>
-    </message>
-    <message>
-        <source>Throughput</source>
-        <translation>吞吐量</translation>
-    </message>
-    <message>
-        <source>Round Trip Time</source>
-        <translation>往返时间</translation>
-    </message>
-    <message>
-        <source>TCP round trip time</source>
-        <translation>TCP 往返时间</translation>
-    </message>
-    <message>
-        <source>Window Scaling</source>
-        <translation>窗口尺寸</translation>
-    </message>
-    <message>
-        <source>TCP window scaling</source>
-        <translation>TCP 窗口尺寸</translation>
-    </message>
-    <message>
-        <source>DCCP Stream</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>TLS Stream</source>
-        <translation>TLS 流</translation>
-    </message>
-    <message>
-        <source>HTTP Stream</source>
-        <translation>HTTP 流</translation>
-    </message>
-    <message>
-        <source>HTTP/2 Stream</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>QUIC Stream</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>SIP Call</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Time Sequence (tcptrace)</source>
-        <translation>时间序列 (tcptrace)</translation>
-    </message>
-    <message>
-        <source>TCP time sequence graph (tcptrace)</source>
-        <translation>TCP 时间序列图 (tcptrace)</translation>
-    </message>
-    <message>
-        <source>Analyse this Association</source>
-        <translation>分析关联</translation>
-    </message>
-    <message>
-        <source>Show All Associations</source>
-        <translation>显示所有助手</translation>
-    </message>
-    <message>
-        <source>Flow Graph</source>
-        <translation>流量图</translation>
-    </message>
-    <message>
-        <source>Flow sequence diagram</source>
-        <translation>流序列图</translation>
-    </message>
-    <message>
-        <source>ANCP</source>
-        <translation>ANCP</translation>
-    </message>
-    <message>
-        <source>ANCP statistics</source>
-        <translation>ANCP统计</translation>
-    </message>
-    <message>
-        <source>Packets sorted by Instance ID</source>
-        <translation>分组按实例ID排序</translation>
-    </message>
-    <message>
-        <source>BACapp statistics sorted by instance ID</source>
-        <translation>BACapp 统计按实例ID排序</translation>
-    </message>
-    <message>
-        <source>Packets sorted by IP</source>
-        <translation>分组按IP排序</translation>
-    </message>
-    <message>
-        <source>BACapp statistics sorted by IP</source>
-        <translation>BACapp 统计按实例IP排序</translation>
-    </message>
-    <message>
-        <source>Packets sorted by object type</source>
-        <translation>分组按对象类型排序</translation>
-    </message>
-    <message>
-        <source>BACapp statistics sorted by object type</source>
-        <translation>BACapp 统计按实例对象类型排序</translation>
-    </message>
-    <message>
-        <source>Packets sorted by service</source>
-        <translation>分组按服务排序</translation>
-    </message>
-    <message>
-        <source>BACapp statistics sorted by service</source>
-        <translation>BACapp 统计按实例服务排序</translation>
-    </message>
-    <message>
-        <source>Collectd</source>
-        <translation>Collectd</translation>
-    </message>
-    <message>
-        <source>Collectd statistics</source>
-        <translation>Collectd协议统计</translation>
-    </message>
-    <message>
-        <source>DNS</source>
-        <translation>DNS</translation>
-    </message>
-    <message>
-        <source>DNS statistics</source>
-        <translation>DNS统计</translation>
-    </message>
-    <message>
-        <source>HART-IP</source>
-        <translation>HART-IP</translation>
-    </message>
-    <message>
-        <source>HART-IP statistics</source>
-        <translation>HART-IP 统计</translation>
-    </message>
-    <message>
-        <source>HPFEEDS</source>
-        <translation>HPFEEDS</translation>
-    </message>
-    <message>
-        <source>hpfeeds statistics</source>
-        <translation>hpfeeds 统计</translation>
-    </message>
-    <message>
-        <source>HTTP2</source>
-        <translation>HTTP2</translation>
-    </message>
-    <message>
-        <source>HTTP2 statistics</source>
-        <translation>HTTP2 统计</translation>
-    </message>
-    <message>
-        <source>Packet Counter</source>
-        <translation>分组计数器</translation>
-    </message>
-    <message>
-        <source>HTTP packet counter</source>
-        <translation>HTTP 分组计数器</translation>
-    </message>
-    <message>
-        <source>Requests</source>
-        <translation>请求</translation>
-    </message>
-    <message>
-        <source>HTTP requests</source>
-        <translation>HTTP 请求</translation>
-    </message>
-    <message>
-        <source>Load Distribution</source>
-        <translation>负载分配</translation>
-    </message>
-    <message>
-        <source>HTTP load distribution</source>
-        <translation>HTTP 负载分配</translation>
-    </message>
-    <message>
-        <source>Packet Lengths</source>
-        <translation>分组长度</translation>
-    </message>
-    <message>
-        <source>Packet length statistics</source>
-        <translation>分组长度统计</translation>
-    </message>
-    <message>
-        <source>Sametime</source>
-        <translation>Sametime</translation>
-    </message>
-    <message>
-        <source>Sametime statistics</source>
-        <translation>Sametime协议统计</translation>
-    </message>
-    <message>
-        <source>SOME/IP Messages</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>SOME/IP Message statistics</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>SOME/IP-SD Entries</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>SOME/IP-SD Entries statistics</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>&amp;ISUP Messages</source>
-        <translation>ISUP 消息(&amp;I)</translation>
-    </message>
-    <message>
-        <source>ISUP message statistics</source>
-        <translation>ISUP 消息统计</translation>
-    </message>
-    <message>
-        <source>Osmux packet counts</source>
-        <translation>OSMUX 分组计数</translation>
-    </message>
-    <message>
-        <source>RTSP packet counts</source>
-        <translation>RTSP分组计数</translation>
-    </message>
-    <message>
-        <source>SM&amp;PP Operations</source>
-        <translation>SMPP 操作(&amp;P)</translation>
-    </message>
-    <message>
-        <source>SMPP operation statistics</source>
-        <translation>SMPP操作统计</translation>
-    </message>
-    <message>
-        <source>&amp;UCP Messages</source>
-        <translation>UCP 消息(&amp;U)</translation>
-    </message>
-    <message>
-        <source>UCP message statistics</source>
-        <translation>UCP 消息统计</translation>
-    </message>
-    <message>
-        <source>F1AP</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>F1AP Messages</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>NGAP</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>NGAP Messages</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Change the way packets are dissected</source>
-        <translation>修改分组解析方式</translation>
-    </message>
-    <message>
-        <source>Reload Lua Plugins</source>
-        <translation>重新载入 Lua 插件</translation>
-    </message>
-    <message>
-        <source>Reload Lua plugins</source>
-        <translation>重新载入 Lua 插件</translation>
-    </message>
-    <message>
-        <source>Advertisements by Topic</source>
-        <translation>根据主题的通告</translation>
-    </message>
-    <message>
-        <source>Advertisements by Source</source>
-        <translation>根据源的通告</translation>
-    </message>
-    <message>
-        <source>Advertisements by Transport</source>
-        <translation>根据传输层的通告</translation>
-    </message>
-    <message>
-        <source>Queries by Topic</source>
-        <translation>根据主题的查询</translation>
-    </message>
-    <message>
-        <source>Queries by Receiver</source>
-        <translation>根据接收者的查询</translation>
-    </message>
-    <message>
-        <source>Wildcard Queries by Pattern</source>
-        <translation>根据模式的通配查询</translation>
-    </message>
-    <message>
-        <source>Wildcard Queries by Receiver</source>
-        <translation>根据接收者的通配查询</translation>
-    </message>
-    <message>
-        <source>Advertisements by Queue</source>
-        <translation>根据队列的通告</translation>
-    </message>
-    <message>
-        <source>Queries by Queue</source>
-        <translation>根据队列的查询</translation>
-    </message>
-    <message>
-        <source>Streams</source>
-        <translation>流</translation>
-    </message>
-    <message>
-        <source>LBT-RM</source>
-        <translation>LBT-RM</translation>
-    </message>
-    <message>
-        <source>LBT-RU</source>
-        <translation>LBT-RU</translation>
-    </message>
-    <message>
-        <source>Filter this Association</source>
-        <translation>过滤该助手</translation>
-    </message>
-    <message>
-        <source>Strip Headers…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Strip headers and export higher level encapsulations to file</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>&amp;I/O Graphs</source>
-        <translation>I/O 图表(&amp;I)</translation>
-    </message>
-    <message>
-        <source>&amp;Conversations</source>
-        <translation>会话(&amp;C)</translation>
-    </message>
-    <message>
-        <source>&amp;Endpoints</source>
-        <translation>端点(&amp;E)</translation>
-    </message>
-    <message>
-        <source>Shrink the main window text</source>
-        <translation>收缩主窗口文字</translation>
-    </message>
-    <message>
-        <source>Return the main window text to its normal size</source>
-        <translation>使主窗口文字返回正常大小</translation>
-    </message>
-    <message>
-        <source>Reset Layout</source>
-        <translation>重置布局</translation>
-    </message>
-    <message>
-        <source>Reset appearance layout to default size</source>
-        <translation>重置外观布局为默认尺寸</translation>
-    </message>
-    <message>
-        <source>Packet &amp;Diagram</source>
-        <translation>分组图(&amp;D)</translation>
-    </message>
-    <message>
-        <source>Show or hide the packet diagram</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Show each conversation hash table</source>
-        <translation>显示每个对话哈希表</translation>
-    </message>
-    <message>
-        <source>Show each dissector table and its entries</source>
-        <translation>显示每个解析器表及其项</translation>
-    </message>
-    <message>
-        <source>Show the currently supported protocols and display filter fields</source>
-        <translation>显示当前支持的协议和显示过滤器字段</translation>
-    </message>
-    <message>
-        <source>MAC Statistics</source>
-        <translation>MAC 统计</translation>
-    </message>
-    <message>
-        <source>LTE MAC statistics</source>
-        <translation>LTE MAC 统计</translation>
-    </message>
-    <message>
-        <source>RLC Statistics</source>
-        <translation>RLC 统计</translation>
-    </message>
-    <message>
-        <source>LTE RLC statistics</source>
-        <translation>LTE RLC 统计</translation>
-    </message>
-    <message>
-        <source>LTE RLC graph</source>
-        <translation>LTE RLC 图表</translation>
-    </message>
-    <message>
-        <source>MTP3 Summary</source>
-        <translation>MTP3 汇总</translation>
-    </message>
-    <message>
-        <source>MTP3 summary statistics</source>
-        <translation>MTP3 汇总统计</translation>
-    </message>
-    <message>
-        <source>Bluetooth Devices</source>
-        <translation>蓝牙设备</translation>
-    </message>
-    <message>
-        <source>Bluetooth HCI Summary</source>
-        <translation>蓝牙 HCI 摘要</translation>
-    </message>
-    <message>
-        <source>Display Filter &amp;Expression…</source>
-        <translation>显示过滤器表达式(&amp;E)...</translation>
-    </message>
-    <message>
-        <source>Display Filter Expression…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>REGISTER_STAT_GROUP_RSERPOOL</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Start of &quot;REGISTER_STAT_GROUP_RSERPOOL&quot;</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>No GSM statistics registered</source>
-        <translation>没有已注册的 GSM 统计</translation>
-    </message>
-    <message>
-        <source>No LTE statistics registered</source>
-        <translation>没有 LTE 统计已注册</translation>
-    </message>
-    <message>
-        <source>No MTP3 statistics registered</source>
-        <translation>没有已注册的 MTP3 统计</translation>
-    </message>
-    <message>
-        <source>IAX2 Stream Analysis</source>
-        <translation>IAX2 流分析</translation>
-    </message>
-    <message>
-        <source>Show Packet Bytes…</source>
-        <translation>显示分组字节…</translation>
-    </message>
-    <message>
-        <source>Go to &amp;Linked Packet</source>
-        <translation>转至链接的分组(&amp;L)</translation>
-    </message>
-    <message>
-        <source>UDP Multicast Streams</source>
-        <translation>UDP 多播流</translation>
-    </message>
-    <message>
-        <source>Show UTP multicast stream statistics.</source>
-        <translation>显示 UTP 多播流统计。</translation>
-    </message>
-    <message>
-        <source>WLAN Traffic</source>
-        <translation>WLAN 流量</translation>
-    </message>
-    <message>
-        <source>Show IEEE 802.11 wireless LAN statistics.</source>
-        <translation>显示 IEEE 802.11 无线 LAN 统计。</translation>
-    </message>
-    <message>
-        <source>Add a display filter button.</source>
-        <translation>添加一个显示过滤器按钮。</translation>
-    </message>
-    <message>
-        <source>Firewall ACL Rules</source>
-        <translation>防火墙 ACL 规则</translation>
-    </message>
-    <message>
-        <source>Create firewall ACL rules</source>
-        <translation>创建防火墙 ACL 规则</translation>
-    </message>
-    <message>
-        <source>&amp;Full Screen</source>
-        <translation>全屏(&amp;F)</translation>
-    </message>
-    <message>
-        <source>Credentials</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>&amp;Options…</source>
-        <translation>选项(&amp;O)…</translation>
-    </message>
-    <message>
-        <source>&amp;Wireless</source>
-        <translation>无线(&amp;W)</translation>
-    </message>
-    <message>
-        <source>Capture &amp;Filters…</source>
-        <translation>捕获过滤器(&amp;F)…</translation>
-    </message>
-    <message>
-        <source>As Plain &amp;Text…</source>
-        <translation>为纯文本(&amp;T)…</translation>
-    </message>
-    <message>
-        <source>As Plain &amp;Text</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>As &amp;CSV</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>As &amp;YAML</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>All Visible Items</source>
-        <translation>所有可见项目</translation>
-    </message>
-    <message>
-        <source>All Visible Selected Tree Items</source>
-        <translation>选中树的所有可见项目</translation>
-    </message>
-    <message>
-        <source>Display Filter &amp;Macros…</source>
-        <translation>显示过滤器宏(&amp;M)…</translation>
-    </message>
-    <message>
-        <source>&amp;Find Packet…</source>
-        <translation>查找分组(&amp;F)…</translation>
-    </message>
-    <message>
-        <source>Find Ne&amp;xt</source>
-        <translation>查找下一个(&amp;N)</translation>
-    </message>
-    <message>
-        <source>Find Pre&amp;vious</source>
-        <translation>查找上一个(&amp;v)</translation>
-    </message>
-    <message>
-        <source>Mark or unmark each selected packet</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Ignore or unignore each selected packet</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>U&amp;nignore All Displayed</source>
-        <translation>取消忽略所有显示的分组(&amp;n)</translation>
-    </message>
-    <message>
-        <source>Unignore all displayed packets</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Time Shift…</source>
-        <translation>时间平移…</translation>
-    </message>
-    <message>
-        <source>&amp;Preferences…</source>
-        <translation>首选项(&amp;P)…</translation>
-    </message>
-    <message>
-        <source>TCP throughput</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>TCP Stream</source>
-        <translation>TCP 流</translation>
-    </message>
-    <message>
-        <source>UDP Stream</source>
-        <translation>UDP 流</translation>
-    </message>
-    <message>
-        <source>Request Sequences</source>
-        <translation>请求序列</translation>
-    </message>
-    <message>
-        <source>HTTP Request Sequences</source>
-        <translation>HTTP 请求序列</translation>
-    </message>
-    <message>
-        <source>Decode &amp;As…</source>
-        <translation>解码为(&amp;A)…</translation>
-    </message>
-    <message>
-        <source>Export PDUs to File…</source>
-        <translation>导出 PDU 到文件…</translation>
-    </message>
-    <message>
-        <source>Create graphs based on display filter fields</source>
-        <translation>基于显示过滤器字段创建图形</translation>
-    </message>
-    <message>
-        <source>&amp;Main Toolbar</source>
-        <translation>主工具栏(&amp;M)</translation>
-    </message>
-    <message>
-        <source>Show or hide the main toolbar</source>
-        <translation>显示或隐藏主工具栏</translation>
-    </message>
-    <message>
-        <source>&amp;Filter Toolbar</source>
-        <translation>过滤器工具栏(&amp;F)</translation>
-    </message>
-    <message>
-        <source>Show or hide the display filter toolbar</source>
-        <translation>显示或隐藏显示过滤器工具栏</translation>
-    </message>
-    <message>
-        <source>Conversations at different protocol levels</source>
-        <translation>对话在不同的协议层</translation>
-    </message>
-    <message>
-        <source>Endpoints at different protocol levels</source>
-        <translation>端点在不同的协议层</translation>
-    </message>
-    <message>
-        <source>Colorize Packet List</source>
-        <translation>着色分组列表</translation>
-    </message>
-    <message>
-        <source>Draw packets using your coloring rules</source>
-        <translation>使用您的着色规则来绘制分组</translation>
-    </message>
-    <message>
-        <source>&amp;Zoom In</source>
-        <translation>放大(&amp;Z)</translation>
-    </message>
-    <message>
-        <source>Enlarge the main window text</source>
-        <translation>放大主窗口文本</translation>
-    </message>
-    <message>
-        <source>Zoom Out</source>
-        <translation>缩小</translation>
-    </message>
-    <message>
-        <source>Normal Size</source>
-        <translation>普通大小</translation>
-    </message>
-    <message>
-        <source>Resize Columns</source>
-        <translation>调整列宽</translation>
-    </message>
-    <message>
-        <source>Resize packet list columns to fit contents</source>
-        <translation>调整分组列表列以适应内容</translation>
-    </message>
-    <message>
-        <source>Date and Time of Day (1970-01-01 01:02:03.123456)</source>
-        <translation>日期和时间 (1970-01-01 01:02:03.123456)</translation>
-    </message>
-    <message>
-        <source>Show packet times as the date and time of day.</source>
-        <translation>使用日期和时间来显示分组时间。</translation>
-    </message>
-    <message>
-        <source>Year, Day of Year, and Time of Day (1970/001 01:02:03.123456)</source>
-        <translation>年、年积日、时间 (1970/001 01:02:03.123456)</translation>
-    </message>
-    <message>
-        <source>Show packet times as the year, day of the year and time of day.</source>
-        <translation>使用年、年积日和时间来显示分组时间。</translation>
-    </message>
-    <message>
-        <source>Time of Day (01:02:03.123456)</source>
-        <translation>时间 (01:02:03.123456)</translation>
-    </message>
-    <message>
-        <source>Seconds Since 1970-01-01</source>
-        <translation>自1970-01-01经过的秒数</translation>
-    </message>
-    <message>
-        <source>Show packet times as the seconds since the UNIX / POSIX epoch (1970-01-01).</source>
-        <translation>使用自 UNIX / POSIX 时间戳 (1970-01-01) 以来的秒数来显示分组时间。</translation>
-    </message>
-    <message>
-        <source>Seconds Since Beginning of Capture</source>
-        <translation>自捕获开始经过的秒数</translation>
-    </message>
-    <message>
-        <source>Seconds Since Previous Captured Packet</source>
-        <translation>自上一个捕获分组经过的秒数</translation>
-    </message>
-    <message>
-        <source>Show packet times as the seconds since the previous captured packet.</source>
-        <translation>使用自上一个被捕获分组的秒数来显示分组时间。</translation>
-    </message>
-    <message>
-        <source>Seconds Since Previous Displayed Packet</source>
-        <translation>自上一个显示分组经过的秒数</translation>
-    </message>
-    <message>
-        <source>Show packet times as the seconds since the previous displayed packet.</source>
-        <translation>使用自上一个被显示分组的秒数来显示分组时间。</translation>
-    </message>
-    <message>
-        <source>UTC Date and Time of Day (1970-01-01 01:02:03.123456)</source>
-        <translation>UTC 日期和时间 (1970-01-01 01:02:03.123456)</translation>
-    </message>
-    <message>
-        <source>Show packet times as the UTC date and time of day.</source>
-        <translation>使用 UTC 日期和时间来显示分组时间。</translation>
-    </message>
-    <message>
-        <source>UTC Year, Day of Year, and Time of Day (1970/001 01:02:03.123456)</source>
-        <translation>UTC 年、年积日、时间 (1970/001 01:02:03.123456)</translation>
-    </message>
-    <message>
-        <source>Show packet times as the UTC year, day of the year and time of day.</source>
-        <translation>使用 UTC 年、年积日和时间来显示分组时间。</translation>
-    </message>
-    <message>
-        <source>UTC Time of Day (01:02:03.123456)</source>
-        <translation>UTC 时间 (01:02:03.123456)</translation>
-    </message>
-    <message>
-        <source>Show packet times as the UTC time of day.</source>
-        <translation>使用 UTC 时间来显示分组时间。</translation>
-    </message>
-    <message>
-        <source>Automatic (from capture file)</source>
-        <translation>自动 (根据捕获文件)</translation>
-    </message>
-    <message>
-        <source>Use the time precision indicated in the capture file.</source>
-        <translation>使用捕获文件中指示的时间精度。</translation>
-    </message>
-    <message>
-        <source>Seconds</source>
-        <translation>秒</translation>
-    </message>
-    <message>
-        <source>Tenths of a second</source>
-        <translation>十分之一秒</translation>
-    </message>
-    <message>
-        <source>Hundredths of a second</source>
-        <translation>百分之一秒</translation>
-    </message>
-    <message>
-        <source>Milliseconds</source>
-        <translation>毫秒</translation>
-    </message>
-    <message>
-        <source>Microseconds</source>
-        <translation>微秒</translation>
-    </message>
-    <message>
-        <source>Nanoseconds</source>
-        <translation>纳秒</translation>
-    </message>
-    <message>
-        <source>Display Seconds With Hours and Minutes</source>
-        <translation>显示小时、分钟和秒</translation>
-    </message>
-    <message>
-        <source>Display seconds with hours and minutes</source>
-        <translation>显示小时、分钟、秒</translation>
-    </message>
-    <message>
-        <source>Resolve &amp;Physical Addresses</source>
-        <translation>解析物理地址(&amp;P)</translation>
-    </message>
-    <message>
-        <source>Show names for known MAC addresses. Lookups use a local database.</source>
-        <translation>显示已知 MAC 地址的名称。使用本地数据库查询。</translation>
-    </message>
-    <message>
-        <source>Resolve &amp;Network Addresses</source>
-        <translation>解析网络地址(&amp;N)</translation>
-    </message>
-    <message>
-        <source>Show names for known IPv4, IPv6, and IPX addresses. Lookups can generate network traffic.</source>
-        <translation>显示已知的IPv4、IPv6和IPX地址的名称。查找会产生网络流量。</translation>
-    </message>
-    <message>
-        <source>Resolve &amp;Transport Addresses</source>
-        <translation>解析传输层地址(&amp;T)</translation>
-    </message>
-    <message>
-        <source>Show names for known TCP, UDP, and SCTP services. Lookups can generate traffic on some systems.</source>
-        <translation>显示已知的 TCP、UDP 和 SCTP 服务的名称。在一些系统中，查找会产生流量。</translation>
-    </message>
-    <message>
-        <source>Wire&amp;less Toolbar</source>
-        <translation>无线工具栏(&amp;l)</translation>
-    </message>
-    <message>
-        <source>Show or hide the wireless toolbar</source>
-        <translation>显示或隐藏无线工具栏</translation>
-    </message>
-    <message>
-        <source>&amp;Status Bar</source>
-        <translation>状态栏(&amp;S)</translation>
-    </message>
-    <message>
-        <source>Show or hide the status bar</source>
-        <translation>显示或隐藏状态栏</translation>
-    </message>
-    <message>
-        <source>Packet &amp;List</source>
-        <translation>分组列表(&amp;L)</translation>
-    </message>
-    <message>
-        <source>Show or hide the packet list</source>
-        <translation>显示或隐藏分组列表</translation>
-    </message>
-    <message>
-        <source>Packet &amp;Details</source>
-        <translation>分组详情(&amp;D)</translation>
-    </message>
-    <message>
-        <source>Show or hide the packet details</source>
-        <translation>显示或隐藏分组详情</translation>
-    </message>
-    <message>
-        <source>Packet &amp;Bytes</source>
-        <translation>分组字节流(&amp;B)</translation>
-    </message>
-    <message>
-        <source>Show or hide the packet bytes</source>
-        <translation>显示或隐藏分组字节流</translation>
-    </message>
-    <message>
-        <source>&amp;Conversation Hash Tables</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>&amp;Dissector Tables</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>&amp;Supported Protocols</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>MAP Summary</source>
-        <translation>MAP 摘要</translation>
-    </message>
-    <message>
-        <source>GSM MAP summary statistics</source>
-        <translation>GSM MAP 摘要统计</translation>
-    </message>
-    <message>
-        <source>RLC &amp;Graph</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>&amp;Coloring Rules…</source>
-        <translation>着色规则(&amp;C)…</translation>
-    </message>
-    <message>
-        <source>Show Linked Packet in New Window</source>
-        <translation>在新窗口中显示已链接的分组</translation>
-    </message>
-    <message>
-        <source>New Coloring Rule…</source>
-        <oldsource>New Conversation Rule…</oldsource>
-        <translation>新建着色规则…</translation>
-    </message>
-    <message>
-        <source>RTP Stream Analysis for selected stream. Press CTRL key for adding reverse stream too.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>RTP Player</source>
-        <translation type="unfinished">RTP 播放器</translation>
-    </message>
-    <message>
-        <source>Play selected stream. Press CTRL key for playing reverse stream too.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>IA&amp;X2 Stream Analysis</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enabled Protocols…</source>
-        <oldsource>Enable Protocols…</oldsource>
-        <translation>启用的协议…</translation>
-    </message>
-    <message>
-        <source>Wiki Protocol Page</source>
-        <translation>Wiki 协议页面</translation>
-    </message>
-    <message>
-        <source>Open the Wireshark wiki page for this protocol.</source>
-        <translation>打开针对此协议的 Wireshark Wiki 页面。</translation>
-    </message>
-    <message>
-        <source>Filter Field Reference</source>
-        <translation>过滤器字段参考</translation>
-    </message>
-    <message>
-        <source>Open the display filter reference page for this filter field.</source>
-        <translation>打开此过滤器字段的显示过滤器参考。</translation>
-    </message>
-    <message>
-        <source>Go to the packet referenced by the selected field.</source>
-        <translation>转至选定字段引用的分组。</translation>
-    </message>
-    <message>
-        <source>&amp;VoIP Calls</source>
-        <translation>&amp;VoIP 通话</translation>
-    </message>
-    <message>
-        <source>Open &amp;Recent</source>
-        <translation>打开最近的文件(&amp;R)</translation>
-    </message>
-    <message>
-        <source>Name Resol&amp;ution</source>
-        <translation>名称解析(&amp;U)</translation>
-    </message>
-    <message>
-        <source>Service &amp;Response Time</source>
-        <translation>服务响应时间(&amp;R)</translation>
-    </message>
-    <message>
-        <source>&amp;RTP</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>S&amp;CTP</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>&amp;ANSI</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>&amp;GSM</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>&amp;LTE</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>&amp;MTP3</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>&amp;Open</source>
-        <translation>打开(&amp;O)</translation>
-    </message>
-    <message>
-        <source>&amp;Quit</source>
-        <translation>退出(&amp;Q)</translation>
-    </message>
-    <message>
-        <source>&amp;Close</source>
-        <translation>关闭(&amp;C)</translation>
-    </message>
-    <message>
-        <source>Display &amp;Filters…</source>
-        <translation>显示过滤器(&amp;F)…</translation>
-    </message>
-    <message>
-        <source>&amp;Unmark All Displayed</source>
-        <translation>取消标记所有显示的分组(&amp;U)</translation>
-    </message>
-    <message>
-        <source>All VoIP Calls</source>
-        <translation>全部VoIP呼叫</translation>
-    </message>
-    <message>
-        <source>SIP &amp;Flows</source>
-        <translation>SIP 流(&amp;F)</translation>
-    </message>
-    <message>
-        <source>SIP Flows</source>
-        <translation>SIP流</translation>
-    </message>
-    <message>
-        <source>RTP Streams</source>
-        <translation>RTP 流</translation>
-    </message>
-    <message>
-        <source>Edit the packet list coloring rules.</source>
-        <translation>编辑分组列表着色规则。</translation>
-    </message>
-    <message>
-        <source>Bluetooth ATT Server Attributes</source>
-        <oldsource>ATT Server Attributes</oldsource>
-        <translation>蓝牙 ATT 服务器属性</translation>
-    </message>
-    <message>
-        <source>Show Packet in New &amp;Window</source>
-        <translation>在新窗口显示分组(&amp;W)</translation>
-    </message>
-    <message>
-        <source>Show this packet in a separate window.</source>
-        <translation>在单独窗口中显示此分组。</translation>
-    </message>
-    <message>
-        <source>Show the linked packet in a separate window.</source>
-        <translation>在独立窗口中显示链接分组。</translation>
-    </message>
-    <message>
-        <source>Auto Scroll in Li&amp;ve Capture</source>
-        <translation>实时捕获时自动滚动(&amp;V)</translation>
-    </message>
-    <message>
-        <source>Automatically scroll to the last packet during a live capture.</source>
-        <translation>在实时捕获时，自动滚动屏幕到最新的分组。</translation>
-    </message>
-    <message>
-        <source>Expert Information</source>
-        <translation>专家信息</translation>
-    </message>
-    <message>
-        <source>Show expert notifications</source>
-        <translation>显示专家通知</translation>
-    </message>
-    <message>
-        <source>Add an expression to the display filter.</source>
-        <translation>添加一个表达式到显示过滤器。</translation>
-    </message>
-    <message>
-        <source>REGISTER_STAT_GROUP_UNSORTED</source>
-        <translation>REGISTER_STAT_GROUP_UNSORTED</translation>
-    </message>
-    <message>
-        <source>Start of &quot;REGISTER_STAT_GROUP_UNSORTED&quot;</source>
-        <translation>&quot;REGISTER_STAT_GROUP_UNSORTED&quot; 的启动</translation>
-    </message>
-    <message>
-        <source>No ANSI statistics registered</source>
-        <oldsource>No tools registered</oldsource>
-        <translation>没有 ANSI 统计已注册</translation>
-    </message>
-    <message>
-        <source>Resolved Addresses</source>
-        <translation>已解析的地址</translation>
-    </message>
-    <message>
-        <source>Show each table of resolved addresses as copyable text.</source>
-        <translation>将每个已解析地址的表格表示为可复制的文本。</translation>
-    </message>
-    <message>
-        <source>Color &amp;1</source>
-        <translation>颜色 &amp;1</translation>
-    </message>
-    <message>
-        <source>Mark the current conversation with its own color.</source>
-        <oldsource>Mark the current coversation with its own color.</oldsource>
-        <translation>让当前的对话使用自己的颜色。</translation>
-    </message>
-    <message>
-        <source>Color &amp;2</source>
-        <translation>颜色 &amp;2</translation>
-    </message>
-    <message>
-        <source>Color &amp;3</source>
-        <translation>颜色 &amp;3</translation>
-    </message>
-    <message>
-        <source>Color &amp;4</source>
-        <translation>颜色 &amp;4</translation>
-    </message>
-    <message>
-        <source>Color &amp;5</source>
-        <translation>颜色 &amp;5</translation>
-    </message>
-    <message>
-        <source>Color &amp;6</source>
-        <translation>颜色 &amp;6</translation>
-    </message>
-    <message>
-        <source>Color &amp;7</source>
-        <translation>颜色 &amp;7</translation>
-    </message>
-    <message>
-        <source>Color &amp;8</source>
-        <translation>颜色 &amp;8</translation>
-    </message>
-    <message>
-        <source>Color &amp;9</source>
-        <translation>颜色 &amp;9</translation>
-    </message>
-    <message>
-        <source>Color 1&amp;0</source>
-        <translation>颜色 1&amp;0</translation>
-    </message>
-    <message>
-        <source>Create a new coloring rule based on this field.</source>
-        <oldsource>Create a new coloring rule based on this conversation.</oldsource>
-        <translation>基于此栏创建一个新的着色规则。</translation>
-    </message>
-    <message>
-        <source>Reset Colorization</source>
-        <translation>重置着色</translation>
-    </message>
-    <message>
-        <source>Reset colorized conversations.</source>
-        <translation>重置着色的对话。</translation>
-    </message>
-    <message>
-        <source>RTP Stream Analysis</source>
-        <translation>RTP 流分析</translation>
-    </message>
-    <message>
-        <source>Edit Resolved Name</source>
-        <translation>编辑解析的名称</translation>
-    </message>
-    <message>
-        <source>Manually edit a name resolution entry.</source>
-        <translation>手动编辑一个名称解析项。</translation>
-    </message>
-    <message>
-        <source>Enable and disable specific protocols</source>
-        <translation>启用和禁用特定的协议</translation>
-    </message>
-    <message>
-        <source> before quitting</source>
-        <translation>在退出前</translation>
-    </message>
-    <message>
-        <source>Save packets before merging?</source>
-        <translation>是否在合并之前保存分组？</translation>
-    </message>
-    <message>
-        <source>A temporary capture file can&apos;t be merged.</source>
-        <translation>无法合并临时捕获文件。</translation>
-    </message>
-    <message>
-        <source>Save changes in &quot;%1&quot; before merging?</source>
-        <translation>是否在合并前保存对“%1”的更改？</translation>
-    </message>
-    <message>
-        <source>Changes must be saved before the files can be merged.</source>
-        <translation>在文件合并之前，其更改必须先保存。</translation>
-    </message>
-    <message>
-        <source>Invalid Display Filter</source>
-        <translation>无效显示过滤器</translation>
-    </message>
-    <message>
-        <source>Invalid Read Filter</source>
-        <translation>无效读取过滤器</translation>
-    </message>
-    <message>
-        <source>The filter expression %1 isn&apos;t a valid read filter. (%2).</source>
-        <translation>过滤器表达式 %1 不是有效的读取过滤器 (%2)。</translation>
-    </message>
-    <message>
-        <source> before importing a capture</source>
-        <oldsource> before importing a new capture</oldsource>
-        <translation> 导入新捕获前</translation>
-    </message>
-    <message>
-        <source>Unable to export to &quot;%1&quot;.</source>
-        <translation>无法导出“%1”。</translation>
-    </message>
-    <message>
-        <source>You cannot export packets to the current capture file.</source>
-        <translation>您不能将分组导出到当前捕获文件。</translation>
-    </message>
-    <message>
-        <source>Do you want to save the changes you&apos;ve made%1?</source>
-        <oldsource>Do you want to save the captured packets</oldsource>
-        <translation>您是否要保存已做出的更改%1？</translation>
-    </message>
-    <message>
-        <source>Your captured packets will be lost if you don&apos;t save them.</source>
-        <translation>若不保存，您已经捕获的分组将会丢失。</translation>
-    </message>
-    <message>
-        <source>Do you want to save the changes you&apos;ve made to the capture file &quot;%1&quot;%2?</source>
-        <translation>是否希望保存对捕获文件“%1”%2 的更改？</translation>
-    </message>
-    <message>
-        <source>Your changes will be lost if you don&apos;t save them.</source>
-        <translation>若不保存，您的更改将会丢失。</translation>
-    </message>
-    <message>
-        <source>Check for Updates…</source>
-        <translation>检查更新...</translation>
-    </message>
-    <message>
-        <source>Unable to drop files during capture.</source>
-        <translation>无法在捕获时拖放文件。</translation>
-    </message>
-    <message>
-        <source>Unknown file type returned by merge dialog.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Please report this as a Wireshark issue at https://gitlab.com/wireshark/wireshark/-/issues.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Unknown file type returned by export dialog.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Do you want to stop the capture and save the captured packets%1?</source>
-        <translation>您是否要停止捕获，并保存已捕获的分组%1？</translation>
-    </message>
-    <message>
-        <source>Do you want to save the captured packets%1?</source>
-        <translation>您是否要保存已捕获的分组%1？</translation>
-    </message>
-    <message>
-        <source>Save before Continue</source>
-        <translation>继续前保存</translation>
-    </message>
-    <message>
-        <source>Stop and Save</source>
-        <translation>停止并保存</translation>
-    </message>
-    <message>
-        <source>Stop and Quit &amp;without Saving</source>
-        <oldsource>Stop and Quit without Saving</oldsource>
-        <translation>停止并退出，不保存(&amp;W)</translation>
-    </message>
-    <message>
-        <source>Quit &amp;without Saving</source>
-        <oldsource>Quit without Saving</oldsource>
-        <translation>直接退出，不保存(&amp;W)</translation>
-    </message>
-    <message>
-        <source>There is no &quot;rtp.ssrc&quot; field in this version of Wireshark.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Please select an RTPv2 packet with an SSRC value</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>SSRC value not found.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Show or hide the toolbar</source>
-        <translation>显示或隐藏该工具栏</translation>
-    </message>
-    <message>
-        <source>Continue &amp;without Saving</source>
-        <oldsource>Continue without Saving</oldsource>
-        <translation>继续，不保存(&amp;W)</translation>
-    </message>
-    <message>
-        <source>Stop and Continue &amp;without Saving</source>
-        <oldsource>Stop and Continue without Saving</oldsource>
-        <translation>停止并继续，不保存(&amp;W)</translation>
-    </message>
-    <message>
-        <source>The Wireshark Network Analyzer</source>
-        <translation>Wireshark 网络分析器</translation>
-    </message>
-    <message>
-        <source>Capturing from %1</source>
-        <translation>正在捕获 %1</translation>
-    </message>
-    <message>
-        <source> before opening another file</source>
-        <translation>打开另一个文件前</translation>
-    </message>
-    <message>
-        <source>Merging files.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1: %2</source>
-        <translation>%1: %2</translation>
-    </message>
-    <message>
-        <source>Clear Menu</source>
-        <translation>清除菜单</translation>
-    </message>
-    <message>
-        <source> before closing the file</source>
-        <translation>关闭文件前</translation>
-    </message>
-    <message>
-        <source>Export Selected Packet Bytes</source>
-        <translation>导出选择分组字节流</translation>
-    </message>
-    <message>
-        <source>No Keys</source>
-        <translation>无密钥</translation>
-    </message>
-    <message numerus="yes">
-        <source>Export SSL Session Keys (%Ln key(s))</source>
-        <oldsource>Export SSL Session Keys (%1 key%2</oldsource>
-        <translation type="vanished">
-            <numerusform>导出 SSL 会话密钥 (%Ln 个密钥)</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>Raw data (*.bin *.dat *.raw);;All Files (</source>
-        <translation>原始数据 (*.bin *.dat *.raw);;所有文件 (</translation>
-    </message>
-    <message>
-        <source>Couldn&apos;t copy text. Try another item.</source>
-        <translation>无法复制文本。请尝试其他对象。</translation>
-    </message>
-    <message>
-        <source>Are you sure you want to remove all packet comments?</source>
-        <translation>确实要删除所有分组注释吗？</translation>
-    </message>
-    <message>
-        <source>Unable to build conversation filter.</source>
-        <translation>无法建立对话过滤器。</translation>
-    </message>
-    <message>
-        <source> before reloading the file</source>
-        <translation>重新载入文件前</translation>
-    </message>
-    <message>
-        <source>Error compiling filter for this conversation.</source>
-        <translation>为此对话编译过滤器时出错。</translation>
-    </message>
-    <message>
-        <source>No previous/next packet in conversation.</source>
-        <translation>此对话中没有上一个/下一个分组。</translation>
-    </message>
-    <message>
-        <source>No interface selected.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Saving %1…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Configure all extcaps before start of capture.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Invalid capture filter.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>(empty comment)</source>
-        <comment>placeholder for empty comment</comment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Add New Comment…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Edit &quot;%1&quot;</source>
-        <comment>edit packet comment</comment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Delete &quot;%1&quot;</source>
-        <comment>delete packet comment</comment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Delete packet comments</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message numerus="yes">
-        <source>Delete comments from %n packet(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-        </translation>
-    </message>
-    <message>
-        <source> before starting a new capture</source>
-        <translation>在开始新捕获前</translation>
-    </message>
-    <message>
-        <source> before reloading Lua plugins</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Please wait while Wireshark is initializing…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>There are no TLS Session Keys to save.</source>
-        <translation>没有要保存的 TLS 会话密钥。</translation>
-    </message>
-    <message numerus="yes">
-        <source>Export TLS Session Keys (%Ln key(s))</source>
-        <translation>
-            <numerusform>导出 TLS 会话密钥（%Ln 个密钥）</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>TLS Session Keys (*.keys *.txt);;All Files (</source>
-        <translation>TLS 会话密钥 (*.keys *.txt);;所有文件(</translation>
-    </message>
-    <message>
-        <source>No filter available. Try another %1.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>column</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>item</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>The &quot;%1&quot; column already exists.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>The &quot;%1&quot; column already exists as &quot;%2&quot;.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>RTP packet search failed</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>No Interface Selected.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source> before restarting the capture</source>
-        <translation>重新开始捕获前</translation>
-    </message>
-    <message>
-        <source>Wiki Page for %1</source>
-        <translation>%1 的 Wiki 页面</translation>
-    </message>
-    <message>
-        <source>&lt;p&gt;The Wireshark Wiki is maintained by the community.&lt;/p&gt;&lt;p&gt;The page you are about to load might be wonderful, incomplete, wrong, or nonexistent.&lt;/p&gt;&lt;p&gt;Proceed to the wiki?&lt;/p&gt;</source>
-        <translation>&lt;p&gt;Wireshark Wiki 由社区进行维护。&lt;/p&gt;&lt;p&gt;您即将加载的页面可能是良好的、不完整的、有错误的，甚至不存在的。&lt;/p&gt;&lt;p&gt;继续访问该 Wiki？&lt;/p&gt;</translation>
-    </message>
-    <message>
-        <source>Loading</source>
-        <translation>正在载入</translation>
-    </message>
-    <message>
-        <source>Reloading</source>
-        <translation>正在重新加载</translation>
-    </message>
-    <message>
-        <source>Rescanning</source>
-        <translation>正在重新扫描</translation>
     </message>
 </context>
 <context>
@@ -9043,7 +7119,19 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
 <context>
     <name>PacketListModel</name>
     <message>
+        <source>Column</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 can only be sorted with %2 or fewer visible rows; increase cache size in Layout preferences</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Sorting &quot;%1&quot;…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sorting …</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -9095,14 +7183,21 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     </message>
 </context>
 <context>
-    <name>PathChooserDelegate</name>
+    <name>PathSelectionDelegate</name>
+    <message>
+        <source>Open a pipe</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PathSelectionEdit</name>
     <message>
         <source>Browse</source>
-        <translation>浏览</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Open Pipe</source>
-        <translation>打开管道</translation>
+        <source>Select a path</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -9324,6 +7419,24 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation type="unfinished">导出</translation>
     </message>
     <message>
+        <source>From Zip File...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>From Directory...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%Ln Selected Personal Profile(s)...</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>All Personal Profiles...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>New profile</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9342,12 +7455,6 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     <message>
         <source>Select zip file for export</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message numerus="yes">
-        <source>%Ln selected personal profile(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-        </translation>
     </message>
     <message>
         <source>An import of profiles is not allowed, while changes are pending</source>
@@ -9381,18 +7488,6 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     </message>
     <message>
         <source>Zip File (*.zip)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>from zip file</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>from directory</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>all personal profiles</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -9688,6 +7783,10 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     <message>
         <source>End Bits/s</source>
         <translation>结束 位/秒</translation>
+    </message>
+    <message>
+        <source>PDUs</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>&lt;small&gt;&lt;i&gt;A hint.&lt;/i&gt;&lt;/small&gt;</source>
@@ -12872,6 +10971,10 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Percent-Encoding</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Quoted-Printable</source>
         <translation>可打印引用</translation>
     </message>
@@ -12906,10 +11009,6 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     <message>
         <source>Image</source>
         <translation>图像</translation>
-    </message>
-    <message>
-        <source>Json</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Raw</source>
@@ -12948,6 +11047,10 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation>
             <numerusform>已显示 %Ln 字节。</numerusform>
         </translation>
+    </message>
+    <message>
+        <source>JSON</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Regex Find:</source>
@@ -13087,6 +11190,10 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
 </context>
 <context>
     <name>SyntaxLineEdit</name>
+    <message>
+        <source>Invalid filter: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>&quot;%1&quot; is deprecated in favour of &quot;%2&quot;. See Help section 6.4.8 for details.</source>
         <translation type="unfinished"></translation>
@@ -13799,6 +11906,25 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     </message>
 </context>
 <context>
+    <name>TrafficTab</name>
+    <message>
+        <source>Map file error</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not open base file %1 for reading: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No endpoints available to map</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unable to create temporary file</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TrafficTableDialog</name>
     <message>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Show resolved addresses and port names rather than plain values. The corresponding name resolution preference must be enabled.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
@@ -13817,44 +11943,113 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation>显示过滤器的限制</translation>
     </message>
     <message>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Only show types matching the filter value&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Filter list for specific type</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Show absolute times in the start time column.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;在开始时间列中显示绝对时间。&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+    </message>
+    <message>
+        <source>GroupBox</source>
+        <translation type="unfinished">分组框</translation>
     </message>
     <message>
         <source>Absolute start time</source>
         <translation>绝对开始时间</translation>
     </message>
     <message>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Add and remove conversation types.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;添加、删除对话类型。&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
-    </message>
-    <message>
-        <source>%1 Types</source>
-        <translation>%1 类型</translation>
-    </message>
-    <message>
         <source>Copy</source>
         <translation>复制</translation>
     </message>
     <message>
+        <source>Unknown</source>
+        <translation>未知</translation>
+    </message>
+</context>
+<context>
+    <name>TrafficTree</name>
+    <message>
+        <source>Resize all columns to content</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Filter on stream id</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy %1 table</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>as CSV</source>
-        <translation>作为 CSV</translation>
+        <translation type="unfinished">作为 CSV</translation>
     </message>
     <message>
         <source>Copy all values of this page to the clipboard in CSV (Comma Separated Values) format.</source>
-        <translation>复制此页的所有值到剪贴板，使用 CSV（逗号分隔值）格式。</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>as YAML</source>
-        <translation>作为YAML</translation>
+        <translation type="unfinished">作为YAML</translation>
     </message>
     <message>
         <source>Copy all values of this page to the clipboard in the YAML data serialization format.</source>
-        <translation>复制此页的所有值到剪贴板，使用 YAML 数据串行格式。</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Unknown</source>
-        <translation>未知</translation>
+        <source>as JSON</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy all values of this page to the clipboard in the JSON data serialization format.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save data as raw</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Disable data formatting for export/clipboard and save as raw data</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TrafficTreeHeaderView</name>
+    <message>
+        <source>Less than</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Greater than</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Equal</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Columns to display</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Filter %1 by</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enter filter value</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TrafficTypesModel</name>
+    <message>
+        <source>Protocol</source>
+        <translation type="unfinished">协议</translation>
     </message>
 </context>
 <context>
@@ -14203,6 +12398,18 @@ a:hover {
 
 &lt;th&gt;&lt;a href=&quot;https://www.wireshark.org/lists/&quot;&gt;Mailing Lists&lt;/a&gt;&lt;/th&gt;
 
+&lt;td style=&quot;padding-left: 8px; padding-right: 8px;&quot;&gt;·&lt;/td&gt;
+
+&lt;th&gt;&lt;a href=&quot;https://sharkfest.wireshark.org/&quot;&gt;SharkFest&lt;/a&gt;&lt;/th&gt;
+
+&lt;td style=&quot;padding-left: 8px; padding-right: 8px;&quot;&gt;·&lt;/td&gt;
+
+&lt;th&gt;&lt;a href=&quot;https://discord.com/invite/ts9GZCjGj5&quot;&gt;Wireshark Discord&lt;/a&gt;&lt;/th&gt;
+
+&lt;td style=&quot;padding-left: 8px; padding-right: 8px;&quot;&gt;·&lt;/td&gt;
+
+&lt;th&gt;&lt;a href=&quot;https://wiresharkfoundation.org/donate/&quot;&gt;Donate&lt;/a&gt;&lt;/th&gt;
+
 &lt;/tr&gt;&lt;/table&gt;
 &lt;/body&gt;&lt;/html&gt;</source>
         <translation type="unfinished"></translation>
@@ -14214,6 +12421,10 @@ a:hover {
     <message>
         <source>Show in Folder</source>
         <translation>在 Finder 中显示</translation>
+    </message>
+    <message>
+        <source>Welcome to %1</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>All interfaces shown</source>
@@ -14341,6 +12552,2147 @@ a:hover {
     <message>
         <source>Failed to attach to tap &quot;%1&quot;</source>
         <translation>附加到 Tap “%1” 失败</translation>
+    </message>
+</context>
+<context>
+    <name>WiresharkMainWindow</name>
+    <message>
+        <source>Wireshark</source>
+        <translation>Wireshark</translation>
+    </message>
+    <message>
+        <source>Go to packet</source>
+        <translation>转到分组</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>取消</translation>
+    </message>
+    <message>
+        <source>File Set</source>
+        <translation>文件集合</translation>
+    </message>
+    <message>
+        <source>Export Packet Dissections</source>
+        <translation>导出分组解析结果</translation>
+    </message>
+    <message>
+        <source>Export Objects</source>
+        <translation>导出对象</translation>
+    </message>
+    <message>
+        <source>&amp;Zoom</source>
+        <translation>缩放(&amp;Z)</translation>
+    </message>
+    <message>
+        <source>&amp;Time Display Format</source>
+        <translation>时间显示格式(&amp;T)</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>复制</translation>
+    </message>
+    <message>
+        <source>Manual pages</source>
+        <translation>说明文档</translation>
+    </message>
+    <message>
+        <source>Apply as Filter</source>
+        <translation>作为过滤器应用</translation>
+    </message>
+    <message>
+        <source>Prepare as Filter</source>
+        <translation>准备作为过滤器</translation>
+    </message>
+    <message>
+        <source>SCTP</source>
+        <translation>SCTP</translation>
+    </message>
+    <message>
+        <source>TCP Stream Graphs</source>
+        <translation>TCP 流图形</translation>
+    </message>
+    <message>
+        <source>BACnet</source>
+        <translation>BACnet</translation>
+    </message>
+    <message>
+        <source>HTTP</source>
+        <translation>HTTP</translation>
+    </message>
+    <message>
+        <source>&amp;File</source>
+        <translation>文件(&amp;F)</translation>
+    </message>
+    <message>
+        <source>&amp;Capture</source>
+        <translation>捕获(&amp;C)</translation>
+    </message>
+    <message>
+        <source>&amp;Help</source>
+        <translation>帮助(&amp;H)</translation>
+    </message>
+    <message>
+        <source>&amp;Go</source>
+        <translation>跳转(&amp;G)</translation>
+    </message>
+    <message>
+        <source>&amp;View</source>
+        <translation>视图(&amp;V)</translation>
+    </message>
+    <message>
+        <source>&amp;Analyze</source>
+        <translation>分析(&amp;A)</translation>
+    </message>
+    <message>
+        <source>Follow</source>
+        <translation>追踪流</translation>
+    </message>
+    <message>
+        <source>&amp;Statistics</source>
+        <translation>统计(&amp;S)</translation>
+    </message>
+    <message>
+        <source>29West</source>
+        <translation>29West</translation>
+    </message>
+    <message>
+        <source>Topics</source>
+        <translation>主题</translation>
+    </message>
+    <message>
+        <source>Queues</source>
+        <translation>队列</translation>
+    </message>
+    <message>
+        <source>UIM</source>
+        <translation>UIM</translation>
+    </message>
+    <message>
+        <source>Telephon&amp;y</source>
+        <translation>电话(&amp;Y)</translation>
+    </message>
+    <message>
+        <source>RTSP</source>
+        <translation>RTSP</translation>
+    </message>
+    <message>
+        <source>&amp;Edit</source>
+        <translation>编辑(&amp;E)</translation>
+    </message>
+    <message>
+        <source>Packet Comments</source>
+        <translation type="unfinished">分组注释</translation>
+    </message>
+    <message>
+        <source>Main Toolbar</source>
+        <translation>主工具栏</translation>
+    </message>
+    <message>
+        <source>Display Filter Toolbar</source>
+        <translation>显示过滤器工具栏</translation>
+    </message>
+    <message>
+        <source>Open a capture file</source>
+        <translation>打开已保存的捕获文件</translation>
+    </message>
+    <message>
+        <source>Quit Wireshark</source>
+        <translation>退出 Wireshark</translation>
+    </message>
+    <message>
+        <source>&amp;Start</source>
+        <translation>开始(&amp;S)</translation>
+    </message>
+    <message>
+        <source>Start capturing packets</source>
+        <translation>开始捕获分组</translation>
+    </message>
+    <message>
+        <source>S&amp;top</source>
+        <translation>停止(&amp;T)</translation>
+    </message>
+    <message>
+        <source>Stop capturing packets</source>
+        <translation>停止捕获分组</translation>
+    </message>
+    <message>
+        <source>No files found</source>
+        <translation>未找到文件</translation>
+    </message>
+    <message>
+        <source>&amp;Contents</source>
+        <translation>内容(&amp;C)</translation>
+    </message>
+    <message>
+        <source>Wireshark Filter</source>
+        <translation>Wireshark 过滤器</translation>
+    </message>
+    <message>
+        <source>TShark</source>
+        <translation>TShark</translation>
+    </message>
+    <message>
+        <source>Rawshark</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dumpcap</source>
+        <translation>Dumpcap</translation>
+    </message>
+    <message>
+        <source>Mergecap</source>
+        <translation>Mergecap</translation>
+    </message>
+    <message>
+        <source>Editcap</source>
+        <translation>Editcap</translation>
+    </message>
+    <message>
+        <source>Text2pcap</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Website</source>
+        <translation>网站</translation>
+    </message>
+    <message>
+        <source>Downloads</source>
+        <translation>下载</translation>
+    </message>
+    <message>
+        <source>Wiki</source>
+        <translation>Wiki</translation>
+    </message>
+    <message>
+        <source>Sample Captures</source>
+        <translation>捕获示例</translation>
+    </message>
+    <message>
+        <source>&amp;About Wireshark</source>
+        <translation>关于 Wireshark (&amp;A)</translation>
+    </message>
+    <message>
+        <source>Ask (Q&amp;&amp;A)</source>
+        <translation>提问 (问答平台)</translation>
+    </message>
+    <message>
+        <source>Next Packet</source>
+        <translation>下一分组</translation>
+    </message>
+    <message>
+        <source>Go to the next packet</source>
+        <translation>转到下一分组</translation>
+    </message>
+    <message>
+        <source>Previous Packet</source>
+        <translation>前一分组</translation>
+    </message>
+    <message>
+        <source>Go to the previous packet</source>
+        <translation>转到前一分组</translation>
+    </message>
+    <message>
+        <source>First Packet</source>
+        <translation>首个分组</translation>
+    </message>
+    <message>
+        <source>Go to the first packet</source>
+        <translation>转到首个分组</translation>
+    </message>
+    <message>
+        <source>Last Packet</source>
+        <translation>最新分组</translation>
+    </message>
+    <message>
+        <source>Go to the last packet</source>
+        <translation>转到最新分组</translation>
+    </message>
+    <message>
+        <source>E&amp;xpand Subtrees</source>
+        <translation>展开子树(&amp;X)</translation>
+    </message>
+    <message>
+        <source>Expand the current packet detail</source>
+        <translation>展开当前分组详情</translation>
+    </message>
+    <message>
+        <source>&amp;Expand All</source>
+        <translation>展开全部(&amp;E)</translation>
+    </message>
+    <message>
+        <source>Expand packet details</source>
+        <translation>展开分组详情</translation>
+    </message>
+    <message>
+        <source>Collapse &amp;All</source>
+        <translation>收起全部(&amp;A)</translation>
+    </message>
+    <message>
+        <source>Collapse all packet details</source>
+        <translation>收起所有分组详情</translation>
+    </message>
+    <message>
+        <source>Go to specified packet</source>
+        <translation>转到特定分组</translation>
+    </message>
+    <message>
+        <source>Merge one or more files</source>
+        <translation>合并一或多个文件</translation>
+    </message>
+    <message>
+        <source>Import a file</source>
+        <translation>导入文件</translation>
+    </message>
+    <message>
+        <source>&amp;Save</source>
+        <translation>保存(&amp;S)</translation>
+    </message>
+    <message>
+        <source>Save as a different file</source>
+        <translation>另存为不同的文件</translation>
+    </message>
+    <message>
+        <source>Export specified packets</source>
+        <translation>导出指定分组</translation>
+    </message>
+    <message>
+        <source>Export TLS Session Keys…</source>
+        <translation>导出 TLS 会话密钥…</translation>
+    </message>
+    <message>
+        <source>List Files</source>
+        <translation>列出文件</translation>
+    </message>
+    <message>
+        <source>Next File</source>
+        <translation>下一文件</translation>
+    </message>
+    <message>
+        <source>Previous File</source>
+        <translation>上一文件</translation>
+    </message>
+    <message>
+        <source>&amp;Reload</source>
+        <translation>重新加载(&amp;R)</translation>
+    </message>
+    <message>
+        <source>Options</source>
+        <translation>选项</translation>
+    </message>
+    <message>
+        <source>Capture options</source>
+        <translation>捕获选项</translation>
+    </message>
+    <message>
+        <source>Capture filters</source>
+        <translation>捕获过滤器</translation>
+    </message>
+    <message>
+        <source>Refresh Interfaces</source>
+        <translation>刷新接口列表</translation>
+    </message>
+    <message>
+        <source>Refresh interfaces</source>
+        <translation>刷新接口列表</translation>
+    </message>
+    <message>
+        <source>&amp;Restart</source>
+        <translation>重新开始(&amp;R)</translation>
+    </message>
+    <message>
+        <source>Restart current capture</source>
+        <translation>重新开始当前捕获</translation>
+    </message>
+    <message>
+        <source>As &amp;CSV…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>As &quot;C&quot; &amp;Arrays…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>As P&amp;SML XML…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>As P&amp;DML XML…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>As &amp;JSON…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Description</source>
+        <translation>描述</translation>
+    </message>
+    <message>
+        <source>Field Name</source>
+        <translation>字段名称</translation>
+    </message>
+    <message>
+        <source>Value</source>
+        <translation>值</translation>
+    </message>
+    <message>
+        <source>As Filter</source>
+        <translation>作为过滤器</translation>
+    </message>
+    <message>
+        <source>Close this capture file</source>
+        <translation>关闭捕获文件</translation>
+    </message>
+    <message>
+        <source>Packet:</source>
+        <translation>分组:</translation>
+    </message>
+    <message>
+        <source>Interface Toolbars</source>
+        <translation>接口工具栏</translation>
+    </message>
+    <message>
+        <source>Colorize Conversation</source>
+        <translation>对话着色</translation>
+    </message>
+    <message>
+        <source>Internals</source>
+        <translation>内部</translation>
+    </message>
+    <message>
+        <source>Additional Toolbars</source>
+        <translation>额外工具栏</translation>
+    </message>
+    <message>
+        <source>Conversation Filter</source>
+        <translation>对话过滤器</translation>
+    </message>
+    <message>
+        <source>Reliable Server Pooling (RSerPool)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>SOME/IP</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;DTN</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Osmux</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Tools</source>
+        <oldsource>Tools</oldsource>
+        <translation>工具(&amp;T)</translation>
+    </message>
+    <message>
+        <source>Wireless Toolbar</source>
+        <translation>无线工具栏</translation>
+    </message>
+    <message>
+        <source>Help contents</source>
+        <translation>帮助内容</translation>
+    </message>
+    <message>
+        <source>FAQs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Next Packet in Conversation</source>
+        <translation>对话中的下一个分组</translation>
+    </message>
+    <message>
+        <source>Go to the next packet in this conversation</source>
+        <translation>转至此对话中的下一个分组</translation>
+    </message>
+    <message>
+        <source>Previous Packet in Conversation</source>
+        <translation>对话中的上一个分组</translation>
+    </message>
+    <message>
+        <source>Go to the previous packet in this conversation</source>
+        <translation>转至此对话中的上一个分组</translation>
+    </message>
+    <message>
+        <source>Next Packet In History</source>
+        <translation>历史中的下一个分组</translation>
+    </message>
+    <message>
+        <source>Go to the next packet in your selection history</source>
+        <translation>转至您的选定历史中的下一个分组</translation>
+    </message>
+    <message>
+        <source>Previous Packet In History</source>
+        <translation>历史中的上一个分组</translation>
+    </message>
+    <message>
+        <source>Go to the previous packet in your selection history</source>
+        <translation>转至您的选定历史中的上一个分组</translation>
+    </message>
+    <message>
+        <source>Collapse Subtrees</source>
+        <translation>折叠子树</translation>
+    </message>
+    <message>
+        <source>Collapse the current packet detail</source>
+        <translation>折叠当前分组详细信息</translation>
+    </message>
+    <message>
+        <source>Go to Packet…</source>
+        <translation>转至分组…</translation>
+    </message>
+    <message>
+        <source>&amp;Merge…</source>
+        <translation>合并(&amp;M)…</translation>
+    </message>
+    <message>
+        <source>&amp;Import from Hex Dump…</source>
+        <translation>从 Hex 转储导入(&amp;I)…</translation>
+    </message>
+    <message>
+        <source>Save this capture file</source>
+        <translation>保存捕获文件</translation>
+    </message>
+    <message>
+        <source>Save &amp;As…</source>
+        <translation>另存为(&amp;A)…</translation>
+    </message>
+    <message>
+        <source>Export Specified Packets…</source>
+        <translation>导出特定分组…</translation>
+    </message>
+    <message>
+        <source>Export Packet &amp;Bytes…</source>
+        <translation>导出分组字节流(&amp;B)…</translation>
+    </message>
+    <message>
+        <source>&amp;Print…</source>
+        <translation>打印(&amp;P)…</translation>
+    </message>
+    <message>
+        <source>Reload this file</source>
+        <translation>重新加载文件</translation>
+    </message>
+    <message>
+        <source>Reload as File Format/Capture</source>
+        <translation>重新载入为文件格式/捕获</translation>
+    </message>
+    <message>
+        <source>Copy this item&apos;s description</source>
+        <translation>复制此项的描述</translation>
+    </message>
+    <message>
+        <source>Copy this item&apos;s field name</source>
+        <translation>复制此项的字段名称</translation>
+    </message>
+    <message>
+        <source>Copy this item&apos;s value</source>
+        <translation>复制此项的值</translation>
+    </message>
+    <message>
+        <source>Copy this item as a display filter</source>
+        <translation>复制此项为显示过滤器</translation>
+    </message>
+    <message>
+        <source>Apply as Column</source>
+        <translation>应用为列</translation>
+    </message>
+    <message>
+        <source>Create a packet list column from the selected field.</source>
+        <translation>从选择的字段创建分组列表列。</translation>
+    </message>
+    <message>
+        <source>Find a packet</source>
+        <translation>查找一个分组</translation>
+    </message>
+    <message>
+        <source>Find the next packet</source>
+        <translation>查找下一分组</translation>
+    </message>
+    <message>
+        <source>Find the previous packet</source>
+        <translation>查找上一分组</translation>
+    </message>
+    <message>
+        <source>&amp;Mark/Unmark Packet(s)</source>
+        <oldsource>&amp;Mark/Unmark Packet</oldsource>
+        <translation>标记/取消标记 分组(&amp;M)</translation>
+    </message>
+    <message>
+        <source>Mark All Displayed</source>
+        <translation>标记所有显示的分组</translation>
+    </message>
+    <message>
+        <source>Mark all displayed packets</source>
+        <translation>标记所有已经显示的分组</translation>
+    </message>
+    <message>
+        <source>Unmark all displayed packets</source>
+        <translation>取消标记所有已经显示的分组</translation>
+    </message>
+    <message>
+        <source>Next Mark</source>
+        <translation>下一标记</translation>
+    </message>
+    <message>
+        <source>Go to the next marked packet</source>
+        <translation>转到下一个已标记的分组</translation>
+    </message>
+    <message>
+        <source>Previous Mark</source>
+        <translation>前一标记</translation>
+    </message>
+    <message>
+        <source>Go to the previous marked packet</source>
+        <translation>转到前一个已标记的分组</translation>
+    </message>
+    <message>
+        <source>&amp;Ignore/Unignore Packet(s)</source>
+        <oldsource>&amp;Ignore/Unignore Packet</oldsource>
+        <translation>忽略/取消忽略 分组(&amp;I)</translation>
+    </message>
+    <message>
+        <source>Ignore All Displayed</source>
+        <translation>忽略所有显示的分组</translation>
+    </message>
+    <message>
+        <source>Ignore all displayed packets</source>
+        <translation>忽略所有已经显示的分组</translation>
+    </message>
+    <message>
+        <source>Set/Unset Time Reference</source>
+        <translation>设置/取消设置 时间参考</translation>
+    </message>
+    <message>
+        <source>Set or unset a time reference for this packet</source>
+        <translation>设置或取消设置该分组的时间参考</translation>
+    </message>
+    <message>
+        <source>Unset All Time References</source>
+        <translation>取消设置所有时间参考</translation>
+    </message>
+    <message>
+        <source>Remove all time references</source>
+        <translation>移除所有时间参考</translation>
+    </message>
+    <message>
+        <source>Next Time Reference</source>
+        <translation>下一时间参考</translation>
+    </message>
+    <message>
+        <source>Go to the next time reference</source>
+        <translation>转到下一个时间参考</translation>
+    </message>
+    <message>
+        <source>Previous Time Reference</source>
+        <translation>前一时间参考</translation>
+    </message>
+    <message>
+        <source>Go to the previous time reference</source>
+        <translation>转到前一时间参考</translation>
+    </message>
+    <message>
+        <source>Shift or change packet timestamps</source>
+        <translation>平移或更改分组时间戳</translation>
+    </message>
+    <message>
+        <source>Delete All Packet Comments</source>
+        <translation>删除所有分组注释</translation>
+    </message>
+    <message>
+        <source>Remove all packet comments in the capture file</source>
+        <translation>删除捕获文件中的所有分组注释</translation>
+    </message>
+    <message>
+        <source>&amp;Configuration Profiles…</source>
+        <translation>配置文件(&amp;C)…</translation>
+    </message>
+    <message>
+        <source>Configuration profiles</source>
+        <translation>配置文件</translation>
+    </message>
+    <message>
+        <source>Manage your configuration profiles</source>
+        <translation>管理配置文件</translation>
+    </message>
+    <message>
+        <source>Manage Wireshark&apos;s preferences</source>
+        <translation>管理 Wireshark 的首选项设置</translation>
+    </message>
+    <message>
+        <source>Capture File Properties</source>
+        <translation>捕获文件属性</translation>
+    </message>
+    <message>
+        <source>Capture file properties</source>
+        <translation>捕获文件属性</translation>
+    </message>
+    <message>
+        <source>&amp;Protocol Hierarchy</source>
+        <translation>协议分级(&amp;P)</translation>
+    </message>
+    <message>
+        <source>Show a summary of protocols present in the capture file.</source>
+        <translation>显示捕获文件中存在协议的概要。</translation>
+    </message>
+    <message>
+        <source>Capinfos</source>
+        <translation>捕获信息</translation>
+    </message>
+    <message>
+        <source>Reordercap</source>
+        <translation>Reordercap</translation>
+    </message>
+    <message>
+        <source>Time Sequence (Stevens)</source>
+        <translation>时间序列 (Stevens)</translation>
+    </message>
+    <message>
+        <source>TCP time sequence graph (Stevens)</source>
+        <translation>TCP 时间序列图 (Stevens)</translation>
+    </message>
+    <message>
+        <source>Throughput</source>
+        <translation>吞吐量</translation>
+    </message>
+    <message>
+        <source>Round Trip Time</source>
+        <translation>往返时间</translation>
+    </message>
+    <message>
+        <source>TCP round trip time</source>
+        <translation>TCP 往返时间</translation>
+    </message>
+    <message>
+        <source>Window Scaling</source>
+        <translation>窗口尺寸</translation>
+    </message>
+    <message>
+        <source>TCP window scaling</source>
+        <translation>TCP 窗口尺寸</translation>
+    </message>
+    <message>
+        <source>TLS Stream</source>
+        <translation type="vanished">TLS 流</translation>
+    </message>
+    <message>
+        <source>HTTP Stream</source>
+        <translation type="vanished">HTTP 流</translation>
+    </message>
+    <message>
+        <source>HTTP/2 Stream</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>SIP Call</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Time Sequence (tcptrace)</source>
+        <translation>时间序列 (tcptrace)</translation>
+    </message>
+    <message>
+        <source>TCP time sequence graph (tcptrace)</source>
+        <translation>TCP 时间序列图 (tcptrace)</translation>
+    </message>
+    <message>
+        <source>Analyse this Association</source>
+        <translation>分析关联</translation>
+    </message>
+    <message>
+        <source>Show All Associations</source>
+        <translation>显示所有助手</translation>
+    </message>
+    <message>
+        <source>Flow Graph</source>
+        <translation>流量图</translation>
+    </message>
+    <message>
+        <source>Flow sequence diagram</source>
+        <translation>流序列图</translation>
+    </message>
+    <message>
+        <source>ANCP</source>
+        <translation>ANCP</translation>
+    </message>
+    <message>
+        <source>ANCP statistics</source>
+        <translation>ANCP统计</translation>
+    </message>
+    <message>
+        <source>Packets sorted by Instance ID</source>
+        <translation>分组按实例ID排序</translation>
+    </message>
+    <message>
+        <source>BACapp statistics sorted by instance ID</source>
+        <translation>BACapp 统计按实例ID排序</translation>
+    </message>
+    <message>
+        <source>Packets sorted by IP</source>
+        <translation>分组按IP排序</translation>
+    </message>
+    <message>
+        <source>BACapp statistics sorted by IP</source>
+        <translation>BACapp 统计按实例IP排序</translation>
+    </message>
+    <message>
+        <source>Packets sorted by object type</source>
+        <translation>分组按对象类型排序</translation>
+    </message>
+    <message>
+        <source>BACapp statistics sorted by object type</source>
+        <translation>BACapp 统计按实例对象类型排序</translation>
+    </message>
+    <message>
+        <source>Packets sorted by service</source>
+        <translation>分组按服务排序</translation>
+    </message>
+    <message>
+        <source>BACapp statistics sorted by service</source>
+        <translation>BACapp 统计按实例服务排序</translation>
+    </message>
+    <message>
+        <source>Collectd</source>
+        <translation>Collectd</translation>
+    </message>
+    <message>
+        <source>Collectd statistics</source>
+        <translation>Collectd协议统计</translation>
+    </message>
+    <message>
+        <source>DNS</source>
+        <translation>DNS</translation>
+    </message>
+    <message>
+        <source>DNS statistics</source>
+        <translation>DNS统计</translation>
+    </message>
+    <message>
+        <source>HART-IP</source>
+        <translation>HART-IP</translation>
+    </message>
+    <message>
+        <source>HART-IP statistics</source>
+        <translation>HART-IP 统计</translation>
+    </message>
+    <message>
+        <source>HPFEEDS</source>
+        <translation>HPFEEDS</translation>
+    </message>
+    <message>
+        <source>hpfeeds statistics</source>
+        <translation>hpfeeds 统计</translation>
+    </message>
+    <message>
+        <source>HTTP2</source>
+        <translation>HTTP2</translation>
+    </message>
+    <message>
+        <source>HTTP2 statistics</source>
+        <translation>HTTP2 统计</translation>
+    </message>
+    <message>
+        <source>Packet Counter</source>
+        <translation>分组计数器</translation>
+    </message>
+    <message>
+        <source>HTTP packet counter</source>
+        <translation>HTTP 分组计数器</translation>
+    </message>
+    <message>
+        <source>Requests</source>
+        <translation>请求</translation>
+    </message>
+    <message>
+        <source>HTTP requests</source>
+        <translation>HTTP 请求</translation>
+    </message>
+    <message>
+        <source>Load Distribution</source>
+        <translation>负载分配</translation>
+    </message>
+    <message>
+        <source>HTTP load distribution</source>
+        <translation>HTTP 负载分配</translation>
+    </message>
+    <message>
+        <source>Packet Lengths</source>
+        <translation>分组长度</translation>
+    </message>
+    <message>
+        <source>Packet length statistics</source>
+        <translation>分组长度统计</translation>
+    </message>
+    <message>
+        <source>Sametime</source>
+        <translation>Sametime</translation>
+    </message>
+    <message>
+        <source>Sametime statistics</source>
+        <translation>Sametime协议统计</translation>
+    </message>
+    <message>
+        <source>SOME/IP Messages</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>SOME/IP Message statistics</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>SOME/IP-SD Entries</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>SOME/IP-SD Entries statistics</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;LTP</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>LTP segment and block statistics</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;ISUP Messages</source>
+        <translation>ISUP 消息(&amp;I)</translation>
+    </message>
+    <message>
+        <source>ISUP message statistics</source>
+        <translation>ISUP 消息统计</translation>
+    </message>
+    <message>
+        <source>Osmux packet counts</source>
+        <translation>OSMUX 分组计数</translation>
+    </message>
+    <message>
+        <source>RTSP packet counts</source>
+        <translation>RTSP分组计数</translation>
+    </message>
+    <message>
+        <source>SM&amp;PP Operations</source>
+        <translation>SMPP 操作(&amp;P)</translation>
+    </message>
+    <message>
+        <source>SMPP operation statistics</source>
+        <translation>SMPP操作统计</translation>
+    </message>
+    <message>
+        <source>&amp;UCP Messages</source>
+        <translation>UCP 消息(&amp;U)</translation>
+    </message>
+    <message>
+        <source>UCP message statistics</source>
+        <translation>UCP 消息统计</translation>
+    </message>
+    <message>
+        <source>F1AP</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>F1AP Messages</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>NGAP</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>NGAP Messages</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change the way packets are dissected</source>
+        <translation>修改分组解析方式</translation>
+    </message>
+    <message>
+        <source>Reload Lua Plugins</source>
+        <translation>重新载入 Lua 插件</translation>
+    </message>
+    <message>
+        <source>Reload Lua plugins</source>
+        <translation>重新载入 Lua 插件</translation>
+    </message>
+    <message>
+        <source>Advertisements by Topic</source>
+        <translation>根据主题的通告</translation>
+    </message>
+    <message>
+        <source>Advertisements by Source</source>
+        <translation>根据源的通告</translation>
+    </message>
+    <message>
+        <source>Advertisements by Transport</source>
+        <translation>根据传输层的通告</translation>
+    </message>
+    <message>
+        <source>Queries by Topic</source>
+        <translation>根据主题的查询</translation>
+    </message>
+    <message>
+        <source>Queries by Receiver</source>
+        <translation>根据接收者的查询</translation>
+    </message>
+    <message>
+        <source>Wildcard Queries by Pattern</source>
+        <translation>根据模式的通配查询</translation>
+    </message>
+    <message>
+        <source>Wildcard Queries by Receiver</source>
+        <translation>根据接收者的通配查询</translation>
+    </message>
+    <message>
+        <source>Advertisements by Queue</source>
+        <translation>根据队列的通告</translation>
+    </message>
+    <message>
+        <source>Queries by Queue</source>
+        <translation>根据队列的查询</translation>
+    </message>
+    <message>
+        <source>Streams</source>
+        <translation>流</translation>
+    </message>
+    <message>
+        <source>LBT-RM</source>
+        <translation>LBT-RM</translation>
+    </message>
+    <message>
+        <source>LBT-RU</source>
+        <translation>LBT-RU</translation>
+    </message>
+    <message>
+        <source>Filter this Association</source>
+        <translation>过滤该助手</translation>
+    </message>
+    <message>
+        <source>Strip Headers…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Strip headers and export higher level encapsulations to file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;I/O Graphs</source>
+        <translation>I/O 图表(&amp;I)</translation>
+    </message>
+    <message>
+        <source>&amp;Conversations</source>
+        <translation>会话(&amp;C)</translation>
+    </message>
+    <message>
+        <source>&amp;Endpoints</source>
+        <translation>端点(&amp;E)</translation>
+    </message>
+    <message>
+        <source>Shrink the main window text</source>
+        <translation>收缩主窗口文字</translation>
+    </message>
+    <message>
+        <source>Return the main window text to its normal size</source>
+        <translation>使主窗口文字返回正常大小</translation>
+    </message>
+    <message>
+        <source>Reset Layout</source>
+        <translation>重置布局</translation>
+    </message>
+    <message>
+        <source>Reset appearance layout to default size</source>
+        <translation>重置外观布局为默认尺寸</translation>
+    </message>
+    <message>
+        <source>Seconds Since First Captured Packet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show packet times as the seconds since the first captured packet.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Packet &amp;Diagram</source>
+        <translation>分组图(&amp;D)</translation>
+    </message>
+    <message>
+        <source>Show or hide the packet diagram</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show each conversation hash table</source>
+        <translation>显示每个对话哈希表</translation>
+    </message>
+    <message>
+        <source>Show each dissector table and its entries</source>
+        <translation>显示每个解析器表及其项</translation>
+    </message>
+    <message>
+        <source>Show the currently supported protocols and display filter fields</source>
+        <translation>显示当前支持的协议和显示过滤器字段</translation>
+    </message>
+    <message>
+        <source>MAC Statistics</source>
+        <translation>MAC 统计</translation>
+    </message>
+    <message>
+        <source>LTE MAC statistics</source>
+        <translation>LTE MAC 统计</translation>
+    </message>
+    <message>
+        <source>RLC Statistics</source>
+        <translation>RLC 统计</translation>
+    </message>
+    <message>
+        <source>LTE RLC statistics</source>
+        <translation>LTE RLC 统计</translation>
+    </message>
+    <message>
+        <source>LTE RLC graph</source>
+        <translation>LTE RLC 图表</translation>
+    </message>
+    <message>
+        <source>MTP3 Summary</source>
+        <translation>MTP3 汇总</translation>
+    </message>
+    <message>
+        <source>MTP3 summary statistics</source>
+        <translation>MTP3 汇总统计</translation>
+    </message>
+    <message>
+        <source>Bluetooth Devices</source>
+        <translation>蓝牙设备</translation>
+    </message>
+    <message>
+        <source>Bluetooth HCI Summary</source>
+        <translation>蓝牙 HCI 摘要</translation>
+    </message>
+    <message>
+        <source>Display Filter &amp;Expression…</source>
+        <translation>显示过滤器表达式(&amp;E)...</translation>
+    </message>
+    <message>
+        <source>Display Filter Expression…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>REGISTER_STAT_GROUP_RSERPOOL</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start of &quot;REGISTER_STAT_GROUP_RSERPOOL&quot;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No GSM statistics registered</source>
+        <translation>没有已注册的 GSM 统计</translation>
+    </message>
+    <message>
+        <source>No LTE statistics registered</source>
+        <translation>没有 LTE 统计已注册</translation>
+    </message>
+    <message>
+        <source>No MTP3 statistics registered</source>
+        <translation>没有已注册的 MTP3 统计</translation>
+    </message>
+    <message>
+        <source>IAX2 Stream Analysis</source>
+        <translation>IAX2 流分析</translation>
+    </message>
+    <message>
+        <source>Show Packet Bytes…</source>
+        <translation>显示分组字节…</translation>
+    </message>
+    <message>
+        <source>Go to &amp;Linked Packet</source>
+        <translation>转至链接的分组(&amp;L)</translation>
+    </message>
+    <message>
+        <source>UDP Multicast Streams</source>
+        <translation>UDP 多播流</translation>
+    </message>
+    <message>
+        <source>Show UTP multicast stream statistics.</source>
+        <translation>显示 UTP 多播流统计。</translation>
+    </message>
+    <message>
+        <source>WLAN Traffic</source>
+        <translation>WLAN 流量</translation>
+    </message>
+    <message>
+        <source>Show IEEE 802.11 wireless LAN statistics.</source>
+        <translation>显示 IEEE 802.11 无线 LAN 统计。</translation>
+    </message>
+    <message>
+        <source>Add a display filter button.</source>
+        <translation>添加一个显示过滤器按钮。</translation>
+    </message>
+    <message>
+        <source>Firewall ACL Rules</source>
+        <translation>防火墙 ACL 规则</translation>
+    </message>
+    <message>
+        <source>Create firewall ACL rules</source>
+        <translation>创建防火墙 ACL 规则</translation>
+    </message>
+    <message>
+        <source>&amp;Full Screen</source>
+        <translation>全屏(&amp;F)</translation>
+    </message>
+    <message>
+        <source>Credentials</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Options…</source>
+        <translation>选项(&amp;O)…</translation>
+    </message>
+    <message>
+        <source>&amp;Wireless</source>
+        <translation>无线(&amp;W)</translation>
+    </message>
+    <message>
+        <source>Capture &amp;Filters…</source>
+        <translation>捕获过滤器(&amp;F)…</translation>
+    </message>
+    <message>
+        <source>As Plain &amp;Text…</source>
+        <translation>为纯文本(&amp;T)…</translation>
+    </message>
+    <message>
+        <source>As Plain &amp;Text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>As &amp;CSV</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>As &amp;YAML</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All Visible Items</source>
+        <translation>所有可见项目</translation>
+    </message>
+    <message>
+        <source>All Visible Selected Tree Items</source>
+        <translation>选中树的所有可见项目</translation>
+    </message>
+    <message>
+        <source>Display Filter &amp;Macros…</source>
+        <translation>显示过滤器宏(&amp;M)…</translation>
+    </message>
+    <message>
+        <source>&amp;Find Packet…</source>
+        <translation>查找分组(&amp;F)…</translation>
+    </message>
+    <message>
+        <source>Find Ne&amp;xt</source>
+        <translation>查找下一个(&amp;N)</translation>
+    </message>
+    <message>
+        <source>Find Pre&amp;vious</source>
+        <translation>查找上一个(&amp;v)</translation>
+    </message>
+    <message>
+        <source>Mark or unmark each selected packet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ignore or unignore each selected packet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>U&amp;nignore All Displayed</source>
+        <translation>取消忽略所有显示的分组(&amp;n)</translation>
+    </message>
+    <message>
+        <source>Unignore all displayed packets</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Time Shift…</source>
+        <translation>时间平移…</translation>
+    </message>
+    <message>
+        <source>&amp;Preferences…</source>
+        <translation>首选项(&amp;P)…</translation>
+    </message>
+    <message>
+        <source>TCP throughput</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>TCP Stream</source>
+        <translation type="vanished">TCP 流</translation>
+    </message>
+    <message>
+        <source>UDP Stream</source>
+        <translation type="vanished">UDP 流</translation>
+    </message>
+    <message>
+        <source>Request Sequences</source>
+        <translation>请求序列</translation>
+    </message>
+    <message>
+        <source>HTTP Request Sequences</source>
+        <translation>HTTP 请求序列</translation>
+    </message>
+    <message>
+        <source>Decode &amp;As…</source>
+        <translation>解码为(&amp;A)…</translation>
+    </message>
+    <message>
+        <source>Export PDUs to File…</source>
+        <translation>导出 PDU 到文件…</translation>
+    </message>
+    <message>
+        <source>Create graphs based on display filter fields</source>
+        <translation>基于显示过滤器字段创建图形</translation>
+    </message>
+    <message>
+        <source>&amp;Main Toolbar</source>
+        <translation>主工具栏(&amp;M)</translation>
+    </message>
+    <message>
+        <source>Show or hide the main toolbar</source>
+        <translation>显示或隐藏主工具栏</translation>
+    </message>
+    <message>
+        <source>&amp;Filter Toolbar</source>
+        <translation>过滤器工具栏(&amp;F)</translation>
+    </message>
+    <message>
+        <source>Show or hide the display filter toolbar</source>
+        <translation>显示或隐藏显示过滤器工具栏</translation>
+    </message>
+    <message>
+        <source>Conversations at different protocol levels</source>
+        <translation>对话在不同的协议层</translation>
+    </message>
+    <message>
+        <source>Endpoints at different protocol levels</source>
+        <translation>端点在不同的协议层</translation>
+    </message>
+    <message>
+        <source>Colorize Packet List</source>
+        <translation>着色分组列表</translation>
+    </message>
+    <message>
+        <source>Draw packets using your coloring rules</source>
+        <translation>使用您的着色规则来绘制分组</translation>
+    </message>
+    <message>
+        <source>&amp;Zoom In</source>
+        <translation>放大(&amp;Z)</translation>
+    </message>
+    <message>
+        <source>Enlarge the main window text</source>
+        <translation>放大主窗口文本</translation>
+    </message>
+    <message>
+        <source>Zoom Out</source>
+        <translation>缩小</translation>
+    </message>
+    <message>
+        <source>Normal Size</source>
+        <translation>普通大小</translation>
+    </message>
+    <message>
+        <source>Resize Columns</source>
+        <translation>调整列宽</translation>
+    </message>
+    <message>
+        <source>Resize packet list columns to fit contents</source>
+        <translation>调整分组列表列以适应内容</translation>
+    </message>
+    <message>
+        <source>Date and Time of Day (1970-01-01 01:02:03.123456)</source>
+        <translation>日期和时间 (1970-01-01 01:02:03.123456)</translation>
+    </message>
+    <message>
+        <source>Show packet times as the date and time of day.</source>
+        <translation>使用日期和时间来显示分组时间。</translation>
+    </message>
+    <message>
+        <source>Year, Day of Year, and Time of Day (1970/001 01:02:03.123456)</source>
+        <translation>年、年积日、时间 (1970/001 01:02:03.123456)</translation>
+    </message>
+    <message>
+        <source>Show packet times as the year, day of the year and time of day.</source>
+        <translation>使用年、年积日和时间来显示分组时间。</translation>
+    </message>
+    <message>
+        <source>Time of Day (01:02:03.123456)</source>
+        <translation>时间 (01:02:03.123456)</translation>
+    </message>
+    <message>
+        <source>Seconds Since 1970-01-01</source>
+        <translation>自1970-01-01经过的秒数</translation>
+    </message>
+    <message>
+        <source>Show packet times as the seconds since the UNIX / POSIX epoch (1970-01-01).</source>
+        <translation>使用自 UNIX / POSIX 时间戳 (1970-01-01) 以来的秒数来显示分组时间。</translation>
+    </message>
+    <message>
+        <source>Seconds Since Previous Captured Packet</source>
+        <translation>自上一个捕获分组经过的秒数</translation>
+    </message>
+    <message>
+        <source>Show packet times as the seconds since the previous captured packet.</source>
+        <translation>使用自上一个被捕获分组的秒数来显示分组时间。</translation>
+    </message>
+    <message>
+        <source>Seconds Since Previous Displayed Packet</source>
+        <translation>自上一个显示分组经过的秒数</translation>
+    </message>
+    <message>
+        <source>Show packet times as the seconds since the previous displayed packet.</source>
+        <translation>使用自上一个被显示分组的秒数来显示分组时间。</translation>
+    </message>
+    <message>
+        <source>UTC Date and Time of Day (1970-01-01 01:02:03.123456)</source>
+        <translation>UTC 日期和时间 (1970-01-01 01:02:03.123456)</translation>
+    </message>
+    <message>
+        <source>Show packet times as the UTC date and time of day.</source>
+        <translation>使用 UTC 日期和时间来显示分组时间。</translation>
+    </message>
+    <message>
+        <source>UTC Year, Day of Year, and Time of Day (1970/001 01:02:03.123456)</source>
+        <translation>UTC 年、年积日、时间 (1970/001 01:02:03.123456)</translation>
+    </message>
+    <message>
+        <source>Show packet times as the UTC year, day of the year and time of day.</source>
+        <translation>使用 UTC 年、年积日和时间来显示分组时间。</translation>
+    </message>
+    <message>
+        <source>UTC Time of Day (01:02:03.123456)</source>
+        <translation>UTC 时间 (01:02:03.123456)</translation>
+    </message>
+    <message>
+        <source>Show packet times as the UTC time of day.</source>
+        <translation>使用 UTC 时间来显示分组时间。</translation>
+    </message>
+    <message>
+        <source>Automatic (from capture file)</source>
+        <translation>自动 (根据捕获文件)</translation>
+    </message>
+    <message>
+        <source>Use the time precision indicated in the capture file.</source>
+        <translation>使用捕获文件中指示的时间精度。</translation>
+    </message>
+    <message>
+        <source>Seconds</source>
+        <translation>秒</translation>
+    </message>
+    <message>
+        <source>Tenths of a second</source>
+        <translation>十分之一秒</translation>
+    </message>
+    <message>
+        <source>Hundredths of a second</source>
+        <translation>百分之一秒</translation>
+    </message>
+    <message>
+        <source>Milliseconds</source>
+        <translation>毫秒</translation>
+    </message>
+    <message>
+        <source>Microseconds</source>
+        <translation>微秒</translation>
+    </message>
+    <message>
+        <source>Nanoseconds</source>
+        <translation>纳秒</translation>
+    </message>
+    <message>
+        <source>Display Seconds With Hours and Minutes</source>
+        <translation>显示小时、分钟和秒</translation>
+    </message>
+    <message>
+        <source>Display seconds with hours and minutes</source>
+        <translation>显示小时、分钟、秒</translation>
+    </message>
+    <message>
+        <source>Resolve &amp;Physical Addresses</source>
+        <translation>解析物理地址(&amp;P)</translation>
+    </message>
+    <message>
+        <source>Show names for known MAC addresses. Lookups use a local database.</source>
+        <translation>显示已知 MAC 地址的名称。使用本地数据库查询。</translation>
+    </message>
+    <message>
+        <source>Resolve &amp;Network Addresses</source>
+        <translation>解析网络地址(&amp;N)</translation>
+    </message>
+    <message>
+        <source>Show names for known IPv4, IPv6, and IPX addresses. Lookups can generate network traffic.</source>
+        <translation>显示已知的IPv4、IPv6和IPX地址的名称。查找会产生网络流量。</translation>
+    </message>
+    <message>
+        <source>Resolve &amp;Transport Addresses</source>
+        <translation>解析传输层地址(&amp;T)</translation>
+    </message>
+    <message>
+        <source>Show names for known TCP, UDP, and SCTP services. Lookups can generate traffic on some systems.</source>
+        <translation>显示已知的 TCP、UDP 和 SCTP 服务的名称。在一些系统中，查找会产生流量。</translation>
+    </message>
+    <message>
+        <source>Wire&amp;less Toolbar</source>
+        <translation>无线工具栏(&amp;l)</translation>
+    </message>
+    <message>
+        <source>Show or hide the wireless toolbar</source>
+        <translation>显示或隐藏无线工具栏</translation>
+    </message>
+    <message>
+        <source>&amp;Status Bar</source>
+        <translation>状态栏(&amp;S)</translation>
+    </message>
+    <message>
+        <source>Show or hide the status bar</source>
+        <translation>显示或隐藏状态栏</translation>
+    </message>
+    <message>
+        <source>Packet &amp;List</source>
+        <translation>分组列表(&amp;L)</translation>
+    </message>
+    <message>
+        <source>Show or hide the packet list</source>
+        <translation>显示或隐藏分组列表</translation>
+    </message>
+    <message>
+        <source>Packet &amp;Details</source>
+        <translation>分组详情(&amp;D)</translation>
+    </message>
+    <message>
+        <source>Show or hide the packet details</source>
+        <translation>显示或隐藏分组详情</translation>
+    </message>
+    <message>
+        <source>Packet &amp;Bytes</source>
+        <translation>分组字节流(&amp;B)</translation>
+    </message>
+    <message>
+        <source>Show or hide the packet bytes</source>
+        <translation>显示或隐藏分组字节流</translation>
+    </message>
+    <message>
+        <source>&amp;Conversation Hash Tables</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Dissector Tables</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Supported Protocols</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>MAP Summary</source>
+        <translation>MAP 摘要</translation>
+    </message>
+    <message>
+        <source>GSM MAP summary statistics</source>
+        <translation>GSM MAP 摘要统计</translation>
+    </message>
+    <message>
+        <source>RLC &amp;Graph</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Coloring Rules…</source>
+        <translation>着色规则(&amp;C)…</translation>
+    </message>
+    <message>
+        <source>Show Linked Packet in New Window</source>
+        <translation>在新窗口中显示已链接的分组</translation>
+    </message>
+    <message>
+        <source>New Coloring Rule…</source>
+        <oldsource>New Conversation Rule…</oldsource>
+        <translation>新建着色规则…</translation>
+    </message>
+    <message>
+        <source>RTP Stream Analysis for selected stream. Press CTRL key for adding reverse stream too.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>RTP Player</source>
+        <translation type="unfinished">RTP 播放器</translation>
+    </message>
+    <message>
+        <source>Play selected stream. Press CTRL key for playing reverse stream too.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>IA&amp;X2 Stream Analysis</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enabled Protocols…</source>
+        <oldsource>Enable Protocols…</oldsource>
+        <translation>启用的协议…</translation>
+    </message>
+    <message>
+        <source>Wiki Protocol Page</source>
+        <translation>Wiki 协议页面</translation>
+    </message>
+    <message>
+        <source>Open the Wireshark wiki page for this protocol.</source>
+        <translation>打开针对此协议的 Wireshark Wiki 页面。</translation>
+    </message>
+    <message>
+        <source>Filter Field Reference</source>
+        <translation>过滤器字段参考</translation>
+    </message>
+    <message>
+        <source>Open the display filter reference page for this filter field.</source>
+        <translation>打开此过滤器字段的显示过滤器参考。</translation>
+    </message>
+    <message>
+        <source>Go to the packet referenced by the selected field.</source>
+        <translation>转至选定字段引用的分组。</translation>
+    </message>
+    <message>
+        <source>&amp;VoIP Calls</source>
+        <translation>&amp;VoIP 通话</translation>
+    </message>
+    <message>
+        <source>Open &amp;Recent</source>
+        <translation>打开最近的文件(&amp;R)</translation>
+    </message>
+    <message>
+        <source>Name Resol&amp;ution</source>
+        <translation>名称解析(&amp;U)</translation>
+    </message>
+    <message>
+        <source>Service &amp;Response Time</source>
+        <translation>服务响应时间(&amp;R)</translation>
+    </message>
+    <message>
+        <source>&amp;RTP</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>S&amp;CTP</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;ANSI</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;GSM</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;LTE</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;MTP3</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Open</source>
+        <translation>打开(&amp;O)</translation>
+    </message>
+    <message>
+        <source>&amp;Quit</source>
+        <translation>退出(&amp;Q)</translation>
+    </message>
+    <message>
+        <source>&amp;Close</source>
+        <translation>关闭(&amp;C)</translation>
+    </message>
+    <message>
+        <source>Display &amp;Filters…</source>
+        <translation>显示过滤器(&amp;F)…</translation>
+    </message>
+    <message>
+        <source>&amp;Unmark All Displayed</source>
+        <translation>取消标记所有显示的分组(&amp;U)</translation>
+    </message>
+    <message>
+        <source>All VoIP Calls</source>
+        <translation>全部VoIP呼叫</translation>
+    </message>
+    <message>
+        <source>SIP &amp;Flows</source>
+        <translation>SIP 流(&amp;F)</translation>
+    </message>
+    <message>
+        <source>SIP Flows</source>
+        <translation>SIP流</translation>
+    </message>
+    <message>
+        <source>RTP Streams</source>
+        <translation>RTP 流</translation>
+    </message>
+    <message>
+        <source>Edit the packet list coloring rules.</source>
+        <translation>编辑分组列表着色规则。</translation>
+    </message>
+    <message>
+        <source>Bluetooth ATT Server Attributes</source>
+        <oldsource>ATT Server Attributes</oldsource>
+        <translation>蓝牙 ATT 服务器属性</translation>
+    </message>
+    <message>
+        <source>Show Packet in New &amp;Window</source>
+        <translation>在新窗口显示分组(&amp;W)</translation>
+    </message>
+    <message>
+        <source>Show this packet in a separate window.</source>
+        <translation>在单独窗口中显示此分组。</translation>
+    </message>
+    <message>
+        <source>Show the linked packet in a separate window.</source>
+        <translation>在独立窗口中显示链接分组。</translation>
+    </message>
+    <message>
+        <source>Auto Scroll in Li&amp;ve Capture</source>
+        <translation>实时捕获时自动滚动(&amp;V)</translation>
+    </message>
+    <message>
+        <source>Automatically scroll to the last packet during a live capture.</source>
+        <translation>在实时捕获时，自动滚动屏幕到最新的分组。</translation>
+    </message>
+    <message>
+        <source>Expert Information</source>
+        <translation>专家信息</translation>
+    </message>
+    <message>
+        <source>Show expert notifications</source>
+        <translation>显示专家通知</translation>
+    </message>
+    <message>
+        <source>Add an expression to the display filter.</source>
+        <translation>添加一个表达式到显示过滤器。</translation>
+    </message>
+    <message>
+        <source>REGISTER_STAT_GROUP_UNSORTED</source>
+        <translation>REGISTER_STAT_GROUP_UNSORTED</translation>
+    </message>
+    <message>
+        <source>Start of &quot;REGISTER_STAT_GROUP_UNSORTED&quot;</source>
+        <translation>&quot;REGISTER_STAT_GROUP_UNSORTED&quot; 的启动</translation>
+    </message>
+    <message>
+        <source>No ANSI statistics registered</source>
+        <oldsource>No tools registered</oldsource>
+        <translation>没有 ANSI 统计已注册</translation>
+    </message>
+    <message>
+        <source>Resolved Addresses</source>
+        <translation>已解析的地址</translation>
+    </message>
+    <message>
+        <source>Show each table of resolved addresses as copyable text.</source>
+        <translation>将每个已解析地址的表格表示为可复制的文本。</translation>
+    </message>
+    <message>
+        <source>Color &amp;1</source>
+        <translation>颜色 &amp;1</translation>
+    </message>
+    <message>
+        <source>Mark the current conversation with its own color.</source>
+        <oldsource>Mark the current coversation with its own color.</oldsource>
+        <translation>让当前的对话使用自己的颜色。</translation>
+    </message>
+    <message>
+        <source>Color &amp;2</source>
+        <translation>颜色 &amp;2</translation>
+    </message>
+    <message>
+        <source>Color &amp;3</source>
+        <translation>颜色 &amp;3</translation>
+    </message>
+    <message>
+        <source>Color &amp;4</source>
+        <translation>颜色 &amp;4</translation>
+    </message>
+    <message>
+        <source>Color &amp;5</source>
+        <translation>颜色 &amp;5</translation>
+    </message>
+    <message>
+        <source>Color &amp;6</source>
+        <translation>颜色 &amp;6</translation>
+    </message>
+    <message>
+        <source>Color &amp;7</source>
+        <translation>颜色 &amp;7</translation>
+    </message>
+    <message>
+        <source>Color &amp;8</source>
+        <translation>颜色 &amp;8</translation>
+    </message>
+    <message>
+        <source>Color &amp;9</source>
+        <translation>颜色 &amp;9</translation>
+    </message>
+    <message>
+        <source>Color 1&amp;0</source>
+        <translation>颜色 1&amp;0</translation>
+    </message>
+    <message>
+        <source>Create a new coloring rule based on this field.</source>
+        <oldsource>Create a new coloring rule based on this conversation.</oldsource>
+        <translation>基于此栏创建一个新的着色规则。</translation>
+    </message>
+    <message>
+        <source>Reset Colorization</source>
+        <translation>重置着色</translation>
+    </message>
+    <message>
+        <source>Reset colorized conversations.</source>
+        <translation>重置着色的对话。</translation>
+    </message>
+    <message>
+        <source>RTP Stream Analysis</source>
+        <translation>RTP 流分析</translation>
+    </message>
+    <message>
+        <source>Edit Resolved Name</source>
+        <translation>编辑解析的名称</translation>
+    </message>
+    <message>
+        <source>Manually edit a name resolution entry.</source>
+        <translation>手动编辑一个名称解析项。</translation>
+    </message>
+    <message>
+        <source>Enable and disable specific protocols</source>
+        <translation>启用和禁用特定的协议</translation>
+    </message>
+    <message>
+        <source> before quitting</source>
+        <translation>在退出前</translation>
+    </message>
+    <message>
+        <source>Save packets before merging?</source>
+        <translation>是否在合并之前保存分组？</translation>
+    </message>
+    <message>
+        <source>A temporary capture file can&apos;t be merged.</source>
+        <translation>无法合并临时捕获文件。</translation>
+    </message>
+    <message>
+        <source>Save changes in &quot;%1&quot; before merging?</source>
+        <translation>是否在合并前保存对“%1”的更改？</translation>
+    </message>
+    <message>
+        <source>Changes must be saved before the files can be merged.</source>
+        <translation>在文件合并之前，其更改必须先保存。</translation>
+    </message>
+    <message>
+        <source>Invalid Display Filter</source>
+        <translation>无效显示过滤器</translation>
+    </message>
+    <message>
+        <source>Invalid Read Filter</source>
+        <translation>无效读取过滤器</translation>
+    </message>
+    <message>
+        <source>The filter expression %1 isn&apos;t a valid read filter. (%2).</source>
+        <translation>过滤器表达式 %1 不是有效的读取过滤器 (%2)。</translation>
+    </message>
+    <message>
+        <source> before importing a capture</source>
+        <oldsource> before importing a new capture</oldsource>
+        <translation> 导入新捕获前</translation>
+    </message>
+    <message>
+        <source>Unable to export to &quot;%1&quot;.</source>
+        <translation>无法导出“%1”。</translation>
+    </message>
+    <message>
+        <source>You cannot export packets to the current capture file.</source>
+        <translation>您不能将分组导出到当前捕获文件。</translation>
+    </message>
+    <message>
+        <source>Do you want to save the changes you&apos;ve made%1?</source>
+        <oldsource>Do you want to save the captured packets</oldsource>
+        <translation>您是否要保存已做出的更改%1？</translation>
+    </message>
+    <message>
+        <source>Your captured packets will be lost if you don&apos;t save them.</source>
+        <translation>若不保存，您已经捕获的分组将会丢失。</translation>
+    </message>
+    <message>
+        <source>Do you want to save the changes you&apos;ve made to the capture file &quot;%1&quot;%2?</source>
+        <translation>是否希望保存对捕获文件“%1”%2 的更改？</translation>
+    </message>
+    <message>
+        <source>Your changes will be lost if you don&apos;t save them.</source>
+        <translation>若不保存，您的更改将会丢失。</translation>
+    </message>
+    <message>
+        <source>Check for Updates…</source>
+        <translation>检查更新...</translation>
+    </message>
+    <message>
+        <source>Unable to drop files during capture.</source>
+        <translation>无法在捕获时拖放文件。</translation>
+    </message>
+    <message>
+        <source>Unknown file type returned by merge dialog.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Please report this as a Wireshark issue at https://gitlab.com/wireshark/wireshark/-/issues.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unknown file type returned by export dialog.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Do you want to stop the capture and save the captured packets%1?</source>
+        <translation>您是否要停止捕获，并保存已捕获的分组%1？</translation>
+    </message>
+    <message>
+        <source>Do you want to save the captured packets%1?</source>
+        <translation>您是否要保存已捕获的分组%1？</translation>
+    </message>
+    <message>
+        <source>Save before Continue</source>
+        <translation>继续前保存</translation>
+    </message>
+    <message>
+        <source>Stop and Save</source>
+        <translation>停止并保存</translation>
+    </message>
+    <message>
+        <source>Stop and Quit &amp;without Saving</source>
+        <oldsource>Stop and Quit without Saving</oldsource>
+        <translation>停止并退出，不保存(&amp;W)</translation>
+    </message>
+    <message>
+        <source>Quit &amp;without Saving</source>
+        <oldsource>Quit without Saving</oldsource>
+        <translation>直接退出，不保存(&amp;W)</translation>
+    </message>
+    <message>
+        <source>There is no &quot;rtp.ssrc&quot; field in this version of Wireshark.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Please select an RTPv2 packet with an SSRC value</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>SSRC value not found.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show or hide the toolbar</source>
+        <translation>显示或隐藏该工具栏</translation>
+    </message>
+    <message>
+        <source>Continue &amp;without Saving</source>
+        <oldsource>Continue without Saving</oldsource>
+        <translation>继续，不保存(&amp;W)</translation>
+    </message>
+    <message>
+        <source>Stop and Continue &amp;without Saving</source>
+        <oldsource>Stop and Continue without Saving</oldsource>
+        <translation>停止并继续，不保存(&amp;W)</translation>
+    </message>
+    <message>
+        <source>The Wireshark Network Analyzer</source>
+        <translation>Wireshark 网络分析器</translation>
+    </message>
+    <message>
+        <source>Capturing from %1</source>
+        <translation>正在捕获 %1</translation>
+    </message>
+    <message>
+        <source> before opening another file</source>
+        <translation>打开另一个文件前</translation>
+    </message>
+    <message>
+        <source>Merging files.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1: %2</source>
+        <translation>%1: %2</translation>
+    </message>
+    <message>
+        <source>Clear Menu</source>
+        <translation>清除菜单</translation>
+    </message>
+    <message>
+        <source> before closing the file</source>
+        <translation>关闭文件前</translation>
+    </message>
+    <message>
+        <source>Export Selected Packet Bytes</source>
+        <translation>导出选择分组字节流</translation>
+    </message>
+    <message>
+        <source>No Keys</source>
+        <translation>无密钥</translation>
+    </message>
+    <message>
+        <source>Raw data (*.bin *.dat *.raw);;All Files (</source>
+        <translation>原始数据 (*.bin *.dat *.raw);;所有文件 (</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t copy text. Try another item.</source>
+        <translation>无法复制文本。请尝试其他对象。</translation>
+    </message>
+    <message>
+        <source>Are you sure you want to remove all packet comments?</source>
+        <translation>确实要删除所有分组注释吗？</translation>
+    </message>
+    <message>
+        <source>Unable to build conversation filter.</source>
+        <translation>无法建立对话过滤器。</translation>
+    </message>
+    <message>
+        <source> before reloading the file</source>
+        <translation>重新载入文件前</translation>
+    </message>
+    <message>
+        <source>Error compiling filter for this conversation.</source>
+        <translation>为此对话编译过滤器时出错。</translation>
+    </message>
+    <message>
+        <source>No previous/next packet in conversation.</source>
+        <translation>此对话中没有上一个/下一个分组。</translation>
+    </message>
+    <message>
+        <source>No interface selected.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saving %1…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Configure all extcaps before start of capture.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Invalid capture filter.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>(empty comment)</source>
+        <comment>placeholder for empty comment</comment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add New Comment…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit &quot;%1&quot;</source>
+        <comment>edit packet comment</comment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete &quot;%1&quot;</source>
+        <comment>delete packet comment</comment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete packet comments</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Delete comments from %n packet(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source> before starting a new capture</source>
+        <translation>在开始新捕获前</translation>
+    </message>
+    <message>
+        <source> before reloading Lua plugins</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Please wait while Wireshark is initializing…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>There are no TLS Session Keys to save.</source>
+        <translation>没有要保存的 TLS 会话密钥。</translation>
+    </message>
+    <message numerus="yes">
+        <source>Export TLS Session Keys (%Ln key(s))</source>
+        <translation>
+            <numerusform>导出 TLS 会话密钥（%Ln 个密钥）</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>TLS Session Keys (*.keys *.txt);;All Files (</source>
+        <translation>TLS 会话密钥 (*.keys *.txt);;所有文件(</translation>
+    </message>
+    <message>
+        <source>No filter available. Try another %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>column</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>item</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The &quot;%1&quot; column already exists.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The &quot;%1&quot; column already exists as &quot;%2&quot;.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>RTP packet search failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No Interface Selected.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source> before restarting the capture</source>
+        <translation>重新开始捕获前</translation>
+    </message>
+    <message>
+        <source>Wiki Page for %1</source>
+        <translation>%1 的 Wiki 页面</translation>
+    </message>
+    <message>
+        <source>&lt;p&gt;The Wireshark Wiki is maintained by the community.&lt;/p&gt;&lt;p&gt;The page you are about to load might be wonderful, incomplete, wrong, or nonexistent.&lt;/p&gt;&lt;p&gt;Proceed to the wiki?&lt;/p&gt;</source>
+        <translation>&lt;p&gt;Wireshark Wiki 由社区进行维护。&lt;/p&gt;&lt;p&gt;您即将加载的页面可能是良好的、不完整的、有错误的，甚至不存在的。&lt;/p&gt;&lt;p&gt;继续访问该 Wiki？&lt;/p&gt;</translation>
+    </message>
+    <message>
+        <source>Loading</source>
+        <translation>正在载入</translation>
+    </message>
+    <message>
+        <source>Reloading</source>
+        <translation>正在重新加载</translation>
+    </message>
+    <message>
+        <source>Rescanning</source>
+        <translation>正在重新扫描</translation>
     </message>
 </context>
 <context>

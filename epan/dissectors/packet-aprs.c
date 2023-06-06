@@ -518,7 +518,7 @@ dissect_mic_e(	tvbuff_t    *tvb,
 	int	    new_offset;
 	int	    data_len;
 	char    *info_buffer;
-	char    latitude[7] = { '?', '?', '?', '?', '.', '?', '?' };
+	char    latitude[8] = { '?', '?', '?', '?', '.', '?', '?', 0x0 };
 	int	    msg_a;
 	int	    msg_b;
 	int	    msg_c;
@@ -1106,7 +1106,7 @@ dissect_aprs( tvbuff_t *tvb, packet_info *pinfo, proto_tree *parent_tree, void *
 
 	dti	 = tvb_get_guint8( tvb, offset );
 
-	sb = wmem_strbuf_new_label(wmem_packet_scope());
+	sb = wmem_strbuf_create(wmem_packet_scope());
 
 	if (dti != '!')
 		wmem_strbuf_append(sb, val_to_str_ext_const(dti, &aprs_description_ext, ""));

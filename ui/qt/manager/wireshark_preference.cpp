@@ -16,7 +16,7 @@
 #include <ui/qt/manager/preference_manager.h>
 #include <ui/qt/widgets/range_syntax_lineedit.h>
 #include "ui/qt/widgets/wireshark_file_dialog.h"
-#include <ui/qt/wireshark_application.h>
+#include <ui/qt/main_application.h>
 #include <ui/qt/uat_dialog.h>
 
 #include <QDir>
@@ -191,7 +191,7 @@ public:
     SaveFilePreference(QObject * parent = Q_NULLPTR) : WiresharkPreference(parent) {}
     virtual QWidget * editor(QWidget * parent, const QStyleOptionViewItem &option, const QModelIndex &index)
     {
-        QString filename = WiresharkFileDialog::getSaveFileName(parent, wsApp->windowTitleString(prefs_get_title(prefsItem()->getPref())),
+        QString filename = WiresharkFileDialog::getSaveFileName(parent, mainApp->windowTitleString(prefs_get_title(prefsItem()->getPref())),
                                                     index.model()->data(index, Qt::DisplayRole).toString());
         if (!filename.isEmpty()) {
             const_cast<QAbstractItemModel*>(index.model())->setData(index, QDir::toNativeSeparators(filename), Qt::EditRole);
@@ -207,7 +207,7 @@ public:
     OpenFilePreference(QObject * parent = Q_NULLPTR) : WiresharkPreference(parent) {}
     virtual QWidget * editor(QWidget * parent, const QStyleOptionViewItem &option, const QModelIndex &index)
     {
-        QString filename = WiresharkFileDialog::getOpenFileName(parent, wsApp->windowTitleString(prefs_get_title(prefsItem()->getPref())),
+        QString filename = WiresharkFileDialog::getOpenFileName(parent, mainApp->windowTitleString(prefs_get_title(prefsItem()->getPref())),
                                                         index.model()->data(index, Qt::DisplayRole).toString());
         if (!filename.isEmpty()) {
             const_cast<QAbstractItemModel*>(index.model())->setData(index, QDir::toNativeSeparators(filename), Qt::EditRole);
@@ -223,7 +223,7 @@ public:
     DirNamePreference(QObject * parent = Q_NULLPTR) : WiresharkPreference(parent) {}
     virtual QWidget * editor(QWidget * parent, const QStyleOptionViewItem &option, const QModelIndex &index)
     {
-        QString filename = WiresharkFileDialog::getExistingDirectory(parent, wsApp->windowTitleString(prefs_get_title(prefsItem()->getPref())),
+        QString filename = WiresharkFileDialog::getExistingDirectory(parent, mainApp->windowTitleString(prefs_get_title(prefsItem()->getPref())),
                                                     index.model()->data(index, Qt::DisplayRole).toString());
         if (!filename.isEmpty()) {
             const_cast<QAbstractItemModel*>(index.model())->setData(index, QDir::toNativeSeparators(filename), Qt::EditRole);
@@ -239,10 +239,9 @@ public:
     UatPreference(QObject * parent = Q_NULLPTR) : WiresharkPreference(parent) {}
     virtual QWidget * editor(QWidget * parent, const QStyleOptionViewItem &option, const QModelIndex &index)
     {
-        if (prefsItem()->getPrefGUIType() == GUI_ALL || prefsItem()->getPrefGUIType() == GUI_QT) {
-            UatDialog uat_dlg(parent, prefs_get_uat_value(prefsItem()->getPref()));
-            uat_dlg.exec();
-        }
+        UatDialog uat_dlg(parent, prefs_get_uat_value(prefsItem()->getPref()));
+        uat_dlg.exec();
+
         return WiresharkPreference::editor(parent, option, index);
     }
 };

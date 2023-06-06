@@ -1031,23 +1031,25 @@ unescape_and_tvbuffify_telnet_option(packet_info *pinfo, tvbuff_t *tvb, int offs
   guint8       *dpos;
   int           skip, l;
 
-  if(len>=MAX_KRB5_BLOB_LEN)
+  if(len >= MAX_KRB5_BLOB_LEN)
     return NULL;
 
-  spos=tvb_get_ptr(tvb, offset, len);
-  buf=(guint8 *)wmem_alloc(pinfo->pool, len);
-  dpos=buf;
-  skip=0;
-  l=len;
-  while(l>0){
-    if((spos[0]==0xff) && (spos[1]==0xff)){
+  spos = tvb_get_ptr(tvb, offset, len);
+  const guint8 *last_src_pos = spos + len - 1;
+  buf = (guint8 *)wmem_alloc(pinfo->pool, len);
+  dpos = buf;
+  skip = 0;
+  l = len;
+  while(l > 0) {
+    // XXX Add expert info if spos >= last_src_pos?
+    if(spos < last_src_pos && (spos[0] == 0xff) && (spos[1] == 0xff)) {
       skip++;
-      l-=2;
-      *(dpos++)=0xff;
-      spos+=2;
+      l -= 2;
+      *(dpos++) = 0xff;
+      spos += 2;
       continue;
     }
-    *(dpos++)=*(spos++);
+    *(dpos++) = *(spos++);
     l--;
   }
   krb5_tvb = tvb_new_child_real_data(tvb, buf, len-skip, len-skip);
@@ -1994,15 +1996,15 @@ proto_register_telnet(void)
         NULL, 0, NULL, HFILL }
     },
     { &hf_telnet_comport_subopt_parity,
-      { "Parity", "telnet.comport_subopt.parity", FT_UINT8, BASE_DEC,
+      { "Parity", "telnet.comport_subopt.parity", FT_UINT16, BASE_DEC,
         NULL, 0, NULL, HFILL }
     },
     { &hf_telnet_comport_subopt_stop,
-      { "Stop Bits", "telnet.comport_subopt.stop", FT_UINT8, BASE_DEC,
+      { "Stop Bits", "telnet.comport_subopt.stop", FT_UINT16, BASE_DEC,
         NULL, 0, NULL, HFILL }
     },
     { &hf_telnet_comport_subopt_control,
-      { "Control", "telnet.comport_subopt.control", FT_UINT8, BASE_DEC,
+      { "Control", "telnet.comport_subopt.control", FT_UINT16, BASE_DEC,
         NULL, 0, NULL, HFILL }
     },
     { &hf_telnet_comport_linestate,
@@ -2030,7 +2032,7 @@ proto_register_telnet(void)
         NULL, 0, NULL, HFILL }
     },
     { &hf_telnet_comport_subopt_purge,
-      { "Purge", "telnet.comport_subopt.purge", FT_UINT8, BASE_DEC,
+      { "Purge", "telnet.comport_subopt.purge", FT_UINT16, BASE_DEC,
         NULL, 0, NULL, HFILL }
     },
     { &hf_telnet_rfc_subopt_cmd,

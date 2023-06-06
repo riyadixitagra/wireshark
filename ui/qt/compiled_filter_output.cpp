@@ -13,14 +13,17 @@
 #include "compiled_filter_output.h"
 
 #ifdef HAVE_LIBPCAP
-#include "wspcap.h"
+#ifdef __MINGW32__
+#include <_bsd_types.h>
+#endif
+#include <pcap.h>
 #endif
 
 #include "capture_opts.h"
 #include <wiretap/wtap.h>
 #include "ui/capture_globals.h"
 
-#include "wireshark_application.h"
+#include "main_application.h"
 
 #include <QClipboard>
 #include <QPushButton>
@@ -34,7 +37,7 @@ CompiledFilterOutput::CompiledFilterOutput(QWidget *parent, QStringList &intList
     ui->setupUi(this);
     loadGeometry();
     setAttribute(Qt::WA_DeleteOnClose, true);
-    ui->filterList->setCurrentFont(wsApp->monospaceFont());
+    ui->filterList->setCurrentFont(mainApp->monospaceFont());
 
     copy_bt_ = ui->buttonBox->addButton(tr("Copy"), QDialogButtonBox::ActionRole);
     copy_bt_->setToolTip(tr("Copy filter text to the clipboard."));
@@ -113,5 +116,5 @@ void CompiledFilterOutput::on_interfaceList_currentItemChanged(QListWidgetItem *
 
 void CompiledFilterOutput::copyFilterText()
 {
-    wsApp->clipboard()->setText(ui->filterList->toPlainText());
+    mainApp->clipboard()->setText(ui->filterList->toPlainText());
 }

@@ -360,6 +360,9 @@ static const value_string disk_state_names[] = {
 #define STATE_SUSP_FEN (0x1 << 22)  /* IO suspended because fence peer handler runs*/
 #define STATE_QUORUM (0x1 << 23)
 
+#define TWOPC_HAS_FLAGS     0x80000000 /* For packet dissectors */
+#define TWOPC_HAS_REACHABLE 0x40000000 /* The reachable_nodes field is valid */
+
 #define UUID_FLAG_DISCARD_MY_DATA 1
 #define UUID_FLAG_CRASHED_PRIMARY 2
 #define UUID_FLAG_INCONSISTENT 4
@@ -383,6 +386,15 @@ static const value_string disk_state_names[] = {
 #define DP_SEND_WRITE_ACK   256
 #define DP_WSAME            512
 #define DP_ZEROES          1024
+
+#define DRBD_STREAM_DATA 0
+#define DRBD_STREAM_CONTROL 1
+
+static const value_string stream_names[] = {
+    { DRBD_STREAM_DATA, "Data" },
+    { DRBD_STREAM_CONTROL, "Control" },
+    { 0, NULL }
+};
 
 static void dissect_drbd_message(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree);
 
@@ -568,6 +580,7 @@ static int hf_drbd_state = -1;
 static int hf_drbd_retcode = -1;
 static int hf_drbd_twopc_prepare_in = -1;
 static int hf_drbd_tid = -1;
+static int hf_drbd_twopc_flags = -1;
 static int hf_drbd_initiator_node_id = -1;
 static int hf_drbd_target_node_id = -1;
 static int hf_drbd_nodes_to_reach = -1;
@@ -580,6 +593,9 @@ static int hf_drbd_max_possible_size = -1;
 static int hf_drbd_offset = -1;
 static int hf_drbd_dagtag = -1;
 static int hf_drbd_dagtag_node_id = -1;
+static int hf_drbd_new_rx_descs_data = -1;
+static int hf_drbd_new_rx_descs_control = -1;
+static int hf_drbd_rx_desc_stolen_from = -1;
 
 static int hf_drbd_state_role = -1;
 static int hf_drbd_state_peer = -1;
@@ -593,6 +609,8 @@ static int hf_drbd_state_user_isp = -1;
 static int hf_drbd_state_susp_nod = -1;
 static int hf_drbd_state_susp_fen = -1;
 static int hf_drbd_state_quorum = -1;
+
+static int hf_drbd_twopc_flag_has_reachable = -1;
 
 static int hf_drbd_uuid_flag_discard_my_data = -1;
 static int hf_drbd_uuid_flag_crashed_primary = -1;
@@ -620,6 +638,7 @@ static int hf_drbd_dp_zeroes = -1;
 
 static gint ett_drbd = -1;
 static gint ett_drbd_state = -1;
+static gint ett_drbd_twopc_flags = -1;
 static gint ett_drbd_uuid_flags = -1;
 static gint ett_drbd_history_uuids = -1;
 static gint ett_drbd_data_flags = -1;
@@ -637,6 +656,11 @@ static int * const state_fields[] = {
     &hf_drbd_state_susp_nod,
     &hf_drbd_state_susp_fen,
     &hf_drbd_state_quorum,
+    NULL
+};
+
+static int * const twopc_flag_fields[] = {
+    &hf_drbd_twopc_flag_has_reachable,
     NULL
 };
 
@@ -682,10 +706,12 @@ static gboolean is_bit_set_64(guint64 value, int bit) {
 #define DRBD_FRAME_HEADER_80_LEN 8
 #define DRBD_FRAME_HEADER_95_LEN 8
 #define DRBD_FRAME_HEADER_100_LEN 16
+#define DRBD_TRANSPORT_RDMA_PACKET_LEN 16
 
 #define DRBD_MAGIC 0x83740267
 #define DRBD_MAGIC_BIG 0x835a
 #define DRBD_MAGIC_100 0x8620ec20
+#define DRBD_TRANSPORT_RDMA_MAGIC 0x5257494E
 
 static guint get_drbd_pdu_len(packet_info *pinfo _U_, tvbuff_t *tvb, int offset, void *data _U_)
 {
@@ -722,8 +748,7 @@ static int dissect_drbd(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, voi
     return tvb_reported_length(tvb);
 }
 
-static gboolean test_drbd_protocol(tvbuff_t *tvb, packet_info *pinfo,
-        proto_tree *tree, void *data _U_)
+static gboolean test_drbd_header(tvbuff_t *tvb)
 {
     guint reported_length = tvb_reported_length(tvb);
     if (reported_length < DRBD_FRAME_HEADER_80_LEN || tvb_captured_length(tvb) < 4) {
@@ -743,13 +768,31 @@ static gboolean test_drbd_protocol(tvbuff_t *tvb, packet_info *pinfo,
             match = TRUE;
     }
 
-    if (match) {
-        conversation_t *conversation = find_or_create_conversation(pinfo);
-        conversation_set_dissector(conversation, drbd_handle);
-        dissect_drbd(tvb, pinfo, tree, data);
+    return match;
+}
+
+static gboolean test_drbd_rdma_control_header(tvbuff_t *tvb)
+{
+    guint reported_length = tvb_reported_length(tvb);
+    if (reported_length < DRBD_TRANSPORT_RDMA_PACKET_LEN || tvb_captured_length(tvb) < 4) {
+        return FALSE;
     }
 
-    return match;
+    guint32 magic32 = tvb_get_ntohl(tvb, 0);
+    return magic32 == DRBD_TRANSPORT_RDMA_MAGIC;
+}
+
+static gboolean test_drbd_protocol(tvbuff_t *tvb, packet_info *pinfo,
+        proto_tree *tree, void *data _U_)
+{
+    if (!test_drbd_header(tvb))
+        return FALSE;
+
+    conversation_t *conversation = find_or_create_conversation(pinfo);
+    conversation_set_dissector(conversation, drbd_handle);
+    dissect_drbd(tvb, pinfo, tree, data);
+
+    return TRUE;
 }
 
 /*
@@ -783,12 +826,12 @@ static conversation_t *find_drbd_conversation(packet_info *pinfo)
         addr_b = &pinfo->src;
     }
 
-    conversation_t *conv = find_conversation(pinfo->num, addr_a, addr_b, ENDPOINT_TCP, port_a, 0, NO_PORT_B);
+    conversation_t *conv = find_conversation(pinfo->num, addr_a, addr_b, CONVERSATION_TCP, port_a, 0, NO_PORT_B);
     if (!conv)
     {
         /* CONVERSATION_TEMPLATE prevents the port information being added once
          * a wildcard search matches. */
-        conv = conversation_new(pinfo->num, addr_a, addr_b, ENDPOINT_TCP, port_a, 0,
+        conv = conversation_new(pinfo->num, addr_a, addr_b, CONVERSATION_TCP, port_a, 0,
                 NO_PORT2|CONVERSATION_TEMPLATE);
     }
 
@@ -838,13 +881,23 @@ static tvbuff_t *decode_header(tvbuff_t *tvb, proto_tree *pt, guint16 *command)
     return NULL;
 }
 
+static const value_payload_decoder *find_payload_decoder(guint16 command)
+{
+    for (unsigned int i = 0; i < array_length(payload_decoders); i++) {
+        if (payload_decoders[i].value == command) {
+            return &payload_decoders[i];
+        }
+    }
+
+    return NULL;
+}
+
 static void dissect_drbd_message(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree)
 {
     proto_tree      *drbd_tree;
     proto_item      *ti;
     guint16         command = -1;
 
-    col_set_str(pinfo->cinfo, COL_PROTOCOL, "DRBD");
     col_clear(pinfo->cinfo, COL_INFO);
 
     ti = proto_tree_add_item(tree, proto_drbd, tvb, 0, -1, ENC_NA);
@@ -855,26 +908,16 @@ static void dissect_drbd_message(tvbuff_t *tvb, packet_info *pinfo, proto_tree *
     if (!payload_tvb)
         return;
 
-    /*
-     * Indicate what kind of message this is.
-     */
+    /* Indicate what kind of message this is. */
     const gchar *packet_name = val_to_str(command, packet_names, "Unknown (0x%02x)");
     const gchar *info_text = col_get_text(pinfo->cinfo, COL_INFO);
     if (!info_text || !info_text[0]) {
         col_append_ports(pinfo->cinfo, COL_INFO, PT_TCP, pinfo->srcport, pinfo->destport);
         col_append_fstr(pinfo->cinfo, COL_INFO, " [%s]", packet_name);
     } else {
-        col_append_sep_fstr(pinfo->cinfo, COL_INFO, " ", "[%s]", packet_name);
+        col_append_fstr(pinfo->cinfo, COL_INFO, " [%s]", packet_name);
     }
     col_set_fence(pinfo->cinfo, COL_INFO);
-
-    const value_payload_decoder *payload_decoder = NULL;
-    for (unsigned int i = 0; i < array_length(payload_decoders); i++) {
-        if (payload_decoders[i].value == command) {
-            payload_decoder = &payload_decoders[i];
-            break;
-        }
-    }
 
     conversation_t *conv = find_drbd_conversation(pinfo);
     drbd_conv *conv_data = (drbd_conv *)conversation_get_proto_data(conv, proto_drbd);
@@ -883,6 +926,8 @@ static void dissect_drbd_message(tvbuff_t *tvb, packet_info *pinfo, proto_tree *
         conv_data->twopc = wmem_map_new(wmem_file_scope(), drbd_twopc_key_hash, drbd_twopc_key_equal);
         conversation_add_proto_data(conv, proto_drbd, conv_data);
     }
+
+    const value_payload_decoder *payload_decoder = find_payload_decoder(command);
 
     if (!PINFO_FD_VISITED(pinfo) && payload_decoder && payload_decoder->state_reader_fn)
         (*payload_decoder->state_reader_fn) (payload_tvb, pinfo, conv_data);
@@ -896,11 +941,114 @@ static void dissect_drbd_message(tvbuff_t *tvb, packet_info *pinfo, proto_tree *
         (*payload_decoder->tree_fn) (payload_tvb, drbd_tree, conv_data);
 }
 
+static void drbd_ib_append_col_info(packet_info *pinfo, const gchar *packet_name)
+{
+    const gchar *info_text;
+
+    col_clear(pinfo->cinfo, COL_INFO);
+    info_text = col_get_text(pinfo->cinfo, COL_INFO);
+    if (!info_text || !info_text[0])
+        col_append_fstr(pinfo->cinfo, COL_INFO, "QP=0x%06x [%s]", pinfo->destport, packet_name);
+    else
+        col_append_fstr(pinfo->cinfo, COL_INFO, " [%s]", packet_name);
+    col_set_fence(pinfo->cinfo, COL_INFO);
+}
+
+static void dissect_drbd_ib_message(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree)
+{
+    proto_tree      *drbd_tree;
+    proto_item      *ti;
+    guint16         command = -1;
+
+    ti = proto_tree_add_item(tree, proto_drbd, tvb, 0, -1, ENC_NA);
+    drbd_tree = proto_item_add_subtree(ti, ett_drbd);
+
+    tvbuff_t *payload_tvb = decode_header(tvb, drbd_tree, &command);
+
+    if (!payload_tvb)
+        return;
+
+    /* Indicate what kind of message this is. */
+    const gchar *packet_name = val_to_str(command, packet_names, "Unknown (0x%02x)");
+    drbd_ib_append_col_info(pinfo, packet_name);
+
+    if (tree == NULL)
+        return;
+
+    proto_item_set_text(ti, "DRBD [%s]", packet_name);
+
+    const value_payload_decoder *payload_decoder = find_payload_decoder(command);
+
+    if (payload_decoder && payload_decoder->tree_fn)
+        (*payload_decoder->tree_fn) (payload_tvb, drbd_tree, NULL);
+}
+
+static void dissect_drbd_ib_control_message(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree)
+{
+    proto_tree      *drbd_tree;
+    proto_item      *ti;
+
+    drbd_ib_append_col_info(pinfo, "RDMA Flow Control");
+
+    if (tree == NULL)
+        return;
+
+    ti = proto_tree_add_item(tree, proto_drbd, tvb, 0, -1, ENC_NA);
+    proto_item_set_text(ti, "DRBD [RDMA Flow Control]");
+    drbd_tree = proto_item_add_subtree(ti, ett_drbd);
+
+    proto_tree_add_item(drbd_tree, hf_drbd_new_rx_descs_data, tvb, 4, 4, ENC_BIG_ENDIAN);
+    proto_tree_add_item(drbd_tree, hf_drbd_new_rx_descs_control, tvb, 8, 4, ENC_BIG_ENDIAN);
+    proto_tree_add_item(drbd_tree, hf_drbd_rx_desc_stolen_from, tvb, 12, 4, ENC_BIG_ENDIAN);
+}
+
+static gboolean dissect_drbd_ib(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *data)
+{
+    if (!test_drbd_header(tvb) && !test_drbd_rdma_control_header(tvb))
+        return FALSE;
+
+    col_set_str(pinfo->cinfo, COL_PROTOCOL, "DRBD RDMA");
+    while (1) {
+        guint length;
+        gboolean is_control_packet = test_drbd_rdma_control_header(tvb);
+
+        if (is_control_packet)
+            length = DRBD_TRANSPORT_RDMA_PACKET_LEN;
+        else
+            length = get_drbd_pdu_len(pinfo, tvb, 0, data);
+
+        /* Was a header recognized? */
+        if (length == 0)
+            break;
+
+        tvbuff_t *packet_tvb = tvb_new_subset_length(tvb, 0, length);
+
+        if (is_control_packet)
+            dissect_drbd_ib_control_message(packet_tvb, pinfo, tree);
+        else
+            dissect_drbd_ib_message(packet_tvb, pinfo, tree);
+
+        /* Is there enough data for another DRBD packet? */
+        if (tvb_reported_length(tvb) < length + DRBD_FRAME_HEADER_80_LEN)
+            break;
+
+        /* Move to the next DRBD packet. */
+        tvb = tvb_new_subset_remaining(tvb, length);
+    }
+
+    return TRUE;
+}
+
 static void insert_twopc(tvbuff_t *tvb, packet_info *pinfo, drbd_conv *conv_data, enum drbd_packet command)
 {
+    guint32 flags = tvb_get_ntohl(tvb, 4);
+
     drbd_twopc_key *key = wmem_new0(wmem_file_scope(), drbd_twopc_key);
     key->tid = tvb_get_ntohl(tvb, 0);
-    key->initiator_node_id = tvb_get_ntohil(tvb, 4);
+    if (flags & TWOPC_HAS_FLAGS)
+        key->initiator_node_id = tvb_get_gint8(tvb, 10);
+    else
+        key->initiator_node_id = tvb_get_ntohil(tvb, 4);
 
     drbd_twopc_val *val = wmem_new0(wmem_file_scope(), drbd_twopc_val);
     val->prepare_frame = pinfo->num;
@@ -951,9 +1099,13 @@ static void decode_payload_data(tvbuff_t *tvb, proto_tree *tree, drbd_conv *conv
     decode_data_common(tvb, tree);
 
     guint nbytes = tvb_reported_length_remaining(tvb, 24);
-    proto_tree_add_uint(tree, hf_drbd_size, tvb, 24, nbytes, nbytes);
-    proto_tree_add_bytes_format(tree, hf_drbd_data, tvb, 24,
-            -1, NULL, "Data (%u byte%s)", nbytes, plurality(nbytes, "", "s"));
+    proto_tree_add_uint(tree, hf_drbd_size, tvb, 0, 0, nbytes);
+
+    /* For infiniband the data is not in this tvb, so we do not show the data field. */
+    if (tvb_captured_length(tvb) >= 24 + nbytes) {
+        proto_tree_add_bytes_format(tree, hf_drbd_data, tvb, 24,
+                nbytes, NULL, "Data (%u byte%s)", nbytes, plurality(nbytes, "", "s"));
+    }
 }
 
 static void decode_payload_barrier(tvbuff_t *tvb, proto_tree *tree, drbd_conv *conv_data _U_)
@@ -1096,21 +1248,36 @@ static void decode_payload_out_of_sync(tvbuff_t *tvb, proto_tree *tree, drbd_con
     proto_tree_add_item(tree, hf_drbd_size, tvb, 8, 4, ENC_BIG_ENDIAN);
 }
 
-static void decode_twopc_request_common(tvbuff_t *tvb, proto_tree *tree, drbd_twopc_key *key)
+/* Return the twopc flags, if present. */
+static guint32 decode_twopc_request_common(tvbuff_t *tvb, proto_tree *tree, drbd_twopc_key *key)
 {
     proto_tree_add_item_ret_uint(tree, hf_drbd_tid, tvb, 0, 4, ENC_BIG_ENDIAN,
             key ? &key->tid : NULL);
-    proto_tree_add_item_ret_int(tree, hf_drbd_initiator_node_id, tvb, 4, 4, ENC_BIG_ENDIAN,
-            key ? &key->initiator_node_id : NULL);
-    proto_tree_add_item(tree, hf_drbd_target_node_id, tvb, 8, 4, ENC_BIG_ENDIAN);
+
+    guint32 flags = tvb_get_ntohl(tvb, 4);
+    if (flags & TWOPC_HAS_FLAGS) {
+        proto_tree_add_bitmask(tree, tvb, 4, hf_drbd_twopc_flags, ett_drbd_twopc_flags, twopc_flag_fields, ENC_BIG_ENDIAN);
+        proto_tree_add_item_ret_int(tree, hf_drbd_initiator_node_id, tvb, 10, 1, ENC_BIG_ENDIAN,
+                key ? &key->initiator_node_id : NULL);
+        proto_tree_add_item(tree, hf_drbd_target_node_id, tvb, 11, 1, ENC_BIG_ENDIAN);
+    } else {
+        flags = 0;
+        proto_tree_add_item_ret_int(tree, hf_drbd_initiator_node_id, tvb, 4, 4, ENC_BIG_ENDIAN,
+                key ? &key->initiator_node_id : NULL);
+        proto_tree_add_item(tree, hf_drbd_target_node_id, tvb, 8, 4, ENC_BIG_ENDIAN);
+    }
+
     proto_tree_add_item(tree, hf_drbd_nodes_to_reach, tvb, 12, 8, ENC_BIG_ENDIAN);
+    return flags;
 }
 
 static void decode_payload_twopc_prepare(tvbuff_t *tvb, proto_tree *tree, drbd_conv *conv_data _U_)
 {
-    decode_twopc_request_common(tvb, tree, NULL);
+    guint32 flags = decode_twopc_request_common(tvb, tree, NULL);
 
-    proto_tree_add_item(tree, hf_drbd_primary_nodes, tvb, 20, 8, ENC_BIG_ENDIAN);
+    if (!(flags & TWOPC_HAS_FLAGS))
+        proto_tree_add_item(tree, hf_drbd_primary_nodes, tvb, 20, 8, ENC_BIG_ENDIAN);
+
     decode_state_change(tvb, tree, 28);
 }
 
@@ -1125,7 +1292,10 @@ static void decode_payload_twopc_prep_rsz(tvbuff_t *tvb, proto_tree *tree, drbd_
 static void decode_payload_twopc_commit(tvbuff_t *tvb, proto_tree *tree, drbd_conv *conv_data)
 {
     drbd_twopc_key key;
-    decode_twopc_request_common(tvb, tree, &key);
+    guint32 flags = decode_twopc_request_common(tvb, tree, &key);
+
+    if (!conv_data)
+        return;
 
     drbd_twopc_val *val = wmem_map_lookup(conv_data->twopc, &key);
     if (!val)
@@ -1137,7 +1307,10 @@ static void decode_payload_twopc_commit(tvbuff_t *tvb, proto_tree *tree, drbd_co
 
     if (val->command == P_TWOPC_PREPARE) {
         proto_tree_add_item(tree, hf_drbd_primary_nodes, tvb, 20, 8, ENC_BIG_ENDIAN);
-        decode_state_change(tvb, tree, 28);
+        if (!(flags & TWOPC_HAS_FLAGS))
+            decode_state_change(tvb, tree, 28);
+        else if (flags & TWOPC_HAS_REACHABLE)
+            proto_tree_add_item(tree, hf_drbd_reachable_nodes, tvb, 28, 8, ENC_BIG_ENDIAN);
     } else if (val->command == P_TWOPC_PREP_RSZ) {
         proto_tree_add_item(tree, hf_drbd_diskful_primary_nodes, tvb, 20, 8, ENC_BIG_ENDIAN);
         proto_tree_add_item(tree, hf_drbd_exposed_size, tvb, 28, 8, ENC_BIG_ENDIAN);
@@ -1202,8 +1375,11 @@ static void decode_payload_data_wsame(tvbuff_t *tvb, proto_tree *tree, drbd_conv
     proto_tree_add_item(tree, hf_drbd_size, tvb, 24, 4, ENC_BIG_ENDIAN);
 
     guint nbytes = tvb_reported_length_remaining(tvb, 28);
-    proto_tree_add_bytes_format(tree, hf_drbd_data, tvb, 28,
-            -1, NULL, "Data (%u byte%s)", nbytes, plurality(nbytes, "", "s"));
+    /* For infiniband the data is not in this tvb, so we do not show the data field. */
+    if (tvb_captured_length(tvb) >= 28 + nbytes) {
+        proto_tree_add_bytes_format(tree, hf_drbd_data, tvb, 28,
+                nbytes, NULL, "Data (%u byte%s)", nbytes, plurality(nbytes, "", "s"));
+    }
 }
 
 static void decode_payload_rs_deallocated(tvbuff_t *tvb, proto_tree *tree, drbd_conv *conv_data _U_)
@@ -1260,6 +1436,9 @@ static void decode_payload_twopc_reply(tvbuff_t *tvb, proto_tree *tree, drbd_con
     proto_tree_add_item_ret_int(tree, hf_drbd_initiator_node_id, tvb, 4, 4, ENC_BIG_ENDIAN,
             &key.initiator_node_id);
     proto_tree_add_item(tree, hf_drbd_reachable_nodes, tvb, 8, 8, ENC_BIG_ENDIAN);
+
+    if (!conv_data)
+        return;
 
     drbd_twopc_val *val = wmem_map_lookup(conv_data->twopc, &key);
     if (!val)
@@ -1385,6 +1564,7 @@ void proto_register_drbd(void)
         { &hf_drbd_retcode, { "retcode", "drbd.retcode", FT_UINT32, BASE_HEX_DEC, NULL, 0x0, NULL, HFILL }},
         { &hf_drbd_twopc_prepare_in, { "Two-phase commit prepare in", "drbd.twopc_prepare_in", FT_FRAMENUM, BASE_NONE, FRAMENUM_TYPE(FT_FRAMENUM_RESPONSE), 0x0, NULL, HFILL }},
         { &hf_drbd_tid, { "tid", "drbd.tid", FT_UINT32, BASE_DEC, NULL, 0x0, NULL, HFILL }},
+        { &hf_drbd_twopc_flags, { "twopc_flags", "drbd.twopc_flags", FT_UINT32, BASE_HEX, NULL, 0x0, NULL, HFILL }},
         { &hf_drbd_initiator_node_id, { "initiator_node_id", "drbd.initiator_node_id", FT_INT32, BASE_DEC, NULL, 0x0, NULL, HFILL }},
         { &hf_drbd_target_node_id, { "target_node_id", "drbd.target_node_id", FT_INT32, BASE_DEC, NULL, 0x0, NULL, HFILL }},
         { &hf_drbd_nodes_to_reach, { "nodes_to_reach", "drbd.nodes_to_reach", FT_UINT64, BASE_CUSTOM, CF_FUNC(format_node_mask), 0x0, NULL, HFILL }},
@@ -1397,6 +1577,9 @@ void proto_register_drbd(void)
         { &hf_drbd_offset, { "offset", "drbd.offset", FT_UINT32, BASE_DEC, NULL, 0x0, NULL, HFILL }},
         { &hf_drbd_dagtag, { "dagtag", "drbd.dagtag", FT_UINT64, BASE_DEC_HEX, NULL, 0x0, NULL, HFILL }},
         { &hf_drbd_dagtag_node_id, { "dagtag_node_id", "drbd.dagtag_node_id", FT_INT32, BASE_DEC, NULL, 0x0, NULL, HFILL }},
+        { &hf_drbd_new_rx_descs_data, { "New descriptors received (data)", "drbd.new_rx_descs_data", FT_INT32, BASE_DEC, NULL, 0x0, NULL, HFILL }},
+        { &hf_drbd_new_rx_descs_control, { "New descriptors received (control)", "drbd.new_rx_descs_control", FT_INT32, BASE_DEC, NULL, 0x0, NULL, HFILL }},
+        { &hf_drbd_rx_desc_stolen_from, { "Descriptor stolen from", "drbd.rx_desc_stolen_from", FT_INT32, BASE_DEC, VALS(stream_names), 0x0, NULL, HFILL }},
 
         { &hf_drbd_state_role, { "role", "drbd.state.role", FT_UINT32, BASE_DEC, VALS(role_names), STATE_ROLE, NULL, HFILL }},
         { &hf_drbd_state_peer, { "peer", "drbd.state.peer", FT_UINT32, BASE_DEC, VALS(role_names), STATE_PEER, NULL, HFILL }},
@@ -1410,6 +1593,8 @@ void proto_register_drbd(void)
         { &hf_drbd_state_susp_nod, { "susp_nod", "drbd.state.susp_nod", FT_BOOLEAN, 32, NULL, STATE_SUSP_NOD, NULL, HFILL }},
         { &hf_drbd_state_susp_fen, { "susp_fen", "drbd.state.susp_fen", FT_BOOLEAN, 32, NULL, STATE_SUSP_FEN, NULL, HFILL }},
         { &hf_drbd_state_quorum, { "quorum", "drbd.state.quorum", FT_BOOLEAN, 32, NULL, STATE_QUORUM, NULL, HFILL }},
+
+        { &hf_drbd_twopc_flag_has_reachable, { "has_reachable", "drbd.twopc_flags.has_reachable", FT_BOOLEAN, 32, NULL, TWOPC_HAS_REACHABLE, NULL, HFILL }},
 
         { &hf_drbd_uuid_flag_discard_my_data, { "discard_my_data", "drbd.uuid_flag.discard_my_data", FT_BOOLEAN, 64, NULL, UUID_FLAG_DISCARD_MY_DATA, NULL, HFILL }},
         { &hf_drbd_uuid_flag_crashed_primary, { "crashed_primary", "drbd.uuid_flag.crashed_primary", FT_BOOLEAN, 64, NULL, UUID_FLAG_CRASHED_PRIMARY, NULL, HFILL }},
@@ -1439,6 +1624,7 @@ void proto_register_drbd(void)
     static gint *ett[] = {
         &ett_drbd,
         &ett_drbd_state,
+        &ett_drbd_twopc_flags,
         &ett_drbd_uuid_flags,
         &ett_drbd_history_uuids,
         &ett_drbd_data_flags,
@@ -1447,12 +1633,14 @@ void proto_register_drbd(void)
     proto_drbd = proto_register_protocol("DRBD Protocol", "DRBD", "drbd");
     proto_register_field_array(proto_drbd, hf, array_length(hf));
     proto_register_subtree_array(ett, array_length(ett));
+
+    drbd_handle = register_dissector("drbd", dissect_drbd, proto_drbd);
 }
 
 void proto_reg_handoff_drbd(void)
 {
-    drbd_handle = create_dissector_handle(dissect_drbd, proto_drbd);
     heur_dissector_add("tcp", test_drbd_protocol, "DRBD over TCP", "drbd_tcp", proto_drbd, HEURISTIC_DISABLE);
+    heur_dissector_add("infiniband.payload", dissect_drbd_ib, "DRBD over RDMA", "drbd_rdma", proto_drbd, HEURISTIC_DISABLE);
 }
 
 /*

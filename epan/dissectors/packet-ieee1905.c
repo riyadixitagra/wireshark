@@ -131,6 +131,8 @@ static int hf_ieee1905_ipv4_addr_count = -1;
 static int hf_ieee1905_addr_type = -1;
 static int hf_ieee1905_ipv4_addr = -1;
 static int hf_ieee1905_dhcp_server = -1;
+static int hf_ieee1905_ipv6_mac_address = -1;
+static int hf_ieee1905_ipv6_linklocal = -1;
 static int hf_ieee1905_ipv6_type_count = -1;
 static int hf_ieee1905_ipv6_addr_count = -1;
 static int hf_ieee1905_ipv6_addr_type = -1;
@@ -548,8 +550,9 @@ static int hf_ieee1905_max_total_serv_prio_rules = -1;
 static int hf_ieee1905_r2_ap_capa_reserved = -1;
 static int hf_ieee1905_r2_ap_capa_flags = -1;
 static int hf_ieee1905_byte_counter_units = -1;
-static int hf_ieee1905_basic_service_prio_flag = -1;
-static int hf_ieee1905_enhanced_service_prio_flag = -1;
+static int hf_ieee1905_ctag_service_prio_flag = -1;
+static int hf_ieee1905_dpp_onboarding_flag = -1;
+static int hf_ieee1905_traffic_separation_flag = -1;
 static int hf_ieee1905_r2_ap_capa_flags_reserved = -1;
 static int hf_ieee1905_max_vid_count = -1;
 static int hf_ieee1905_default_802_1q_settings_primary_vlan = -1;
@@ -1587,14 +1590,14 @@ dissect_media_type(tvbuff_t *tvb, packet_info *pinfo _U_,
     switch (bits_15_to_8) {
     case 0:
         proto_item_append_text(pi, ", %s",
-                        val_to_str(bits_7_to_0,
+                        val_to_str_const(bits_7_to_0,
                             ieee1905_media_type_0_vals,
                             "Reserved"));
         break;
 
     case 1:
         proto_item_append_text(pi, ", %s",
-                        val_to_str(bits_7_to_0,
+                        val_to_str_const(bits_7_to_0,
                             ieee1905_media_type_1_vals,
                             "Reserved"));
         break;
@@ -1608,7 +1611,7 @@ dissect_media_type(tvbuff_t *tvb, packet_info *pinfo _U_,
 
     case 3:
         proto_item_append_text(pi, ", %s",
-                        val_to_str(bits_7_to_0,
+                        val_to_str_const(bits_7_to_0,
                             ieee1905_media_type_3_vals,
                             "Reserved"));
         break;
@@ -1839,7 +1842,7 @@ dissect_link_metric_result_code(tvbuff_t *tvb, packet_info *pinfo _U_,
                              tvb, offset, 1, ENC_NA);
 
     proto_item_append_text(pi, ", %s",
-                        val_to_str(code, ieee1905_link_metric_result_vals,
+                        val_to_str_const(code, ieee1905_link_metric_result_vals,
                                 "Reserved"));
 
     offset++;
@@ -1880,7 +1883,7 @@ dissect_searched_role(tvbuff_t *tvb, packet_info *pinfo _U_,
                              1, ENC_NA);
 
     proto_item_append_text(pi, ", %s",
-                        val_to_str(role, ieee1905_searched_role_vals,
+                        val_to_str_const(role, ieee1905_searched_role_vals,
                                 "Reserved"));
 
     offset++;
@@ -1905,7 +1908,7 @@ dissect_supported_role(tvbuff_t *tvb, packet_info *pinfo _U_,
      * We can re-use this.
      */
     proto_item_append_text(pi, ", %s",
-                        val_to_str(role, ieee1905_searched_role_vals,
+                        val_to_str_const(role, ieee1905_searched_role_vals,
                                 "Reserved"));
 
     offset++;
@@ -1927,7 +1930,7 @@ dissect_auto_config_freq_band(tvbuff_t *tvb, packet_info *pinfo _U_,
                              offset, 1, ENC_NA);
 
     proto_item_append_text(pi, ", %s",
-                        val_to_str(freq, ieee1905_freq_band_vals,
+                        val_to_str_const(freq, ieee1905_freq_band_vals,
                                 "Reserved"));
 
     offset++;
@@ -1949,7 +1952,7 @@ dissect_supported_freq_band(tvbuff_t *tvb, packet_info *pinfo _U_,
                              offset, 1, ENC_NA);
 
     proto_item_append_text(pi, ", %s",
-                        val_to_str(freq, ieee1905_freq_band_vals,
+                        val_to_str_const(freq, ieee1905_freq_band_vals,
                                 "Reserved"));
 
     offset++;
@@ -2246,7 +2249,7 @@ dissect_ipv4_type(tvbuff_t *tvb, packet_info *pinfo _U_,
             atpi = proto_tree_add_item(addr_tree, hf_ieee1905_addr_type,
                         tvb, offset, 1, ENC_NA);
             proto_item_append_text(atpi, ", %s",
-                        val_to_str(addr_type, ieee1905_ipv4_addr_type_vals,
+                        val_to_str_const(addr_type, ieee1905_ipv4_addr_type_vals,
                                 "Reserved"));
             offset++;
 
@@ -2308,9 +2311,14 @@ dissect_ipv6_type(tvbuff_t *tvb, packet_info *pinfo _U_,
                                         &ipi, "IPv6 type %u info",
                                         entry_index);
 
-        proto_tree_add_item(ipv6_tree, hf_ieee1905_mac_address, tvb,
+        proto_tree_add_item(ipv6_tree, hf_ieee1905_ipv6_mac_address, tvb,
                             offset, 6, ENC_NA);
         offset += 6;
+
+        proto_tree_add_item(ipv6_tree, hf_ieee1905_ipv6_linklocal, tvb,
+                            offset, 16, ENC_NA);
+
+        offset += 16;
 
         addr_count = tvb_get_guint8(tvb, offset);
         proto_tree_add_item(ipv6_tree, hf_ieee1905_ipv6_addr_count,
@@ -2338,7 +2346,7 @@ dissect_ipv6_type(tvbuff_t *tvb, packet_info *pinfo _U_,
             atpi = proto_tree_add_item(addr_tree, hf_ieee1905_ipv6_addr_type,
                         tvb, offset, 1, ENC_NA);
             proto_item_append_text(atpi, ", %s",
-                        val_to_str(addr_type, ieee1905_ipv6_addr_type_vals,
+                        val_to_str_const(addr_type, ieee1905_ipv6_addr_type_vals,
                                 "Reserved"));
             offset++;
 
@@ -2437,7 +2445,7 @@ dissect_profile_version(tvbuff_t *tvb, packet_info *pinfo _U_,
     pi = proto_tree_add_item(tree, hf_ieee1905_profile_version, tvb,
                 offset, 1, ENC_NA);
     proto_item_append_text(pi, ", %s",
-                val_to_str(profile_version, ieee1905_profile_version_vals,
+                val_to_str_const(profile_version, ieee1905_profile_version_vals,
                            "Reserved"));
     offset++;
 
@@ -5244,10 +5252,9 @@ dissect_channel_scan_request(tvbuff_t *tvb, packet_info *pinfo _U_,
                     while (chan_num > 0) {
                         proto_tree_add_item(channels, hf_ieee1905_channel_scan_request_channel,
                                         tvb, offset, 1, ENC_NA);
+                        offset += 1;
                         chan_num--;
                     }
-
-                    offset += chan_num;
                 }
 
                 proto_item_set_len(ci, offset - oper_class_start_offset);
@@ -5938,6 +5945,7 @@ dissect_cac_termination(tvbuff_t *tvb, packet_info *pinfo _U_,
 
     proto_tree_add_item(tree, hf_ieee1905_cac_termination_radio_count, tvb,
                         offset, 1, ENC_NA);
+    offset += 1;
 
     if (radio_count > 0) {
         proto_tree *radio_list = NULL;
@@ -5965,9 +5973,6 @@ dissect_cac_termination(tvbuff_t *tvb, packet_info *pinfo _U_,
             proto_tree_add_item(radio, hf_ieee1905_cac_terminate_channel, tvb,
                                 offset, 1, ENC_NA);
             offset += 1;
-
-            proto_tree_add_item(radio, hf_ieee1905_cac_terminate_action, tvb,
-                                offset, 1, ENC_NA);
 
             radio_num += 1;
         }
@@ -6421,8 +6426,9 @@ static const value_string byte_counter_units_vals[] = {
 
 static int* const r2_ap_capa_flags[] = {
     &hf_ieee1905_byte_counter_units,
-    &hf_ieee1905_basic_service_prio_flag,
-    &hf_ieee1905_enhanced_service_prio_flag,
+    &hf_ieee1905_ctag_service_prio_flag,
+    &hf_ieee1905_dpp_onboarding_flag,
+    &hf_ieee1905_traffic_separation_flag,
     &hf_ieee1905_r2_ap_capa_flags_reserved,
     NULL
 };
@@ -8839,8 +8845,16 @@ proto_register_ieee1905(void)
           { "Count of IPv6 entries", "ieee1905.ipv6_type.count",
             FT_UINT8, BASE_DEC, NULL, 0, NULL, HFILL }},
 
+        { &hf_ieee1905_ipv6_linklocal,
+          { "Link local address", "ieee1905.ipv6_type.link_local",
+            FT_IPv6, BASE_NONE, NULL, 0, NULL, HFILL }},
+
+        { &hf_ieee1905_ipv6_mac_address,
+          { "MAC address", "ieee1905.ipv6_type.mac_address",
+            FT_ETHER, BASE_NONE, NULL, 0, NULL, HFILL }},
+
         { &hf_ieee1905_ipv6_addr_count,
-          { "IPv4 address count", "ieee1905.ipv6_type.addr_count",
+          { "IPv6 address count", "ieee1905.ipv6_type.addr_count",
             FT_UINT8, BASE_DEC, NULL, 0, NULL, HFILL }},
 
         { &hf_ieee1905_ipv6_addr_type,
@@ -9202,19 +9216,19 @@ proto_register_ieee1905(void)
 
         { &hf_ieee1905_vht_support_80plus_mhz_flag,
           { "VHT support for 80+80 MHz", "ieee1905.ap_vht.vht_80plus_mhz",
-            FT_BOOLEAN, 16, TFS(&tfs_supported_not_supported), 0x80, NULL, HFILL}},
+            FT_BOOLEAN, 16, TFS(&tfs_supported_not_supported), 0x0080, NULL, HFILL}},
 
         { &hf_ieee1905_vht_support_160_mhz_flag,
           { "VHT support for 160 MHz", "ieee1905.ap_vht.vht_160mhz",
-            FT_BOOLEAN, 16, TFS(&tfs_supported_not_supported), 0x40, NULL, HFILL}},
+            FT_BOOLEAN, 16, TFS(&tfs_supported_not_supported), 0x0040, NULL, HFILL}},
 
         { &hf_ieee1905_su_beamformer_capable_flag,
           { "SU beamformer capable", "ieee1905.ap_vht.su_beamformer",
-            FT_BOOLEAN, 16, TFS(&tfs_supported_not_supported), 0x20, NULL, HFILL}},
+            FT_BOOLEAN, 16, TFS(&tfs_supported_not_supported), 0x0020, NULL, HFILL}},
 
         { &hf_ieee1905_mu_beamformer_capable_flag,
           { "MU beamformer capable", "ieee1905.ap_vht.mu_beamformer",
-            FT_BOOLEAN, 16, TFS(&tfs_supported_not_supported), 0x10, NULL, HFILL}},
+            FT_BOOLEAN, 16, TFS(&tfs_supported_not_supported), 0x0010, NULL, HFILL}},
 
         { &hf_ieee1905_ap_vht_capabilities_radio_id,
           { "Radio unique ID", "ieee1905.ap_vht.radio_id",
@@ -10087,7 +10101,7 @@ proto_register_ieee1905(void)
 
         { &hf_ieee1905_channel_scan_result_neigh_num,
           { "Number of Neighbors", "ieee1905.channel_scan_result.number_of_neighbors",
-            FT_UINT8, BASE_DEC, NULL, 0, NULL, HFILL }},
+            FT_UINT16, BASE_DEC, NULL, 0, NULL, HFILL }},
 
         { &hf_ieee1905_channel_scan_result_bssid,
           { "BSSID", "ieee1905.channel_scan_result.bssid",
@@ -10655,17 +10669,21 @@ proto_register_ieee1905(void)
           { "Byte Counter Units", "ieee1905.r2_ap_capabilities.byte_counter_units",
             FT_UINT8, BASE_DEC, VALS(byte_counter_units_vals), 0xC0, NULL, HFILL}},
 
-        { &hf_ieee1905_basic_service_prio_flag,
-          { "Basic Service Prioritization", "ieee1905.r2_ap_capabilities.basic_service_prioritization",
+        { &hf_ieee1905_ctag_service_prio_flag,
+          { "802.1Q C-TAG Service Prioritization", "ieee1905.r2_ap_capabilities.ctag_service_prioritization",
             FT_BOOLEAN, 8, TFS(&tfs_enabled_disabled), 0x20, NULL, HFILL }},
 
-        { &hf_ieee1905_enhanced_service_prio_flag,
-          { "Enhanced Service Prioritization", "ieee1905.r2_ap_capabilities.enhanced_service_prioritization" ,
+        { &hf_ieee1905_dpp_onboarding_flag,
+          { "DPP Onboarding procedure", "ieee1905.r2_ap_capabilities.dpp_onboarding" ,
             FT_BOOLEAN, 8, TFS(&tfs_enabled_disabled), 0x10, NULL, HFILL }},
+
+       { &hf_ieee1905_traffic_separation_flag,
+          { "802.1Q C-TAG Traffic Separation", "ieee1905.r2_ap_capabilities.traffic_separation" ,
+            FT_BOOLEAN, 8, TFS(&tfs_enabled_disabled), 0x08, NULL, HFILL }},
 
         { &hf_ieee1905_r2_ap_capa_flags_reserved,
           { "Reserved", "ieee1905.r2_ap_capabilities.reserved",
-            FT_UINT8, BASE_HEX, NULL, 0x0F, NULL, HFILL }},
+            FT_UINT8, BASE_HEX, NULL, 0x07, NULL, HFILL }},
 
         { &hf_ieee1905_max_vid_count,
           { "Max Total Number of VIDs", "ieee1905.r2_ap_capabilities.max_total_number_of_vids",

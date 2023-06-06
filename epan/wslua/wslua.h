@@ -118,7 +118,7 @@ typedef struct _wslua_field_t {
     enum ftenum type;
     unsigned base;
     const void* vs;
-    guint32 mask;
+    guint64 mask;
 } wslua_field_t;
 
 typedef struct _wslua_expert_field_t {
@@ -771,6 +771,7 @@ extern void Int64_pack(lua_State* L, luaL_Buffer *b, gint idx, gboolean asLittle
 extern int Int64_unpack(lua_State* L, const gchar *buff, gboolean asLittleEndian);
 extern void UInt64_pack(lua_State* L, luaL_Buffer *b, gint idx, gboolean asLittleEndian);
 extern int UInt64_unpack(lua_State* L, const gchar *buff, gboolean asLittleEndian);
+extern guint64 getUInt64(lua_State *L, int i);
 
 extern Tvb* push_Tvb(lua_State* L, tvbuff_t* tvb);
 extern int push_wsluaTvb(lua_State* L, Tvb t);
@@ -806,7 +807,7 @@ extern char* wslua_get_actual_filename(const char* fname);
 
 extern int wslua_bin2hex(lua_State* L, const guint8* data, const guint len, const gboolean lowercase, const gchar* sep);
 extern int wslua_hex2bin(lua_State* L, const char* data, const guint len, const gchar* sep);
-extern int luaopen_rex_glib(lua_State *L);
+extern int luaopen_rex_pcre2(lua_State *L);
 
 extern const gchar* get_current_plugin_version(void);
 extern void clear_current_plugin_version(void);

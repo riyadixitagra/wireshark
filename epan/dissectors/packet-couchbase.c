@@ -153,6 +153,8 @@ static bool is_request_magic(guint8 magic) {
 #define STATUS_LOCKED             0x09
 #define STATUS_DCP_STREAM_NOT_FOUND 0x0a
 #define STATUS_OPAQUE_NO_MATCH    0x0b
+#define STATUS_EWOULDTHROTTLE     0x0c
+#define STATUS_ECONFIGONLY        0x0d
 #define STATUS_AUTH_STALE         0x1f
 #define STATUS_AUTH_ERROR         0x20
 #define STATUS_AUTH_CONTINUE      0x21
@@ -183,6 +185,10 @@ static bool is_request_magic(guint8 magic) {
 #define STATUS_SYNC_WRITE_IN_PROGRESS           0xa2
 #define STATUS_SYNC_WRITE_AMBIGUOUS             0xa3
 #define STATUS_SYNC_WRITE_RECOMMIT_IN_PROGRESS  0xa4
+#define STATUS_RANGE_SCAN_CANCELLED 0xa5
+#define STATUS_RANGE_SCAN_MORE 0xa6
+#define STATUS_RANGE_SCAN_COMPLETE 0xa7
+#define STATUS_VBUUID_NOT_EQUAL 0xa8
 #define STATUS_SUBDOC_PATH_ENOENT         0xc0
 #define STATUS_SUBDOC_PATH_MISMATCH       0xc1
 #define STATUS_SUBDOC_PATH_EINVAL         0xc2
@@ -394,6 +400,10 @@ static bool is_request_magic(guint8 magic) {
 #define CLIENT_OPCODE_SUBDOC_GET_COUNT        0xd2
 #define CLIENT_OPCODE_SUBDOC_REPLACE_BODY_WITH_XATTR 0xd3
 
+#define CLIENT_OPCODE_RANGE_SCAN_CREATE       0xda
+#define CLIENT_OPCODE_RANGE_SCAN_CONTINUE     0xdb
+#define CLIENT_OPCODE_RANGE_SCAN_CANCEL       0xdc
+
 #define CLIENT_OPCODE_SCRUB                   0xf0
 #define CLIENT_OPCODE_ISASL_REFRESH           0xf1
 #define CLIENT_OPCODE_SSL_CERTS_REFRESH       0xf2
@@ -465,6 +475,8 @@ static int hf_extras_flags_dcp_snapshot_marker_memory = -1;
 static int hf_extras_flags_dcp_snapshot_marker_disk = -1;
 static int hf_extras_flags_dcp_snapshot_marker_chk = -1;
 static int hf_extras_flags_dcp_snapshot_marker_ack = -1;
+static int hf_extras_flags_dcp_snapshot_marker_history = -1;
+static int hf_extras_flags_dcp_snapshot_marker_may_contain_dups = -1;
 static int hf_extras_flags_dcp_include_xattrs = -1;
 static int hf_extras_flags_dcp_no_value = -1;
 static int hf_extras_flags_dcp_include_delete_times = -1;
@@ -491,6 +503,7 @@ static int hf_extras_start_seqno = -1;
 static int hf_extras_end_seqno = -1;
 static int hf_extras_high_completed_seqno = -1;
 static int hf_extras_max_visible_seqno = -1;
+static int hf_extras_timestamp = -1;
 static int hf_extras_marker_version = -1;
 static int hf_extras_vbucket_uuid = -1;
 static int hf_extras_snap_start_seqno = -1;
@@ -599,9 +612,16 @@ static int hf_flex_frame_id_res_esc = -1;
 static int hf_flex_frame_len = -1;
 static int hf_flex_frame_len_esc = -1;
 static int hf_flex_frame_tracing_duration = -1;
+static int hf_flex_frame_ru_count = -1;
+static int hf_flex_frame_wu_count = -1;
 static int hf_flex_frame_durability_req = -1;
 static int hf_flex_frame_dcp_stream_id = -1;
 static int hf_flex_frame_impersonated_user = -1;
+
+static int hf_range_scan_uuid  = -1;
+static int hf_range_scan_item_limit = -1;
+static int hf_range_scan_time_limit = -1;
+static int hf_range_scan_byte_limit = -1;
 
 static expert_field ef_warn_shall_not_have_value = EI_INIT;
 static expert_field ef_warn_shall_not_have_extras = EI_INIT;
@@ -657,6 +677,8 @@ static const value_string magic_vals[] = {
   Response IDs
  */
 #define FLEX_RESPONSE_ID_RX_TX_DURATION 0
+#define FLEX_RESPONSE_ID_RU_USAGE 1
+#define FLEX_RESPONSE_ID_WU_USAGE 2
 
 /* Request IDs */
 #define FLEX_REQUEST_ID_REORDER 0
@@ -668,6 +690,8 @@ static const value_string magic_vals[] = {
 
 static const value_string flex_frame_response_ids[] = {
   { FLEX_RESPONSE_ID_RX_TX_DURATION, "Server Recv->Send duration"},
+  { FLEX_RESPONSE_ID_RU_USAGE, "Read units"},
+  { FLEX_RESPONSE_ID_WU_USAGE, "Write units"},
   { 0, NULL }
 };
 
@@ -701,6 +725,8 @@ static const value_string status_vals[] = {
   { STATUS_LOCKED,            "The requested resource is locked" },
   { STATUS_DCP_STREAM_NOT_FOUND, "No DCP Stream for this request" },
   { STATUS_OPAQUE_NO_MATCH,   "Opaque does not match" },
+  { STATUS_EWOULDTHROTTLE,    "Command would have been throttled" },
+  { STATUS_ECONFIGONLY,       "Command can't be executed in config-only bucket" },
   { STATUS_AUTH_STALE,        "Authentication context is stale. Should reauthenticate." },
   { STATUS_AUTH_ERROR,        "Authentication error"    },
   { STATUS_AUTH_CONTINUE,     "Authentication continue" },
@@ -745,6 +771,10 @@ static const value_string status_vals[] = {
     "The SyncWrite request has not completed in the specified time and has ambiguous result"},
   { STATUS_SYNC_WRITE_RECOMMIT_IN_PROGRESS,
     "The SyncWrite is being re-committed after a change in active node"},
+  { STATUS_RANGE_SCAN_CANCELLED, "RangeScan was cancelled"},
+  { STATUS_RANGE_SCAN_MORE, "RangeScan has more data available"},
+  { STATUS_RANGE_SCAN_COMPLETE, "RangeScan has completed"},
+  { STATUS_VBUUID_NOT_EQUAL, "VB UUID does not equal server value"},
   { STATUS_SUBDOC_PATH_ENOENT,
     "Subdoc: Path not does not exist"},
   { STATUS_SUBDOC_PATH_MISMATCH,
@@ -958,6 +988,9 @@ static const value_string client_opcode_vals[] = {
   { CLIENT_OPCODE_SUBDOC_MULTI_MUTATION,      "Subdoc Multipath Mutation"},
   { CLIENT_OPCODE_SUBDOC_GET_COUNT,           "Subdoc Get Count"         },
   { CLIENT_OPCODE_SUBDOC_REPLACE_BODY_WITH_XATTR, "Subdoc Replace Body With Xattr"},
+  { CLIENT_OPCODE_RANGE_SCAN_CREATE,          "RangeScan Create"         },
+  { CLIENT_OPCODE_RANGE_SCAN_CONTINUE,        "RangeScan Continue"       },
+  { CLIENT_OPCODE_RANGE_SCAN_CANCEL,          "RangeScan Cancel"         },
   { CLIENT_OPCODE_SCRUB,                      "Scrub"                    },
   { CLIENT_OPCODE_ISASL_REFRESH,              "isasl Refresh"            },
   { CLIENT_OPCODE_SSL_CERTS_REFRESH,          "SSL Certificates Refresh" },
@@ -1077,6 +1110,8 @@ static const value_string feature_vals[] = {
   {0x17, "SubdocCreateAsDeleted"},
   {0x18, "SubdocDocumentMacroSupport"},
   {0x19, "SubdocReplaceBodyWithXattr"},
+  {0x1a, "ReportUnitUsage"},
+  {0x1b, "NonBlockingThrottlingMode"},
   {0, NULL}
 };
 
@@ -1094,6 +1129,8 @@ static int * const snapshot_marker_flags [] = {
     &hf_extras_flags_dcp_snapshot_marker_disk,
     &hf_extras_flags_dcp_snapshot_marker_chk,
     &hf_extras_flags_dcp_snapshot_marker_ack,
+    &hf_extras_flags_dcp_snapshot_marker_history,
+    &hf_extras_flags_dcp_snapshot_marker_may_contain_dups,
     NULL
 };
 
@@ -1158,6 +1195,7 @@ has_json_value(gboolean is_request, guint8 opcode)
   if (is_request) {
     switch (opcode) {
     case CLIENT_OPCODE_AUDIT_PUT:
+    case CLIENT_OPCODE_RANGE_SCAN_CREATE:
       return TRUE;
 
     default:
@@ -1481,6 +1519,7 @@ dissect_client_extras(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree,
         NULL
     };
 
+    /* TODO: extra_flags fields are 16-bits wide, whereas flags is 4 bytes? */
     tf = proto_tree_add_bitmask(extras_tree, tvb, offset, hf_extras_flags, ett_extras_flags, extra_flags, ENC_BIG_ENDIAN);
 
     flags = tvb_get_ntohl(tvb, offset);
@@ -1572,7 +1611,7 @@ dissect_client_extras(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree,
         };
 
         proto_tree_add_bitmask(extras_tree, tvb, offset, hf_extras_flags, ett_extras_flags, extra_flags, ENC_BIG_ENDIAN);
-	*/
+        */
         proto_tree_add_item(extras_tree, hf_extras_flags, tvb, offset, 4, ENC_BIG_ENDIAN);
         offset += 4;
         proto_tree_add_item(extras_tree, hf_extras_reserved, tvb, offset, 4, ENC_BIG_ENDIAN);
@@ -1960,6 +1999,7 @@ dissect_client_extras(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree,
 
       // Options field (4 bytes)
       if (extlen == 28 || extlen == 30) {
+          /* TODO: these fields are all 16 bits wide, but field is 32 bits? */
           proto_tree_add_bitmask(
                   extras_tree,
                   tvb,
@@ -2006,6 +2046,26 @@ dissect_client_extras(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree,
       offset += 8;
       proto_tree_add_item(extras_tree, hf_collection_key_id, tvb, offset, 4, ENC_BIG_ENDIAN);
       offset += 4;
+    }
+    break;
+  case CLIENT_OPCODE_RANGE_SCAN_CONTINUE:
+    // https://github.com/couchbase/kv_engine/blob/master/docs/range_scans/range_scan_continue.md
+    if (request) {
+      proto_tree_add_item(extras_tree, hf_range_scan_uuid, tvb, offset, 16, ENC_BIG_ENDIAN);
+      offset += 16;
+      proto_tree_add_item(extras_tree, hf_range_scan_item_limit, tvb, offset, 4, ENC_BIG_ENDIAN);
+      offset += 4;
+      proto_tree_add_item(extras_tree, hf_range_scan_time_limit, tvb, offset, 4, ENC_BIG_ENDIAN);
+      offset += 4;
+      proto_tree_add_item(extras_tree, hf_range_scan_byte_limit, tvb, offset, 4, ENC_BIG_ENDIAN);
+      offset += 4;
+    }
+    break;
+  case CLIENT_OPCODE_RANGE_SCAN_CANCEL:
+    // https://github.com/couchbase/kv_engine/blob/master/docs/range_scans/range_scan_cancel.md
+    if (request) {
+      proto_tree_add_item(extras_tree, hf_range_scan_uuid, tvb, offset, 16, ENC_BIG_ENDIAN);
+      offset += 16;
     }
     break;
   default:
@@ -2577,6 +2637,8 @@ dissect_value(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree,
         proto_tree_add_item(hello_features_tree, hf_hello_features_feature, tvb, curr, 2, ENC_BIG_ENDIAN);
         curr += 2;
       }
+    } else if (!request && opcode == CLIENT_OPCODE_RANGE_SCAN_CREATE) {
+      proto_tree_add_item(tree, hf_range_scan_uuid, tvb, offset, 16, ENC_BIG_ENDIAN);
     } else if (path_len != 0) {
         ti = proto_tree_add_item(tree, hf_path, tvb, offset, path_len, ENC_ASCII | ENC_NA);
         value_len -= path_len;
@@ -2651,20 +2713,38 @@ dissect_value(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree,
         ti = proto_tree_add_item(tree, hf_get_errmap_version, tvb, offset, value_len, ENC_BIG_ENDIAN);
       }
     } else if (request && opcode == CLIENT_OPCODE_DCP_SNAPSHOT_MARKER) {
-      if (value_len != 36) {
-        expert_add_info_format(pinfo, ti, &ef_warn_illegal_value_length, "Illegal Value length, should be 36");
-        ti = proto_tree_add_item(tree, hf_value, tvb, offset, value_len, ENC_ASCII | ENC_NA);
-      } else {
+        if (value_len < 20) {
+            expert_add_info_format(pinfo, ti, &ef_warn_illegal_value_length, "Illegal Value length, should be at least 20");
+            ti = proto_tree_add_item(tree, hf_value, tvb, offset, value_len, ENC_ASCII | ENC_NA);
+        }
+
         proto_tree_add_item(tree, hf_extras_start_seqno, tvb, offset, 8, ENC_BIG_ENDIAN);
         offset += 8;
         proto_tree_add_item(tree, hf_extras_end_seqno, tvb, offset, 8, ENC_BIG_ENDIAN);
         offset += 8;
         proto_tree_add_bitmask(tree, tvb, offset, hf_extras_flags, ett_extras_flags, snapshot_marker_flags, ENC_BIG_ENDIAN);
         offset += 4;
-        proto_tree_add_item(tree, hf_extras_max_visible_seqno, tvb, offset, 8, ENC_BIG_ENDIAN);
-        offset += 8;
-        proto_tree_add_item(tree, hf_extras_high_completed_seqno, tvb, offset, 8, ENC_BIG_ENDIAN);
-      }
+
+        if (value_len > 20) {
+            if (value_len < 36) {
+                expert_add_info_format(pinfo, ti, &ef_warn_illegal_value_length, "Illegal Value length, should be at least 36");
+                ti = proto_tree_add_item(tree, hf_value, tvb, offset, value_len, ENC_ASCII | ENC_NA);
+            }
+
+            proto_tree_add_item(tree, hf_extras_max_visible_seqno, tvb, offset, 8, ENC_BIG_ENDIAN);
+            offset += 8;
+            proto_tree_add_item(tree, hf_extras_high_completed_seqno, tvb, offset, 8, ENC_BIG_ENDIAN);
+            offset += 8;
+
+            if (value_len > 36) {
+                if (value_len != 44) {
+                    expert_add_info_format(pinfo, ti, &ef_warn_illegal_value_length, "Illegal Value length, should be 44");
+                    ti = proto_tree_add_item(tree, hf_value, tvb, offset, value_len, ENC_ASCII | ENC_NA);
+                }
+
+                proto_tree_add_item(tree, hf_extras_timestamp, tvb, offset, 8, ENC_BIG_ENDIAN);
+            }
+        }
     } else {
       ti = proto_tree_add_item(tree, hf_value, tvb, offset, value_len, ENC_ASCII | ENC_NA);
 #ifdef HAVE_SNAPPY
@@ -2798,6 +2878,44 @@ static void flex_frame_duration_dissect(tvbuff_t* tvb,
   }
 }
 
+static void flex_frame_ru_usage_dissect(tvbuff_t* tvb,
+                                        proto_tree* frame_tree,
+                                        gint offset,
+                                        gint length) {
+
+  if (length != 2) {
+    proto_tree_add_expert_format(frame_tree,
+                                 NULL,
+                                 &ef_warn_unknown_flex_len,
+                                 tvb,
+                                 offset,
+                                 length,
+                                 "Read unit illegal length %d", length);
+  } else {
+    guint16 units = tvb_get_ntohs(tvb, offset);
+    proto_tree_add_uint(frame_tree, hf_flex_frame_ru_count, tvb, offset, 2, units);
+  }
+}
+
+static void flex_frame_wu_usage_dissect(tvbuff_t* tvb,
+                                        proto_tree* frame_tree,
+                                        gint offset,
+                                        gint length) {
+
+  if (length != 2) {
+    proto_tree_add_expert_format(frame_tree,
+                                 NULL,
+                                 &ef_warn_unknown_flex_len,
+                                 tvb,
+                                 offset,
+                                 length,
+                                 "Write unit illegal length %d", length);
+  } else {
+    guint16 units = tvb_get_ntohs(tvb, offset);
+    proto_tree_add_uint(frame_tree, hf_flex_frame_wu_count, tvb, offset, 2, units);
+  }
+}
+
 static void flex_frame_reorder_dissect(tvbuff_t* tvb,
                                        proto_tree* frame_tree,
                                        gint offset,
@@ -2889,6 +3007,8 @@ struct flex_frame_by_id_dissect {
 
 static const struct flex_frame_by_id_dissect flex_frame_response_dissect[] = {
   {FLEX_RESPONSE_ID_RX_TX_DURATION, &flex_frame_duration_dissect},
+  {FLEX_RESPONSE_ID_RU_USAGE, &flex_frame_ru_usage_dissect},
+  {FLEX_RESPONSE_ID_WU_USAGE, &flex_frame_wu_usage_dissect},
   {0, NULL }
 };
 
@@ -3690,19 +3810,21 @@ proto_register_couchbase(void)
     { &hf_flex_frame_len_esc, {"Flexible Frame Len (esc)", "couchbase.flex_frame.frame.len", FT_UINT16, BASE_DEC, NULL, 0x0, NULL, HFILL } },
 
     { &hf_flex_frame_tracing_duration, {"Server Recv->Send duration", "couchbase.flex_frame.frame.duration", FT_DOUBLE, BASE_NONE|BASE_UNIT_STRING, &units_microseconds, 0, NULL, HFILL } },
+    { &hf_flex_frame_ru_count, {"Read unit count", "couchbase.flex_frame.frame.ru_count", FT_UINT16, BASE_DEC, NULL, 0, NULL, HFILL } },
+    { &hf_flex_frame_wu_count, {"Write unit count", "couchbase.flex_frame.frame.wu_count", FT_UINT16, BASE_DEC, NULL, 0, NULL, HFILL } },
     { &hf_flex_frame_durability_req, {"Durability Requirement", "couchbase.flex_frame.frame.durability_req", FT_UINT8, BASE_DEC, VALS(flex_frame_durability_req), 0, NULL, HFILL } },
     { &hf_flex_frame_dcp_stream_id, {"DCP Stream Identifier", "couchbase.flex_frame.frame.dcp_stream_id", FT_UINT16, BASE_DEC, NULL, 0, NULL, HFILL } },
     { &hf_flex_frame_impersonated_user, {"Impersonated User", "couchbase.flex_frame.frame.impersonated_user", FT_STRING, BASE_NONE, NULL, 0, NULL, HFILL } },
 
     { &hf_extras, { "Extras", "couchbase.extras", FT_NONE, BASE_NONE, NULL, 0x0, NULL, HFILL } },
     { &hf_extras_flags, { "Flags", "couchbase.extras.flags", FT_UINT32, BASE_HEX, NULL, 0x0, NULL, HFILL } },
-    { &hf_extras_flags_backfill, { "Backfill Age", "couchbase.extras.flags.backfill", FT_BOOLEAN, 16, TFS(&tfs_set_notset), 0x01, NULL, HFILL } },
-    { &hf_extras_flags_dump, { "Dump", "couchbase.extras.flags.dump", FT_BOOLEAN, 16, TFS(&tfs_set_notset), 0x02, NULL, HFILL } },
-    { &hf_extras_flags_list_vbuckets, { "List VBuckets", "couchbase.extras.flags.list_vbuckets", FT_BOOLEAN, 16, TFS(&tfs_set_notset), 0x04, NULL, HFILL } },
-    { &hf_extras_flags_takeover_vbuckets, { "Takeover VBuckets", "couchbase.extras.flags.takeover_vbuckets", FT_BOOLEAN, 16, TFS(&tfs_set_notset), 0x08, NULL, HFILL } },
-    { &hf_extras_flags_support_ack, { "Support ACK", "couchbase.extras.flags.support_ack", FT_BOOLEAN, 16, TFS(&tfs_set_notset), 0x10, NULL, HFILL } },
-    { &hf_extras_flags_request_keys_only, { "Request Keys Only", "couchbase.extras.flags.request_keys_only", FT_BOOLEAN, 16, TFS(&tfs_set_notset), 0x20, NULL, HFILL } },
-    { &hf_extras_flags_checkpoint, { "Checkpoint", "couchbase.extras.flags.checkpoint", FT_BOOLEAN, 16, TFS(&tfs_set_notset), 0x40, NULL, HFILL } },
+    { &hf_extras_flags_backfill, { "Backfill Age", "couchbase.extras.flags.backfill", FT_BOOLEAN, 16, TFS(&tfs_set_notset), 0x0001, NULL, HFILL } },
+    { &hf_extras_flags_dump, { "Dump", "couchbase.extras.flags.dump", FT_BOOLEAN, 16, TFS(&tfs_set_notset), 0x0002, NULL, HFILL } },
+    { &hf_extras_flags_list_vbuckets, { "List VBuckets", "couchbase.extras.flags.list_vbuckets", FT_BOOLEAN, 16, TFS(&tfs_set_notset), 0x0004, NULL, HFILL } },
+    { &hf_extras_flags_takeover_vbuckets, { "Takeover VBuckets", "couchbase.extras.flags.takeover_vbuckets", FT_BOOLEAN, 16, TFS(&tfs_set_notset), 0x0008, NULL, HFILL } },
+    { &hf_extras_flags_support_ack, { "Support ACK", "couchbase.extras.flags.support_ack", FT_BOOLEAN, 16, TFS(&tfs_set_notset), 0x0010, NULL, HFILL } },
+    { &hf_extras_flags_request_keys_only, { "Request Keys Only", "couchbase.extras.flags.request_keys_only", FT_BOOLEAN, 16, TFS(&tfs_set_notset), 0x0020, NULL, HFILL } },
+    { &hf_extras_flags_checkpoint, { "Checkpoint", "couchbase.extras.flags.checkpoint", FT_BOOLEAN, 16, TFS(&tfs_set_notset), 0x0040, NULL, HFILL } },
 
     /* Sub-document */
     { &hf_subdoc_flags, { "Subdoc flags", "couchbase.extras.subdoc.flags", FT_UINT8, BASE_HEX, NULL, 0x0, NULL, HFILL} },
@@ -3720,20 +3842,22 @@ proto_register_couchbase(void)
     { &hf_extras_pathlen, { "Path Length", "couchbase.extras.pathlen", FT_UINT16, BASE_DEC, NULL, 0x0, NULL, HFILL } },
 
     /* DCP flags */
-    { &hf_extras_flags_dcp_connection_type, {"Connection Type", "couchbase.extras.flags.dcp_connection_type", FT_UINT32, BASE_HEX, VALS(dcp_connection_type_vals), 0x03, NULL, HFILL } },
-    { &hf_extras_flags_dcp_add_stream_takeover, {"Take Over", "couchbase.extras.flags.dcp_add_stream_takeover", FT_BOOLEAN, 16, TFS(&tfs_set_notset), 0x01, NULL, HFILL } },
-    { &hf_extras_flags_dcp_add_stream_diskonly, {"Disk Only", "couchbase.extras.flags.dcp_add_stream_diskonly", FT_BOOLEAN, 16, TFS(&tfs_set_notset), 0x02, NULL, HFILL } },
-    { &hf_extras_flags_dcp_add_stream_latest, {"Latest", "couchbase.extras.flags.dcp_add_stream_latest", FT_BOOLEAN, 16, TFS(&tfs_set_notset), 0x04, NULL, HFILL } },
-    { &hf_extras_flags_dcp_snapshot_marker_memory, {"Memory", "couchbase.extras.flags.dcp_snapshot_marker_memory", FT_BOOLEAN, 16, TFS(&tfs_set_notset), 0x01, NULL, HFILL } },
-    { &hf_extras_flags_dcp_snapshot_marker_disk, {"Disk", "couchbase.extras.flags.dcp_snapshot_marker_disk", FT_BOOLEAN, 16, TFS(&tfs_set_notset), 0x02, NULL, HFILL } },
-    { &hf_extras_flags_dcp_snapshot_marker_chk, {"Chk", "couchbase.extras.flags.dcp_snapshot_marker_chk", FT_BOOLEAN, 16, TFS(&tfs_set_notset), 0x04, NULL, HFILL } },
-    { &hf_extras_flags_dcp_snapshot_marker_ack, {"Ack", "couchbase.extras.flags.dcp_snapshot_marker_ack", FT_BOOLEAN, 16, TFS(&tfs_set_notset), 0x08, NULL, HFILL } },
-    { &hf_extras_flags_dcp_include_xattrs, {"Include XATTRs", "couchbase.extras.flags.dcp_include_xattrs", FT_BOOLEAN, 16, TFS(&tfs_set_notset), 0x04, "Indicates the server should include documents XATTRs", HFILL} },
-    { &hf_extras_flags_dcp_no_value, {"No Value", "couchbase.extras.flags.dcp_no_value", FT_BOOLEAN, 16, TFS(&tfs_set_notset), 0x08, "Indicates the server should strip off values", HFILL} },
-    { &hf_extras_flags_dcp_collections, {"Enable Collections", "couchbase.extras.flags.dcp_collections", FT_BOOLEAN, 16, TFS(&tfs_set_notset), 0x10, "Indicates the server should stream collections", HFILL} },
-    { &hf_extras_flags_dcp_include_delete_times, {"Include Delete Times", "couchbase.extras.flags.dcp_include_delete_times", FT_BOOLEAN, 16, TFS(&tfs_set_notset), 0x20, "Indicates the server should include delete timestamps", HFILL} },
-    { &hf_extras_flags_dcp_oso_snapshot_begin, {"OSO Begin", "couchbase.extras.flags.dcp_oso_snapshot_begin", FT_BOOLEAN, 16, TFS(&tfs_set_notset), 0x1, "The start of an OSO snapshot", HFILL} },
-    { &hf_extras_flags_dcp_oso_snapshot_end, {"OSO End", "couchbase.extras.flags.dcp_oso_snapshot_end", FT_BOOLEAN, 16, TFS(&tfs_set_notset), 0x2, "The end of an OSO snapshot", HFILL} },
+    { &hf_extras_flags_dcp_connection_type, {"Connection Type", "couchbase.extras.flags.dcp_connection_type", FT_UINT32, BASE_HEX, VALS(dcp_connection_type_vals), 0x00000003, NULL, HFILL } },
+    { &hf_extras_flags_dcp_add_stream_takeover, {"Take Over", "couchbase.extras.flags.dcp_add_stream_takeover", FT_BOOLEAN, 16, TFS(&tfs_set_notset), 0x0001, NULL, HFILL } },
+    { &hf_extras_flags_dcp_add_stream_diskonly, {"Disk Only", "couchbase.extras.flags.dcp_add_stream_diskonly", FT_BOOLEAN, 16, TFS(&tfs_set_notset), 0x0002, NULL, HFILL } },
+    { &hf_extras_flags_dcp_add_stream_latest, {"Latest", "couchbase.extras.flags.dcp_add_stream_latest", FT_BOOLEAN, 16, TFS(&tfs_set_notset), 0x0004, NULL, HFILL } },
+    { &hf_extras_flags_dcp_snapshot_marker_memory, {"Memory", "couchbase.extras.flags.dcp_snapshot_marker_memory", FT_BOOLEAN, 16, TFS(&tfs_set_notset), 0x0001, NULL, HFILL } },
+    { &hf_extras_flags_dcp_snapshot_marker_disk, {"Disk", "couchbase.extras.flags.dcp_snapshot_marker_disk", FT_BOOLEAN, 16, TFS(&tfs_set_notset), 0x0002, NULL, HFILL } },
+    { &hf_extras_flags_dcp_snapshot_marker_chk, {"Chk", "couchbase.extras.flags.dcp_snapshot_marker_chk", FT_BOOLEAN, 16, TFS(&tfs_set_notset), 0x0004, NULL, HFILL } },
+    { &hf_extras_flags_dcp_snapshot_marker_ack, {"Ack", "couchbase.extras.flags.dcp_snapshot_marker_ack", FT_BOOLEAN, 16, TFS(&tfs_set_notset), 0x0008, NULL, HFILL } },
+    { &hf_extras_flags_dcp_snapshot_marker_history, {"History", "couchbase.extras.flags.dcp_snapshot_marker_history", FT_BOOLEAN, 16, TFS(&tfs_set_notset), 0x0010, NULL, HFILL } },
+    { &hf_extras_flags_dcp_snapshot_marker_may_contain_dups, {"May Contain Duplicates", "couchbase.extras.flags.dcp_snapshot_marker_may_contain_duplicates", FT_BOOLEAN, 16, TFS(&tfs_set_notset), 0x0020, NULL, HFILL } },
+    { &hf_extras_flags_dcp_include_xattrs, {"Include XATTRs", "couchbase.extras.flags.dcp_include_xattrs", FT_BOOLEAN, 16, TFS(&tfs_set_notset), 0x0004, "Indicates the server should include documents XATTRs", HFILL} },
+    { &hf_extras_flags_dcp_no_value, {"No Value", "couchbase.extras.flags.dcp_no_value", FT_BOOLEAN, 16, TFS(&tfs_set_notset), 0x0008, "Indicates the server should strip off values", HFILL} },
+    { &hf_extras_flags_dcp_collections, {"Enable Collections", "couchbase.extras.flags.dcp_collections", FT_BOOLEAN, 16, TFS(&tfs_set_notset), 0x0010, "Indicates the server should stream collections", HFILL} },
+    { &hf_extras_flags_dcp_include_delete_times, {"Include Delete Times", "couchbase.extras.flags.dcp_include_delete_times", FT_BOOLEAN, 16, TFS(&tfs_set_notset), 0x0020, "Indicates the server should include delete timestamps", HFILL} },
+    { &hf_extras_flags_dcp_oso_snapshot_begin, {"OSO Begin", "couchbase.extras.flags.dcp_oso_snapshot_begin", FT_BOOLEAN, 16, TFS(&tfs_set_notset), 0x0001, "The start of an OSO snapshot", HFILL} },
+    { &hf_extras_flags_dcp_oso_snapshot_end, {"OSO End", "couchbase.extras.flags.dcp_oso_snapshot_end", FT_BOOLEAN, 16, TFS(&tfs_set_notset), 0x0002, "The end of an OSO snapshot", HFILL} },
 
     { &hf_extras_seqno, { "Sequence number", "couchbase.extras.seqno", FT_UINT32, BASE_DEC, NULL, 0x0, NULL, HFILL } },
     { &hf_extras_mutation_seqno, { "Mutation Sequence Number", "couchbase.extras.mutation_seqno", FT_UINT64, BASE_DEC, NULL, 0x0, NULL, HFILL } },
@@ -3743,6 +3867,7 @@ proto_register_couchbase(void)
     { &hf_extras_end_seqno, { "End Sequence Number", "couchbase.extras.end_seqno", FT_UINT64, BASE_DEC, NULL, 0x0, NULL, HFILL } },
     { &hf_extras_high_completed_seqno, { "High Completed Sequence Number", "couchbase.extras.high_completed_seqno", FT_UINT64, BASE_DEC, NULL, 0x0, NULL, HFILL } },
     { &hf_extras_max_visible_seqno, { "Max Visible Seqno", "couchbase.extras.max_visible_seqno", FT_UINT64, BASE_DEC, NULL, 0x0, NULL, HFILL } },
+    { &hf_extras_timestamp, { "PiTR timestamp", "couchbase.extras.timestamp", FT_UINT64, BASE_DEC, NULL, 0x0, NULL, HFILL } },
     { &hf_extras_marker_version, { "Snapshot Marker Version", "couchbase.extras.marker_version", FT_UINT8, BASE_DEC, NULL, 0x0, NULL, HFILL } },
     { &hf_extras_vbucket_uuid, { "VBucket UUID", "couchbase.extras.vbucket_uuid", FT_UINT64, BASE_HEX, NULL, 0x0, NULL, HFILL } },
     { &hf_extras_snap_start_seqno, { "Snapshot Start Sequence Number", "couchbase.extras.snap_start_seqno", FT_UINT64, BASE_DEC, NULL, 0x0, NULL, HFILL } },
@@ -3809,11 +3934,11 @@ proto_register_couchbase(void)
     { &hf_meta_revseqno, {"RevSeqno", "couchbase.extras.revseqno", FT_UINT64, BASE_HEX, NULL,                                                    0x0, NULL,                                                              HFILL} },
     { &hf_meta_cas, {"CAS", "couchbase.extras.cas", FT_UINT64, BASE_HEX, NULL,                                                                   0x0, NULL,                                                              HFILL} },
     { &hf_meta_options, {"Options", "couchbase.extras.options", FT_UINT32, BASE_HEX, NULL, 0x0, NULL, HFILL} },
-    { &hf_force_meta, {"FORCE_WITH_META_OP", "couchbase.extras.options.force_with_meta_op", FT_BOOLEAN, 16, TFS(&tfs_set_notset), 0x01, NULL, HFILL} },
-    { &hf_force_accept, {"FORCE_ACCEPT_WITH_META_OPS", "couchbase.extras.options.force_accept_with_meta_ops", FT_BOOLEAN, 16, TFS(&tfs_set_notset), 0x02, NULL, HFILL} },
-    { &hf_regenerate_cas, {"REGENERATE_CAS", "couchbase.extras.option.regenerate_cas", FT_BOOLEAN, 16, TFS(&tfs_set_notset), 0x04, NULL, HFILL} },
-    { &hf_skip_conflict, {"SKIP_CONFLICT_RESOLUTION", "couchbase.extras.options.skip_conflict_resolution", FT_BOOLEAN, 16, TFS(&tfs_set_notset), 0x08, NULL, HFILL} },
-    { &hf_is_expiration, {"IS_EXPIRATION", "couchbase.extras.options.is_expiration", FT_BOOLEAN, 16, TFS(&tfs_set_notset), 0x10, NULL, HFILL} },
+    { &hf_force_meta, {"FORCE_WITH_META_OP", "couchbase.extras.options.force_with_meta_op", FT_BOOLEAN, 16, TFS(&tfs_set_notset), 0x0001, NULL, HFILL} },
+    { &hf_force_accept, {"FORCE_ACCEPT_WITH_META_OPS", "couchbase.extras.options.force_accept_with_meta_ops", FT_BOOLEAN, 16, TFS(&tfs_set_notset), 0x0002, NULL, HFILL} },
+    { &hf_regenerate_cas, {"REGENERATE_CAS", "couchbase.extras.option.regenerate_cas", FT_BOOLEAN, 16, TFS(&tfs_set_notset), 0x0004, NULL, HFILL} },
+    { &hf_skip_conflict, {"SKIP_CONFLICT_RESOLUTION", "couchbase.extras.options.skip_conflict_resolution", FT_BOOLEAN, 16, TFS(&tfs_set_notset), 0x0008, NULL, HFILL} },
+    { &hf_is_expiration, {"IS_EXPIRATION", "couchbase.extras.options.is_expiration", FT_BOOLEAN, 16, TFS(&tfs_set_notset), 0x0010, NULL, HFILL} },
     { &hf_metalen, {"Meta Length", "couchbase.extras.meta_length", FT_UINT16, BASE_HEX, NULL, 0x0, NULL, HFILL} },
     { &hf_meta_reqextmeta, {"ReqExtMeta", "couchbase.extras.reqextmeta", FT_UINT8, BASE_HEX, NULL, 0x0, NULL, HFILL} },
     { &hf_meta_deleted, {"Deleted", "couchbase.extras.deleted", FT_UINT32, BASE_HEX, NULL, 0x0, NULL, HFILL} },
@@ -3842,7 +3967,10 @@ proto_register_couchbase(void)
     { &hf_server_external_users, { "External users", "couchbase.server.external_users", FT_STRING, BASE_NONE, NULL, 0x0, NULL, HFILL } },
     { &hf_server_get_authorization, { "Authorization", "couchbase.server.authorization", FT_STRING, BASE_NONE, NULL, 0x0, NULL, HFILL } },
 
-
+    { &hf_range_scan_uuid, { "Range Scan UUID", "couchbase.range_scan.uuid", FT_GUID, BASE_NONE, NULL, 0x0, NULL, HFILL } },
+    { &hf_range_scan_item_limit, { "Range Scan item limit", "couchbase.range_scan.item_limit", FT_UINT32, BASE_DEC, NULL, 0x0, NULL, HFILL } },
+    { &hf_range_scan_time_limit, { "Range Scan time limit", "couchbase.range_scan.time_limit", FT_UINT32, BASE_DEC, NULL, 0x0, NULL, HFILL } },
+    { &hf_range_scan_byte_limit, { "Range Scan byte limit", "couchbase.range_scan.byte_limit", FT_UINT32, BASE_DEC, NULL, 0x0, NULL, HFILL } }
   };
 
   static ei_register_info ei[] = {

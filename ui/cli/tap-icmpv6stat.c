@@ -29,7 +29,7 @@
 #include <epan/stat_tap_ui.h>
 #include <epan/dissectors/packet-icmp.h>
 
-#include <ui/cmdarg_err.h>
+#include <wsutil/cmdarg_err.h>
 
 void register_tap_listener_icmpv6stat(void);
 
@@ -107,7 +107,7 @@ static gint compare_doubles(gconstpointer a, gconstpointer b)
  *  TAP_PACKET_REDRAW: state has changed, call (*draw) sometime later
  */
 static tap_packet_status
-icmpv6stat_packet(void *tapdata, packet_info *pinfo _U_, epan_dissect_t *edt _U_, const void *data)
+icmpv6stat_packet(void *tapdata, packet_info *pinfo _U_, epan_dissect_t *edt _U_, const void *data, tap_flags_t flags _U_)
 {
     icmpv6stat_t *icmpv6stat = (icmpv6stat_t *)tapdata;
     const icmp_transaction_t *trans = (const icmp_transaction_t *)data;

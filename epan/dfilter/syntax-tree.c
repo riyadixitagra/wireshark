@@ -14,7 +14,8 @@
 #include <wsutil/wmem/wmem.h>
 #include <wsutil/str_util.h>
 #include <wsutil/glib-compat.h>
-#include "sttype-test.h"
+#include "sttype-op.h"
+#include "sttype-function.h"
 #include "dfilter-int.h"
 
 /* Keep track of sttype_t's via their sttype_id_t number */
@@ -27,12 +28,13 @@ static sttype_t* type_list[STTYPE_NUM_TYPES];
 void
 sttype_init(void)
 {
+	sttype_register_field();
 	sttype_register_function();
 	sttype_register_pointer();
-	sttype_register_range();
 	sttype_register_set();
+	sttype_register_slice();
 	sttype_register_string();
-	sttype_register_test();
+	sttype_register_opers();
 }
 
 void
@@ -88,7 +90,6 @@ stnode_clear(stnode_t *node)
 	}
 
 	node->type = NULL;
-	node->flags = 0;
 	node->data = NULL;
 	g_free(node->repr_display);
 	node->repr_display = NULL;
@@ -96,20 +97,24 @@ stnode_clear(stnode_t *node)
 	node->repr_debug = NULL;
 	g_free(node->repr_token);
 	node->repr_token = NULL;
+	node->location.col_start = -1;
+	node->location.col_len = 0;
+	node->flags = 0;
 }
 
 void
-stnode_init(stnode_t *node, sttype_id_t type_id, gpointer data, char *token)
+stnode_init(stnode_t *node, sttype_id_t type_id, gpointer data, char *token, df_loc_t loc)
 {
 	sttype_t	*type;
 
 	ws_assert_magic(node, STNODE_MAGIC);
 	ws_assert(!node->type);
 	ws_assert(!node->data);
-	node->flags = 0;
 	node->repr_display = NULL;
 	node->repr_debug = NULL;
 	node->repr_token = token;
+	node->location = loc;
+	node->flags = 0;
 
 	if (type_id == STTYPE_UNINITIALIZED) {
 		node->type = NULL;
@@ -133,60 +138,32 @@ stnode_init(stnode_t *node, sttype_id_t type_id, gpointer data, char *token)
 void
 stnode_replace(stnode_t *node, sttype_id_t type_id, gpointer data)
 {
-	uint16_t flags = node->flags; /* Save flags. */
-	char *repr_token = g_strdup(node->repr_token);
+	char *token = g_strdup(node->repr_token);
+	df_loc_t loc = node->location;
+	uint16_t flags = node->flags;
 	stnode_clear(node);
-	stnode_init(node, type_id, data, NULL);
+	stnode_init(node, type_id, data, token, loc);
 	node->flags = flags;
-	node->repr_token = repr_token;
 }
 
 stnode_t*
-stnode_new(sttype_id_t type_id, gpointer data, char *token)
+stnode_new(sttype_id_t type_id, gpointer data, char *token, df_loc_t loc)
 {
 	stnode_t	*node;
 
 	node = g_new0(stnode_t, 1);
 	node->magic = STNODE_MAGIC;
 
-	stnode_init(node, type_id, data, token);
+	stnode_init(node, type_id, data, token, loc);
 
 	return node;
 }
 
-stnode_t *
-stnode_new_test(test_op_t op, char *token)
+stnode_t*
+stnode_new_empty(sttype_id_t type_id)
 {
-	stnode_t *node;
-
-	node = stnode_new(STTYPE_TEST, NULL, token);
-	sttype_test_set_op(node, op);
-	return node;
-}
-
-stnode_t *
-stnode_new_string(const char *str, char *token)
-{
-	return stnode_new(STTYPE_STRING, g_strdup(str), token);
-}
-
-stnode_t *
-stnode_new_unparsed(const char *str, char *token)
-{
-	return stnode_new(STTYPE_UNPARSED, g_strdup(str), token);
-}
-
-stnode_t *
-stnode_new_literal(const char *str, char *token)
-{
-	char *value = dfilter_literal_normalized(str);
-	return stnode_new(STTYPE_LITERAL, value, token);
-}
-
-stnode_t *
-stnode_new_charconst(unsigned long number, char *token)
-{
-	return stnode_new(STTYPE_CHARCONST, g_memdup2(&number, sizeof(number)), token);
+	df_loc_t loc = {-1, 0};
+	return stnode_new(type_id, NULL, NULL, loc);
 }
 
 stnode_t*
@@ -197,10 +174,11 @@ stnode_dup(const stnode_t *node)
 	ws_assert_magic(node, STNODE_MAGIC);
 	new = g_new(stnode_t, 1);
 	new->magic = STNODE_MAGIC;
-	new->flags = node->flags;
 	new->repr_display = NULL;
 	new->repr_debug = NULL;
 	new->repr_token = g_strdup(node->repr_token);
+	new->location = node->location;
+	new->flags = node->flags;
 
 	new->type = node->type;
 	if (node->type == NULL)
@@ -248,6 +226,13 @@ stnode_data(stnode_t *node)
 	return node->data;
 }
 
+GString *
+stnode_string(stnode_t *node)
+{
+	ws_assert(stnode_type_id(node) == STTYPE_STRING);
+	return stnode_data(node);
+}
+
 gpointer
 stnode_steal_data(stnode_t *node)
 {
@@ -258,22 +243,56 @@ stnode_steal_data(stnode_t *node)
 	return data;
 }
 
-gboolean
-stnode_inside_parens(stnode_t *node)
+const char *
+stnode_token(stnode_t *node)
 {
-	return node->flags & STNODE_F_INSIDE_PARENS;
+	return node->repr_token;
+}
+
+df_loc_t
+stnode_location(stnode_t *node)
+{
+	return node->location;
 }
 
 void
-stnode_set_inside_parens(stnode_t *node, gboolean inside)
+stnode_set_location(stnode_t *node, df_loc_t loc)
 {
-	if (inside) {
-		node->flags |= STNODE_F_INSIDE_PARENS;
-	}
-	else {
-		node->flags &= ~STNODE_F_INSIDE_PARENS;
-	}
+	node->location = loc;
 }
+
+gboolean
+stnode_get_flags(stnode_t *node, uint16_t flags)
+{
+	return node->flags & flags;
+}
+
+void
+stnode_set_flags(stnode_t *node, uint16_t flags)
+{
+	node->flags |= flags;
+}
+
+/* Finds the first and last location from a set and creates
+ * a new location from start of first (col_start) to end of
+ * last (col_start + col_len). Sets the result to dst. */
+void
+stnode_merge_location(stnode_t *dst, stnode_t *n1, stnode_t *n2)
+{
+	df_loc_t first, last;
+	df_loc_t loc2;
+
+	first = last = stnode_location(n1);
+	loc2 = stnode_location(n2);
+	if (loc2.col_start >= 0 && loc2.col_start > first.col_start)
+		last = loc2;
+	dst->location.col_start = first.col_start;
+	dst->location.col_len = last.col_start - first.col_start + last.col_len;
+}
+
+#define IS_OPERATOR(node) \
+	(stnode_type_id(node) == STTYPE_TEST || \
+		stnode_type_id(node) == STTYPE_ARITHMETIC)
 
 static char *
 _node_tostr(stnode_t *node, gboolean pretty)
@@ -288,11 +307,11 @@ _node_tostr(stnode_t *node, gboolean pretty)
 	if (pretty)
 		return s;
 
-	if (stnode_type_id(node) == STTYPE_TEST) {
+	if (IS_OPERATOR(node)) {
 		repr = s;
 	}
 	else {
-		repr = ws_strdup_printf("%s<%s>", stnode_type_name(node), s);
+		repr = ws_strdup_printf("%s(%s)", stnode_type_name(node), s);
 		g_free(s);
 	}
 
@@ -304,14 +323,11 @@ stnode_tostr(stnode_t *node, gboolean pretty)
 {
 	ws_assert_magic(node, STNODE_MAGIC);
 
-	if (pretty && node->repr_token != NULL) {
+	if (pretty && IS_OPERATOR(node) && node->repr_token != NULL) {
+		/* Some operators can have synonyms, like "or" and "||".
+		 * Show the user the same representation as he typed. */
 		g_free(node->repr_display);
-		if (stnode_type_id(node) == STTYPE_CHARCONST) {
-			node->repr_display = g_strdup(node->repr_token);
-		}
-		else {
-			node->repr_display = ws_strdup_printf("\"%s\"", node->repr_token);
-		}
+		node->repr_display = g_strdup(node->repr_token);
 		return node->repr_display;
 	}
 
@@ -334,11 +350,13 @@ sprint_node(stnode_t *node)
 {
 	wmem_strbuf_t *buf = wmem_strbuf_new(NULL, NULL);
 
-	wmem_strbuf_append_printf(buf, "stnode{ ");
-	wmem_strbuf_append_printf(buf, "magic=0x%"PRIx32", ", node->magic);
-	wmem_strbuf_append_printf(buf, "type=%s, ", stnode_type_name(node));
-	wmem_strbuf_append_printf(buf, "data=<%s>, ", stnode_todebug(node));
-	wmem_strbuf_append_printf(buf, "flags=0x%04"PRIx16" }", node->flags);
+	wmem_strbuf_append_printf(buf, "{ ");
+	wmem_strbuf_append_printf(buf, "magic = 0x%"PRIx32", ", node->magic);
+	wmem_strbuf_append_printf(buf, "type = %s, ", stnode_type_name(node));
+	wmem_strbuf_append_printf(buf, "data = %s, ", stnode_todebug(node));
+	wmem_strbuf_append_printf(buf, "location = %ld:%zu",
+			node->location.col_start, node->location.col_len);
+	wmem_strbuf_append_printf(buf, " }");
 	return wmem_strbuf_finalize(buf);
 }
 
@@ -378,11 +396,11 @@ log_test_full(enum ws_log_level level,
 		return;
 	}
 
-	test_op_t st_op;
+	stnode_op_t st_op;
 	stnode_t *st_lhs = NULL, *st_rhs = NULL;
 	char *lhs = NULL, *rhs = NULL;
 
-	sttype_test_get(node, &st_op, &st_lhs, &st_rhs);
+	sttype_oper_get(node, &st_op, &st_lhs, &st_rhs);
 
 	if (st_lhs)
 		lhs = sprint_node(st_lhs);
@@ -390,7 +408,7 @@ log_test_full(enum ws_log_level level,
 		rhs = sprint_node(st_rhs);
 
 	ws_log_write_always_full(WS_LOG_DOMAIN, level, file, line, func,
-				"%s: LHS = %s; RHS = %s",
+				"%s:\n LHS = %s\n RHS = %s",
 				stnode_todebug(node),
 				lhs ? lhs : "NULL",
 				rhs ? rhs : "NULL");
@@ -405,54 +423,100 @@ indent(wmem_strbuf_t *buf, int level)
 	for (int i = 0; i < level * 2; i++) {
 		wmem_strbuf_append_c(buf, ' ');
 	}
+	wmem_strbuf_append_printf(buf, "% 2d ", level);
 }
 
 static void
 visit_tree(wmem_strbuf_t *buf, stnode_t *node, int level)
 {
 	stnode_t *left, *right;
+	stnode_t *lower, *upper;
+	GSList *params;
+	GSList *nodelist;
 
 	if (stnode_type_id(node) == STTYPE_TEST ||
-			stnode_type_id(node) == STTYPE_BITWISE) {
-		wmem_strbuf_append_printf(buf, "%s(", stnode_todebug(node));
-		sttype_test_get(node, NULL, &left, &right);
+			stnode_type_id(node) == STTYPE_ARITHMETIC) {
+		wmem_strbuf_append_printf(buf, "%s:\n", stnode_todebug(node));
+		sttype_oper_get(node, NULL, &left, &right);
 		if (left && right) {
-			wmem_strbuf_append_c(buf, '\n');
 			indent(buf, level + 1);
-			wmem_strbuf_append(buf, "LHS = ");
 			visit_tree(buf, left, level + 1);
 			wmem_strbuf_append_c(buf, '\n');
 			indent(buf, level + 1);
-			wmem_strbuf_append(buf, "RHS = ");
 			visit_tree(buf, right, level + 1);
-			wmem_strbuf_append(buf, "\n");
-			indent(buf, level);
 		}
 		else if (left) {
-			visit_tree(buf, left, level);
+			indent(buf, level + 1);
+			visit_tree(buf, left, level + 1);
 		}
 		else if (right) {
-			visit_tree(buf, right, level);
+			ws_assert_not_reached();
 		}
-		wmem_strbuf_append(buf, ")");
+	}
+	else if (stnode_type_id(node) == STTYPE_SET) {
+		nodelist = stnode_data(node);
+		wmem_strbuf_append_printf(buf, "SET(#%u):\n", g_slist_length(nodelist) / 2);
+		while (nodelist) {
+			indent(buf, level + 1);
+			lower = nodelist->data;
+			wmem_strbuf_append(buf, stnode_tostr(lower, FALSE));
+			/* Set elements are always in pairs; upper may be null. */
+			nodelist = g_slist_next(nodelist);
+			ws_assert(nodelist);
+			upper = nodelist->data;
+			if (upper != NULL) {
+				wmem_strbuf_append(buf, " .. ");
+				wmem_strbuf_append(buf, stnode_tostr(upper, FALSE));
+			}
+			nodelist = g_slist_next(nodelist);
+			if (nodelist != NULL) {
+				wmem_strbuf_append_c(buf, '\n');
+			}
+		}
+	}
+	else if (stnode_type_id(node) == STTYPE_FUNCTION) {
+		wmem_strbuf_append_printf(buf, "%s:\n", stnode_todebug(node));
+		params = sttype_function_params(node);
+		while (params) {
+			indent(buf, level + 1);
+			visit_tree(buf, params->data, level + 1);
+			if (params->next != NULL) {
+				wmem_strbuf_append_c(buf, '\n');
+			}
+			params = params->next;
+		}
 	}
 	else {
 		wmem_strbuf_append(buf, stnode_todebug(node));
 	}
 }
 
+char *
+dump_syntax_tree_str(stnode_t *root)
+{
+	wmem_strbuf_t *buf = wmem_strbuf_new(NULL, NULL);
+	indent(buf, 0);
+	visit_tree(buf, root, 0);
+	return wmem_strbuf_finalize(buf);
+}
+
 void
-log_syntax_tree(enum ws_log_level level, stnode_t *root, const char *msg)
+log_syntax_tree(enum ws_log_level level, stnode_t *root, const char *msg, char **cache_ptr)
 {
 	if (!ws_log_msg_is_active(LOG_DOMAIN_DFILTER, level))
 		return;
 
-	wmem_strbuf_t *buf = wmem_strbuf_new(NULL, NULL);
+	char *str = dump_syntax_tree_str(root);
 
-	visit_tree(buf, root, 0);
 	ws_log_write_always_full(LOG_DOMAIN_DFILTER, level, NULL, -1, NULL,
-				"%s:\n%s", msg, wmem_strbuf_get_str(buf));
-	wmem_strbuf_destroy(buf);
+				"%s:\n%s", msg, str);
+
+	if (cache_ptr) {
+		*cache_ptr = str;
+	}
+	else {
+		g_free(str);
+	}
 }
 
 /*

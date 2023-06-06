@@ -10,6 +10,7 @@
  */
 
 #include <config.h>
+#define WS_LOG_DOMAIN  LOG_DOMAIN_MAIN
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -20,13 +21,13 @@
 
 #include <epan/epan.h>
 
-#include <ui/cmdarg_err.h>
+#include <wsutil/cmdarg_err.h>
 #include <ui/failure_message.h>
 #include <wsutil/filesystem.h>
 #include <wsutil/privileges.h>
 #include <wsutil/report_message.h>
 #include <wsutil/wslog.h>
-#include <ui/version_info.h>
+#include <wsutil/version_info.h>
 
 #include <wiretap/wtap.h>
 
@@ -34,6 +35,7 @@
 #include <epan/timestamp.h>
 #include <epan/prefs.h>
 #include <epan/column.h>
+#include <epan/column-info.h>
 #include <epan/print.h>
 #include <epan/epan_dissect.h>
 #include <epan/disabled_protos.h>
@@ -151,7 +153,7 @@ fuzz_prefs_apply(void)
 static int
 fuzz_init(int argc _U_, char **argv)
 {
-	char                *init_progfile_dir_error;
+	char                *configuration_init_error;
 
 	static const struct report_message_routines fuzzshark_report_routines = {
 		failure_message,
@@ -243,6 +245,8 @@ fuzz_init(int argc _U_, char **argv)
 	/* Early logging command-line initialization. */
 	ws_log_parse_args(&argc, argv, vcmdarg_err, LOG_ARGS_NOEXIT);
 
+	ws_noisy("Finished log init and parsing command line log arguments");
+
 	/*
 	 * Get credential information for later use, and drop privileges
 	 * before doing anything else.
@@ -256,10 +260,10 @@ fuzz_init(int argc _U_, char **argv)
 	/*
 	 * Attempt to get the pathname of the executable file.
 	 */
-	init_progfile_dir_error = init_progfile_dir(argv[0]);
-	if (init_progfile_dir_error != NULL) {
-		fprintf(stderr, "fuzzshark: Can't get pathname of oss-fuzzshark program: %s.\n", init_progfile_dir_error);
-		g_free(init_progfile_dir_error);
+	configuration_init_error = configuration_init(argv[0], NULL);
+	if (configuration_init_error != NULL) {
+		fprintf(stderr, "fuzzshark: Can't get pathname of oss-fuzzshark program: %s.\n", configuration_init_error);
+		g_free(configuration_init_error);
 	}
 
 	/* Initialize the version information. */

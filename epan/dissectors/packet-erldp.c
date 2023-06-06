@@ -95,7 +95,6 @@ static const value_string etf_tag_vals[] = {
   { FUN_EXT             , "FUN_EXT" },
   { DIST_HEADER         , "DIST_HEADER" },
   { DIST_FRAG_HEADER    , "DIST_FRAG_HEADER" },
-  { DIST_FRAG_CONT      , "DIST_FRAG_CONT" },
   { ATOM_CACHE_REF      , "ATOM_CACHE_REF" },
   { COMPRESSED          , "COMPRESSED" },
   {  0, NULL }
@@ -398,7 +397,7 @@ static gint dissect_etf_big_ext(tvbuff_t *tvb, gint offset, guint32 len, proto_t
           *value_str = wmem_strdup_printf(wmem_packet_scope(), "%s%" PRIu64,
                                           sign ? "-"  : "", big_val);
       } if (len < 64) {
-        wmem_strbuf_t *strbuf = wmem_strbuf_sized_new(wmem_packet_scope(), len*1+3+1, len*1+3+1);
+        wmem_strbuf_t *strbuf = wmem_strbuf_new_sized(wmem_packet_scope(), len*1+3+1);
 
         wmem_strbuf_append(strbuf, "0x");
         for (i = len - 1; i >= 0; i--) {
@@ -1145,7 +1144,7 @@ void proto_register_erldp(void) {
     { &hf_erldp_big_ext_str, { "Int", "erldp.big_ext_str",
                         FT_STRING, BASE_NONE, NULL, 0x0,
                         NULL, HFILL}},
-    { &hf_erldp_big_ext_bytes, { "Int", "erldp.big_ext_str",
+    { &hf_erldp_big_ext_bytes, { "Int", "erldp.big_ext_bytes",
                         FT_BYTES, BASE_NONE, NULL, 0x0,
                         NULL, HFILL}},
     { &hf_erldp_float_ext, { "Float", "erldp.float_ext",

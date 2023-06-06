@@ -33,10 +33,6 @@ indent_size = tab
 [clopts_common.[ch]]
 indent_size = 2
 
-[copyright_info.[ch]]
-indent_style = tab
-indent_size = tab
-
 [crash_info.[ch]]
 indent_style = tab
 indent_size = tab
@@ -105,9 +101,6 @@ indent_size = tab
 indent_size = 2
 
 [u3.[ch]]
-indent_size = 2
-
-[unicode-utils.[ch]]
 indent_size = 2
 
 [ws_getopt.[ch]]

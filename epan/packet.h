@@ -47,6 +47,12 @@ struct epan_range;
 	((guint)(offset) + (guint)(len) > (guint)(offset) && \
 	 (guint)(offset) + (guint)(len) <= (guint)(captured_len))
 
+/* 0 is case insenstive for backwards compatibility with tables that
+ * used FALSE or BASE_NONE for case sensitive, which was the default.
+ */
+#define STRING_CASE_SENSITIVE 0
+#define STRING_CASE_INSENSITIVE 1
+
 extern void packet_init(void);
 extern void packet_cache_proto_handles(void);
 extern void packet_cleanup(void);
@@ -166,9 +172,9 @@ WS_DLL_PUBLIC void dissector_all_tables_foreach_table (DATFunc_table func,
 
 /* a protocol uses the function to register a sub-dissector table
  *
- * 'param' is the display base for integer tables, and TRUE/FALSE for
- * string tables (true indicating case-insensitive, false indicating
- * case-sensitive)
+ * 'param' is the display base for integer tables, STRING_CASE_SENSITIVE
+ * or STRING_CASE_INSENSITIVE for string tables, and ignored for other
+ * table types.
  */
 WS_DLL_PUBLIC dissector_table_t register_dissector_table(const char *name,
     const char *ui_name, const int proto, const ftenum_t type, const int param);
@@ -178,7 +184,8 @@ WS_DLL_PUBLIC dissector_table_t register_dissector_table(const char *name,
  * to store subdissectors.
  */
 WS_DLL_PUBLIC dissector_table_t register_custom_dissector_table(const char *name,
-    const char *ui_name, const int proto, GHashFunc hash_func, GEqualFunc key_equal_func);
+    const char *ui_name, const int proto, GHashFunc hash_func, GEqualFunc key_equal_func,
+    GDestroyNotify key_destroy_func);
 
 /** Register a dissector table alias.
  * This is for dissectors whose original name has changed, e.g. SSL to TLS.
@@ -424,9 +431,10 @@ WS_DLL_PUBLIC void dissector_add_for_decode_as_with_preference(const char *name,
  */
 WS_DLL_PUBLIC GSList *dissector_table_get_dissector_handles(dissector_table_t dissector_table);
 
-/** Get a handle to dissector out of a dissector table
+/** Get a handle to dissector out of a dissector table given the description
+ * of what the dissector dissects.
  */
-WS_DLL_PUBLIC dissector_handle_t dissector_table_get_dissector_handle(dissector_table_t dissector_table, const gchar* short_name);
+WS_DLL_PUBLIC dissector_handle_t dissector_table_get_dissector_handle(dissector_table_t dissector_table, const gchar* description);
 
 /** Get a dissector table's type
  */
@@ -435,6 +443,10 @@ WS_DLL_PUBLIC ftenum_t dissector_table_get_type(dissector_table_t dissector_tabl
 /** Mark a dissector table as allowing "Decode As"
  */
 WS_DLL_PUBLIC void dissector_table_allow_decode_as(dissector_table_t dissector_table);
+
+/** Returns TRUE if dissector table allows "Decode As"
+ */
+WS_DLL_PUBLIC gboolean dissector_table_supports_decode_as(dissector_table_t dissector_table);
 
 /* List of "heuristic" dissectors (which get handed a packet, look at it,
    and either recognize it as being for their protocol, dissect it, and
@@ -459,7 +471,7 @@ typedef struct heur_dtbl_entry {
  *  Call this in the parent dissectors proto_register function.
  *
  * @param name the name of this protocol
- * @param proto the value obtained when regestering the protocol
+ * @param proto the value obtained when registering the protocol
  */
 WS_DLL_PUBLIC heur_dissector_list_t register_heur_dissector_list(const char *name, const int proto);
 
@@ -491,7 +503,7 @@ WS_DLL_PUBLIC void heur_dissector_table_foreach(const char *table_name,
 WS_DLL_PUBLIC void dissector_all_heur_tables_foreach_table (DATFunc_heur_table func,
     gpointer user_data, GCompareFunc compare_key_func);
 
-/* true if a heur_dissector list of that anme exists to be registered into */
+/* true if a heur_dissector list of that name exists to be registered into */
 WS_DLL_PUBLIC gboolean has_heur_dissector_list(const gchar *name);
 
 /** Try all the dissectors in a given heuristic dissector list. This is done,
@@ -548,6 +560,9 @@ WS_DLL_PUBLIC void heur_dissector_delete(const char *name, heur_dissector_t diss
 /** Register a new dissector. */
 WS_DLL_PUBLIC dissector_handle_t register_dissector(const char *name, dissector_t dissector, const int proto);
 
+/** Register a new dissector with a description. */
+WS_DLL_PUBLIC dissector_handle_t register_dissector_with_description(const char *name, const char *description, dissector_t dissector, const int proto);
+
 /** Register a new dissector with a callback pointer. */
 WS_DLL_PUBLIC dissector_handle_t register_dissector_with_data(const char *name, dissector_cb_t dissector, const int proto, void *cb_data);
 
@@ -555,10 +570,17 @@ WS_DLL_PUBLIC dissector_handle_t register_dissector_with_data(const char *name, 
 void deregister_dissector(const char *name);
 
 /** Get the long name of the protocol for a dissector handle. */
-extern const char *dissector_handle_get_long_name(const dissector_handle_t handle);
+WS_DLL_PUBLIC const char *dissector_handle_get_protocol_long_name(const dissector_handle_t handle);
 
 /** Get the short name of the protocol for a dissector handle. */
+WS_DLL_PUBLIC const char *dissector_handle_get_protocol_short_name(const dissector_handle_t handle);
+
+/* For backwards source and binary compatibility */
+G_DEPRECATED_FOR(dissector_handle_get_protocol_short_name)
 WS_DLL_PUBLIC const char *dissector_handle_get_short_name(const dissector_handle_t handle);
+
+/** Get the description for what the dissector for a dissector handle dissects. */
+WS_DLL_PUBLIC const char *dissector_handle_get_description(const dissector_handle_t handle);
 
 /** Get the index of the protocol for a dissector handle. */
 WS_DLL_PUBLIC int dissector_handle_get_protocol_index(const dissector_handle_t handle);
@@ -569,7 +591,7 @@ WS_DLL_PUBLIC GList* get_dissector_names(void);
 /** Find a dissector by name. */
 WS_DLL_PUBLIC dissector_handle_t find_dissector(const char *name);
 
-/** Find a dissector by name and add parent protocol as a depedency*/
+/** Find a dissector by name and add parent protocol as a dependency. */
 WS_DLL_PUBLIC dissector_handle_t find_dissector_add_dependency(const char *name, const int parent_proto);
 
 /** Get a dissector name from handle. */
@@ -580,6 +602,10 @@ WS_DLL_PUBLIC dissector_handle_t create_dissector_handle(dissector_t dissector,
     const int proto);
 WS_DLL_PUBLIC dissector_handle_t create_dissector_handle_with_name(dissector_t dissector,
     const int proto, const char* name);
+WS_DLL_PUBLIC dissector_handle_t create_dissector_handle_with_name_and_description(dissector_t dissector,
+    const int proto, const char* name, const char* description);
+WS_DLL_PUBLIC dissector_handle_t create_dissector_handle_with_data(dissector_cb_t dissector,
+    const int proto, void* cb_data);
 
 /** Call a dissector through a handle and if no dissector was found
  * pass it over to the "data" dissector instead.
@@ -647,7 +673,7 @@ WS_DLL_PUBLIC gboolean register_depend_dissector(const char* parent, const char*
 /** Unregister a protocol dependency
  * This is done automatically when removing from a dissector or
  * heuristic table.  This is for "manual" deregistration for things
- * like Lua
+ * like Lua.
  *
  *   @param parent "Parent" protocol short name
  *   @param dependent "Dependent" protocol short name
@@ -718,7 +744,7 @@ WS_DLL_PUBLIC void postseq_cleanup_all_protocols(void);
  * subsystems, liked dfilters, have finished initializing. This is
  * useful for dissector registration routines which need to compile
  * display filters. dfilters can't initialize itself until all protocols
- * have registereed themselvs. */
+ * have registered themselves. */
 WS_DLL_PUBLIC void
 register_final_registration_routine(void (*func)(void));
 
@@ -750,7 +776,7 @@ extern void free_data_sources(packet_info *pinfo);
 
 /* Mark another frame as depended upon by the current frame.
  *
- * This information is used to ensure that the dependend-upon frame is saved
+ * This information is used to ensure that the depended-upon frame is saved
  * if the user does a File->Save-As of only the Displayed packets and the
  * current frame passed the display filter.
  */

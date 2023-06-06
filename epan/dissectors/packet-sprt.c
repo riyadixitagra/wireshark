@@ -770,14 +770,14 @@ void sprt_add_address(packet_info *pinfo,
      * Check if the ip address and port combination is not
      * already registered as a conversation.
      */
-    p_conv = find_conversation(setup_frame_number, addr, &null_addr, ENDPOINT_UDP, port, other_port,
+    p_conv = find_conversation(setup_frame_number, addr, &null_addr, CONVERSATION_UDP, port, other_port,
                                 NO_ADDR_B | (!other_port ? NO_PORT_B : 0));
 
     /*
      * If not, create a new conversation.
      */
     if (!p_conv || p_conv->setup_frame != setup_frame_number) {
-        p_conv = conversation_new(setup_frame_number, addr, &null_addr, ENDPOINT_UDP,
+        p_conv = conversation_new(setup_frame_number, addr, &null_addr, CONVERSATION_UDP,
                                     (guint32)port, (guint32)other_port,
                                     NO_ADDR2 | (!other_port ? NO_PORT2 : 0));
     }
@@ -880,7 +880,9 @@ dissect_sprt_data(tvbuff_t *tvb,
         payload_length--;
 
         /* what kind of message is this? */
-        col_append_fstr(pinfo->cinfo, COL_INFO, ", %s(%d)", rval_to_str(payload_msgid, sprt_modem_relay_msg_id_name, "Unknown"), payload_msgid);
+        col_append_fstr(pinfo->cinfo, COL_INFO, ", %s(%d)",
+                        rval_to_str_const(payload_msgid, sprt_modem_relay_msg_id_name, "Unknown"),
+                        payload_msgid);
 
         /* now parse payload stuff after ext. bit & msgid */
         switch(payload_msgid)
@@ -2247,7 +2249,7 @@ proto_register_sprt(void)
             &hf_sprt_payload_msg_jminfo_mod_v26bis,
             {
                 "V.26bis",
-                "sprt.payload.msg_jminfo.mod_v16bis",
+                "sprt.payload.msg_jminfo.mod_v26bis",
                 FT_BOOLEAN,
                 16,
                 TFS(&tfs_available_not_available),

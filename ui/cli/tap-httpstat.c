@@ -24,7 +24,7 @@
 
 #include <wsutil/wslog.h>
 
-#include <ui/cmdarg_err.h>
+#include <wsutil/cmdarg_err.h>
 
 void register_tap_listener_httpstat(void);
 
@@ -125,7 +125,7 @@ httpstat_reset(void *psp)
 }
 
 static tap_packet_status
-httpstat_packet(void *psp, packet_info *pinfo _U_, epan_dissect_t *edt _U_, const void *pri)
+httpstat_packet(void *psp, packet_info *pinfo _U_, epan_dissect_t *edt _U_, const void *pri, tap_flags_t flags _U_)
 {
 	const http_info_value_t *value = (const http_info_value_t *)pri;
 	httpstat_t *sp = (httpstat_t *)psp;

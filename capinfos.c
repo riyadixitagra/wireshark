@@ -42,6 +42,7 @@
 
 
 #include <config.h>
+#define WS_LOG_DOMAIN  LOG_DOMAIN_MAIN
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -50,18 +51,18 @@
 #include <locale.h>
 #include <errno.h>
 
+#include <ws_exit_codes.h>
 #include <wsutil/ws_getopt.h>
 
 #include <glib.h>
 
 #include <wiretap/wtap.h>
 
-#include <ui/cmdarg_err.h>
-#include <ui/exit_codes.h>
+#include <wsutil/cmdarg_err.h>
 #include <wsutil/filesystem.h>
 #include <wsutil/privileges.h>
 #include <cli_main.h>
-#include <ui/version_info.h>
+#include <wsutil/version_info.h>
 #include <wiretap/wtap_opttypes.h>
 
 #ifdef HAVE_PLUGINS
@@ -74,7 +75,7 @@
 #include <wsutil/ws_assert.h>
 #include <wsutil/wslog.h>
 
-#include <wsutil/wsgcrypt.h>
+#include <gcrypt.h>
 
 #include "ui/failure_message.h"
 
@@ -140,7 +141,6 @@ static gboolean cap_file_hashes    = TRUE;  /* Calculate file hashes */
 
 // Strongest to weakest
 #define HASH_SIZE_SHA256 32
-#define HASH_SIZE_RMD160 20
 #define HASH_SIZE_SHA1   20
 
 #define HASH_STR_SIZE (65) /* Max hash size * 2 + '\0' */
@@ -148,7 +148,6 @@ static gboolean cap_file_hashes    = TRUE;  /* Calculate file hashes */
 
 
 static gchar file_sha256[HASH_STR_SIZE];
-static gchar file_rmd160[HASH_STR_SIZE];
 static gchar file_sha1[HASH_STR_SIZE];
 
 static char  *hash_buf = NULL;
@@ -742,7 +741,6 @@ print_stats(const gchar *filename, capture_info *cf_info)
     }
     if (cap_file_hashes) {
         printf     ("SHA256:              %s\n", file_sha256);
-        printf     ("RIPEMD160:           %s\n", file_rmd160);
         printf     ("SHA1:                %s\n", file_sha1);
     }
     if (cap_order)          printf     ("Strict time order:   %s\n", order_string(cf_info->order));
@@ -856,7 +854,6 @@ print_stats_table_header(void)
     if (cap_packet_rate)    print_stats_table_header_label("Average packet rate (packets/sec)");
     if (cap_file_hashes) {
         print_stats_table_header_label("SHA256");
-        print_stats_table_header_label("RIPEMD160");
         print_stats_table_header_label("SHA1");
     }
     if (cap_order)          print_stats_table_header_label("Strict time order");
@@ -1028,11 +1025,6 @@ print_stats_table(const gchar *filename, capture_info *cf_info)
 
         putsep();
         putquote();
-        printf("%s", file_rmd160);
-        putquote();
-
-        putsep();
-        putquote();
         printf("%s", file_sha1);
         putquote();
     }
@@ -1134,13 +1126,13 @@ cleanup_capture_info(capture_info *cf_info)
 }
 
 static void
-count_ipv4_address(const guint addr _U_, const gchar *name _U_)
+count_ipv4_address(const guint addr _U_, const gchar *name _U_, const gboolean static_entry _U_)
 {
     num_ipv4_addresses++;
 }
 
 static void
-count_ipv6_address(const void *addrp _U_, const gchar *name _U_)
+count_ipv6_address(const void *addrp _U_, const gchar *name _U_, const gboolean static_entry _U_)
 {
     num_ipv6_addresses++;
 }
@@ -1170,7 +1162,6 @@ calculate_hashes(const char *filename)
     size_t hash_bytes;
 
     (void) g_strlcpy(file_sha256, "<unknown>", HASH_STR_SIZE);
-    (void) g_strlcpy(file_rmd160, "<unknown>", HASH_STR_SIZE);
     (void) g_strlcpy(file_sha1, "<unknown>", HASH_STR_SIZE);
 
     if (cap_file_hashes) {
@@ -1181,7 +1172,6 @@ calculate_hashes(const char *filename)
             }
             gcry_md_final(hd);
             hash_to_str(gcry_md_read(hd, GCRY_MD_SHA256), HASH_SIZE_SHA256, file_sha256);
-            hash_to_str(gcry_md_read(hd, GCRY_MD_RMD160), HASH_SIZE_RMD160, file_rmd160);
             hash_to_str(gcry_md_read(hd, GCRY_MD_SHA1), HASH_SIZE_SHA1, file_sha1);
         }
         if (fh) fclose(fh);
@@ -1488,7 +1478,7 @@ print_usage(FILE *output)
     fprintf(output, "  -E display the capture file encapsulation\n");
     fprintf(output, "  -I display the capture file interface information\n");
     fprintf(output, "  -F display additional capture file information\n");
-    fprintf(output, "  -H display the SHA256, RIPEMD160, and SHA1 hashes of the file\n");
+    fprintf(output, "  -H display the SHA256 and SHA1 hashes of the file\n");
     fprintf(output, "  -k display the capture comment\n");
     fprintf(output, "\n");
     fprintf(output, "Size infos:\n");
@@ -1569,7 +1559,7 @@ capinfos_cmdarg_err_cont(const char *msg_format, va_list ap)
 int
 main(int argc, char *argv[])
 {
-    char  *init_progfile_dir_error;
+    char  *configuration_init_error;
     static const struct report_message_routines capinfos_report_routines = {
         failure_message,
         failure_message,
@@ -1609,7 +1599,9 @@ main(int argc, char *argv[])
     ws_log_init("capinfos", vcmdarg_err);
 
     /* Early logging command-line initialization. */
-    ws_log_parse_args(&argc, argv, vcmdarg_err, INVALID_OPTION);
+    ws_log_parse_args(&argc, argv, vcmdarg_err, WS_EXIT_INVALID_OPTION);
+
+    ws_noisy("Finished log init and parsing command line log arguments");
 
     /* Get the decimal point. */
     decimal_point = g_strdup(localeconv()->decimal_point);
@@ -1630,12 +1622,12 @@ main(int argc, char *argv[])
      * Attempt to get the pathname of the directory containing the
      * executable file.
      */
-    init_progfile_dir_error = init_progfile_dir(argv[0]);
-    if (init_progfile_dir_error != NULL) {
+    configuration_init_error = configuration_init(argv[0], NULL);
+    if (configuration_init_error != NULL) {
         fprintf(stderr,
                 "capinfos: Can't get pathname of directory containing the capinfos program: %s.\n",
-                init_progfile_dir_error);
-        g_free(init_progfile_dir_error);
+                configuration_init_error);
+        g_free(configuration_init_error);
     }
 
     init_report_message("capinfos", &capinfos_report_routines);
@@ -1820,7 +1812,7 @@ main(int argc, char *argv[])
 
             case '?':              /* Bad flag - print usage message */
                 print_usage(stderr);
-                overall_error_status = INVALID_OPTION;
+                overall_error_status = WS_EXIT_INVALID_OPTION;
                 goto exit;
                 break;
         }
@@ -1828,7 +1820,7 @@ main(int argc, char *argv[])
 
     if ((argc - ws_optind) < 1) {
         print_usage(stderr);
-        overall_error_status = INVALID_OPTION;
+        overall_error_status = WS_EXIT_INVALID_OPTION;
         goto exit;
     }
 
@@ -1839,10 +1831,9 @@ main(int argc, char *argv[])
     if (cap_file_hashes) {
         gcry_check_version(NULL);
         gcry_md_open(&hd, GCRY_MD_SHA256, 0);
-        if (hd) {
-            gcry_md_enable(hd, GCRY_MD_RMD160);
+        if (hd)
             gcry_md_enable(hd, GCRY_MD_SHA1);
-        }
+
         hash_buf = (char *)g_malloc(HASH_BUF_SIZE);
     }
 

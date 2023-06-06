@@ -160,7 +160,7 @@ static gboolean communityid_tuple_lt(guint8 addr_len,
                                      const guint16 *sport, const guint16 *dport)
 {
     int addrcmp = memcmp(saddr, daddr, addr_len);
-    int ports_lt = (sport != NULL && dport != NULL) ? *sport < *dport : TRUE;
+    int ports_lt = (sport != NULL && dport != NULL) ? GUINT16_FROM_BE(*sport) < GUINT16_FROM_BE(*dport) : TRUE;
     return addrcmp < 0 || (addrcmp == 0 && ports_lt);
 }
 
@@ -606,7 +606,7 @@ void proto_register_communityid(void)
     proto_register_field_array(proto_communityid, hf, array_length(hf));
     proto_disable_by_default(proto_communityid);
 
-    communityid_handle = create_dissector_handle(communityid_dissector,
+    communityid_handle = register_dissector("communityid", communityid_dissector,
                                                  proto_communityid);
     register_postdissector(communityid_handle);
 

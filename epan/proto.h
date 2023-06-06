@@ -81,6 +81,8 @@ typedef void (*custom_fmt_func_t)(gchar *, guint32);
 
 typedef void (*custom_fmt_func_64_t)(gchar *, guint64);
 
+typedef void (*custom_fmt_func_double_t)(gchar *, double);
+
 /** Make a custom format function pointer look like a void pointer. Used to set header_field_info.strings.
  *
  * We cast to gsize first, which 1) is guaranteed to be wide enough to
@@ -259,7 +261,7 @@ void proto_report_dissector_bug(const char *format, ...)
                                            IS_FT_UINT((hfinfo)->type))
 
 #define __DISSECTOR_ASSERT_FIELD_TYPE_IS_STRING(hfinfo) \
-  (REPORT_DISSECTOR_BUG("%s:%u: field %s is not of type FT_STRING, FT_STRINGZ, FT_STRINGZPAD, or FT_STRINGZTRUNC", \
+  (REPORT_DISSECTOR_BUG("%s:%u: field %s is not of type FT_STRING, FT_STRINGZ, FT_STRINGZPAD, FT_STRINGZTRUNC, or FT_UINT_STRING", \
         __FILE__, __LINE__, (hfinfo)->abbrev))
 
 #define DISSECTOR_ASSERT_FIELD_TYPE_IS_STRING(hfinfo)  \
@@ -361,19 +363,15 @@ void proto_report_dissector_bug(const char *format, ...)
  * values are encoded in all but the top bit (which is the byte-order
  * bit, required for FT_UINT_STRING and for UCS-2 and UTF-16 strings)
  * and the bottom bit (which we ignore for now so that programs that
- * pass TRUE for the encoding just do ASCII).  (The encodings are given
- * directly as even numbers in hex, so that make-init-lua.pl can just
- * turn them into numbers for use in init.lua.)
+ * pass TRUE for the encoding just do ASCII).
  *
- * We don't yet process ASCII and UTF-8 differently.  Ultimately, for
- * ASCII, all bytes with the 8th bit set should be mapped to some "this
- * is not a valid character" code point, as ENC_ASCII should mean "this
- * is ASCII, not some extended variant thereof".  We should also map
- * 0x00 to that as well - null-terminated and null-padded strings
- * never have NULs in them, but counted strings might.  (Either that,
- * or the values for strings should be counted, not null-terminated.)
- * For UTF-8, invalid UTF-8 sequences should be mapped to the same
- * code point.
+ * For ENC_ASCII, we map ASCII characters with the high bit set to the UTF-8
+ * REPLACEMENT CHARACTER, and do the same for ENC_UTF_8 with invalid UTF-8
+ * sequences. We should also map 0x00 to that as well - null-terminated and
+ * null-padded strings never have NULs in them, but counted strings might.
+ * Either that, or strings should be counted, not null-terminated. Note
+ * that conversion of ASCII and UTF-8 can change the length of the string,
+ * as with any other encoding, due to REPLACEMENT CHARACTERs.
  *
  * For display, perhaps we should also map control characters to the
  * Unicode glyphs showing the name of the control character in small
@@ -426,6 +424,9 @@ void proto_report_dissector_bug(const char *format, ...)
 #define ENC_GB18030                       0x00000050
 #define ENC_EUC_KR                        0x00000052
 #define ENC_APN_STR                       0x00000054 /* The encoding the APN/DNN field follows 3GPP TS 23.003 [2] clause 9.1.*/
+#define ENC_DECT_STANDARD_8BITS           0x00000056 /* DECT standard character set as defined in ETSI EN 300 175-5 Annex D */
+#define ENC_DECT_STANDARD_4BITS_TBCD      0x00000058 /* DECT standard 4bits character set as defined in ETSI EN 300 175-5 Annex D (BCD with 0xb = SPACE)*/
+#define ENC_EBCDIC_CP500                  0x00000060
 /*
  * TODO:
  *
@@ -564,6 +565,12 @@ void proto_report_dissector_bug(const char *format, ...)
  *  ENC_TIME_MSECS - 6 to 8 bytes, representing a value in milliseconds.
  *  If the time is absolute, it's milliseconds since the UN*X epoch.
  *
+ *  ENC_TIME_USECS - 8 bytes, representing a value in microseconds.
+ *  If the time is absolute, it's microseconds since the UN*X epoch.
+ *
+ *  ENC_TIME_NSECS - 8 bytes, representing a value in nanoseconds.
+ *  If the time is absolute, it's nanoseconds since the UN*X epoch.
+ *
  *  ENC_TIME_SECS_NTP - 4 bytes, representing a count of seconds since
  *  the NTP epoch.
  *
@@ -574,19 +581,12 @@ void proto_report_dissector_bug(const char *format, ...)
  *  ENC_TIME_MSEC_NTP - 4-8 bytes, representing a count of milliseconds since
  *  the NTP epoch.
  *
- *  ENC_MIP6 - 8 bytes; the first 48 bits are seconds since the UN*X epoch
+ *  ENC_TIME_MIP6 - 8 bytes; the first 48 bits are seconds since the UN*X epoch
  *  and the remaining 16 bits indicate the number of 1/65536's of a second
  *  since that second.
  *
  *  ENC_TIME_CLASSIC_MAC_OS_SECS - 4-8 bytes, representing a count of seconds
  *  since January 1, 1904, 00:00:00 UTC.
- *
- *  ENC_TIME_NSECS - 8 bytes, representing a value in nanoseconds.
- *  If the time is absolute, it's nanoseconds since the UN*X epoch.
- *
- * The backwards-compatibility names are defined as hex numbers so that
- * the script to generate init.lua will add them as global variables,
- * along with the new names.
  */
 #define ENC_TIME_SECS_NSECS          0x00000000
 #define ENC_TIME_TIMESPEC            0x00000000 /* for backwards source compatibility */
@@ -604,6 +604,7 @@ void proto_report_dissector_bug(const char *format, ...)
 #define ENC_TIME_MIP6                0x00000024
 #define ENC_TIME_CLASSIC_MAC_OS_SECS 0x00000026
 #define ENC_TIME_NSECS               0x00000028
+#define ENC_TIME_USECS               0x00000030
 
 /*
  * For cases where a string encoding contains a timestamp, use one
@@ -639,8 +640,13 @@ void proto_report_dissector_bug(const char *format, ...)
  * See https://developers.google.com/protocol-buffers/docs/encoding?csw=1#types
  */
 #define ENC_VARINT_ZIGZAG        0x00000008
+/*
+ * Decodes a variable-length integer used in DTN protocols
+ * See https://www.rfc-editor.org/rfc/rfc6256.html
+ */
+#define ENC_VARINT_SDNV          0x00000010
 
-#define ENC_VARINT_MASK          (ENC_VARINT_PROTOBUF|ENC_VARINT_QUIC|ENC_VARINT_ZIGZAG)
+#define ENC_VARINT_MASK          (ENC_VARINT_PROTOBUF|ENC_VARINT_QUIC|ENC_VARINT_ZIGZAG|ENC_VARINT_SDNV)
 
 /* Values for header_field_info.display */
 
@@ -650,48 +656,44 @@ void proto_report_dissector_bug(const char *format, ...)
 /** FIELD_DISPLAY_E_MASK selects the field_display_e value. */
 #define FIELD_DISPLAY_E_MASK 0xFF
 
-/*
- * Note that this enum values are parsed in make-init-lua.pl so make sure
- * any changes here still makes valid entries in init.lua.
- * XXX The script requires the equals sign.
- */
 typedef enum {
     BASE_NONE    = 0,   /**< none */
 
-/* Integral types */
-    BASE_DEC     = 1,   /**< decimal */
-    BASE_HEX     = 2,   /**< hexadecimal */
-    BASE_OCT     = 3,   /**< octal */
-    BASE_DEC_HEX = 4,   /**< decimal (hexadecimal) */
-    BASE_HEX_DEC = 5,   /**< hexadecimal (decimal) */
-    BASE_CUSTOM  = 6,   /**< call custom routine (in ->strings) to format */
-
-/* Float types */
-    BASE_FLOAT   = BASE_NONE, /**< decimal-format float */
+/* Integral and float types */
+    BASE_DEC,           /**< decimal [integer, float] */
+    BASE_HEX,           /**< hexadecimal [integer, float] */
+    BASE_OCT,           /**< octal [integer] */
+    BASE_DEC_HEX,       /**< decimal (hexadecimal) [integer] */
+    BASE_HEX_DEC,       /**< hexadecimal (decimal) [integer] */
+    BASE_CUSTOM,        /**< call custom routine to format [integer, float] */
+    BASE_EXP,           /**< exponential [float] */
 
 /* Byte separators */
-    SEP_DOT      = 8,   /**< hexadecimal bytes with a period (.) between each byte */
-    SEP_DASH     = 9,   /**< hexadecimal bytes with a dash (-) between each byte */
-    SEP_COLON    = 10,  /**< hexadecimal bytes with a colon (:) between each byte */
-    SEP_SPACE    = 11,  /**< hexadecimal bytes with a space between each byte */
+    SEP_DOT,            /**< hexadecimal bytes with a period (.) between each byte */
+    SEP_DASH,           /**< hexadecimal bytes with a dash (-) between each byte */
+    SEP_COLON,          /**< hexadecimal bytes with a colon (:) between each byte */
+    SEP_SPACE,          /**< hexadecimal bytes with a space between each byte */
 
 /* Address types */
-    BASE_NETMASK = 12,  /**< Used for IPv4 address that shouldn't be resolved (like for netmasks) */
+    BASE_NETMASK,       /**< Used for IPv4 address that shouldn't be resolved (like for netmasks) */
 
 /* Port types */
-    BASE_PT_UDP  = 13,  /**< UDP port */
-    BASE_PT_TCP  = 14,  /**< TCP port */
-    BASE_PT_DCCP = 15,  /**< DCCP port */
-    BASE_PT_SCTP = 16,  /**< SCTP port */
+    BASE_PT_UDP,        /**< UDP port */
+    BASE_PT_TCP,        /**< TCP port */
+    BASE_PT_DCCP,       /**< DCCP port */
+    BASE_PT_SCTP,       /**< SCTP port */
 
 /* OUI types */
-    BASE_OUI     = 17,  /**< OUI resolution */
+    BASE_OUI,           /**< OUI resolution */
 
 /* Time types */
-    ABSOLUTE_TIME_LOCAL   = 18,     /**< local time in our time zone, with month and day */
-    ABSOLUTE_TIME_UTC     = 19,     /**< UTC, with month and day */
-    ABSOLUTE_TIME_DOY_UTC = 20,     /**< UTC, with 1-origin day-of-year */
-    ABSOLUTE_TIME_NTP_UTC = 21,     /**< UTC, with "NULL" when timestamp is all zeros */
+    ABSOLUTE_TIME_LOCAL,        /**< local time in our time zone, with month and day */
+    ABSOLUTE_TIME_UTC,          /**< UTC, with month and day */
+    ABSOLUTE_TIME_DOY_UTC,      /**< UTC, with 1-origin day-of-year */
+    ABSOLUTE_TIME_NTP_UTC,      /**< UTC, with "NULL" when timestamp is all zeros */
+
+/* String types */
+    BASE_STR_WSP,       /**< Replace all whitespace characters (newline, formfeed, etc) with "space". */
 } field_display_e;
 
 #define FIELD_DISPLAY(d) ((d) & FIELD_DISPLAY_E_MASK)
@@ -793,7 +795,9 @@ typedef struct field_info {
     guint32              flags;           /**< bitfield like FI_GENERATED, ... */
     item_label_t        *rep;             /**< string for GUI tree */
     tvbuff_t            *ds_tvb;          /**< data source tvbuff */
-    fvalue_t             value;
+    fvalue_t            *value;
+    int                 total_layer_num;        /**< Hierarchical layer number, for all protocols in the tree. */
+    int                 proto_layer_num;        /**< Protocol layer number, so 1st, 2nd, 3rd, ... for protocol X. */
 } field_info;
 
 
@@ -890,7 +894,6 @@ typedef proto_node proto_item;
  * the bottom up.
  */
 
-/* do not modify the PI_SEVERITY_MASK name - it's used by make-init-lua.pl */
 /* expert severities */
 #define PI_SEVERITY_MASK        0x00F00000  /**< mask usually for internal use only! */
 /** Packet comment */
@@ -904,7 +907,6 @@ typedef proto_node proto_item;
 /** Serious problems, e.g. a malformed packet */
 #define PI_ERROR                0x00800000
 
-/* do not modify the PI_GROUP_MASK name - it's used by make-init-lua.pl */
 /* expert "event groups" */
 #define PI_GROUP_MASK           0xFF000000  /**< mask usually for internal use only! */
 /** The protocol field has a bad checksum, usually uses PI_WARN severity */
@@ -1038,9 +1040,6 @@ static inline void proto_item_set_url(proto_item *ti) {
 typedef void (*proto_tree_foreach_func)(proto_node *, gpointer);
 typedef gboolean (*proto_tree_traverse_func)(proto_node *, gpointer);
 
-extern gboolean proto_tree_traverse_post_order(proto_tree *tree,
-    proto_tree_traverse_func func, gpointer data);
-
 WS_DLL_PUBLIC void proto_tree_children_foreach(proto_tree *tree,
     proto_tree_foreach_func func, gpointer data);
 
@@ -1143,7 +1142,7 @@ WS_DLL_PUBLIC void proto_item_set_len(proto_item *pi, const gint length);
 WS_DLL_PUBLIC void proto_item_set_end(proto_item *pi, tvbuff_t *tvb, gint end);
 
 /** Get length of a proto_item. Useful after using proto_tree_add_item()
- * to add a variable-length field (e.g., FT_NSTRING_UINT8).
+ * to add a variable-length field (e.g., FT_UINT_STRING).
  @param pi the item to get the length from
  @return the current length */
 WS_DLL_PUBLIC int proto_item_get_len(const proto_item *pi);
@@ -1985,7 +1984,17 @@ proto_tree_add_oid_format(proto_tree *tree, int hfindex, tvbuff_t *tvb, gint sta
     gint length, const guint8* value_ptr, const char *format, ...) G_GNUC_PRINTF(7,8);
 
 /** Add an FT_STRING, FT_STRINGZ, FT_STRINGZPAD, or FT_STRINGZTRUNC to a
-    proto_tree.
+    proto_tree. The value passed in should be a UTF-8 encoded null terminated
+    string, such as produced by tvb_get_string_enc(), regardless of the original
+    packet data.
+
+    This function is used to add a custom string *value* to the protocol tree.
+    Do not format the string value for display, for example by using format_text().
+    The input string represents packet data, not a display label. Formatting
+    labels is a concern of the UI. Doing that here would change the meaning of the packet
+    data, restrict the options for formatting later and make display filtering unintuitive
+    for whitespace and other special characters.
+
  @param tree the tree to append this item to
  @param hfindex field index
  @param tvb the tv buffer of the current data
@@ -2671,6 +2680,12 @@ WS_DLL_PUBLIC void proto_get_frame_protocols(const wmem_list_t *layers,
  */
 WS_DLL_PUBLIC gboolean proto_is_frame_protocol(const wmem_list_t *layers, const char* proto_name);
 
+/** Create a string of all layers in the packet.
+ * @param pinfo Pointer to packet info
+ * @return string of layer names
+ */
+WS_DLL_PUBLIC gchar * proto_list_layers(const packet_info *pinfo);
+
 /** Mark protocol with the given item number as disabled by default.
  @param proto_id protocol id (0-indexed) */
 WS_DLL_PUBLIC void proto_disable_by_default(const int proto_id);
@@ -2977,6 +2992,25 @@ proto_tree_add_bitmask_value_with_flags(proto_tree *tree, tvbuff_t *tvb, const g
 WS_DLL_PUBLIC void
 proto_tree_add_bitmask_list(proto_tree *tree, tvbuff_t *tvb, const guint offset,
                                 const int len, int * const *fields, const guint encoding);
+
+/** This function will dissect a value that describe a bitmask. Similar to proto_tree_add_bitmask_list(),
+    but with a return value
+ @param tree the tree to append this item to
+ @param tvb the tv buffer of the current data
+ @param offset start of data in tvb
+ @param len number of bytes of data
+ @param fields an array of pointers to int that lists all the fields of the
+        bitmask. These fields can be either of the type FT_BOOLEAN for flags
+        or another integer of the same type/size as hf_hdr with a mask specified.
+        This array is terminated by a NULL entry.
+        FT_BOOLEAN bits that are set to 1 will have the name added to the expansion.
+        FT_integer fields that have a value_string attached will have the
+        matched string displayed on the expansion line.
+ @param encoding big or little endian byte representation (ENC_BIG_ENDIAN/ENC_LITTLE_ENDIAN/ENC_HOST_ENDIAN)
+ @param retval if a pointer is passed here the value is returned. */
+WS_DLL_PUBLIC  void
+proto_tree_add_bitmask_list_ret_uint64(proto_tree *tree, tvbuff_t *tvb, const guint offset,
+					const int len, int * const *fields, const guint encoding, guint64 *retval);
 
 /** This function will dissect a value that describe a bitmask. Similar to proto_tree_add_bitmask_list(),
     but with a passed in value (presumably because it can't be retrieved directly from tvb)
@@ -3317,9 +3351,9 @@ WS_DLL_PUBLIC guchar
 proto_check_field_name_lower(const gchar *field_name);
 
 
-/** Check if given string is a valid field name
+/** Set the column text for a custom column
  @param tree the tree to append this item to
- @param field_id the field id used for custom column
+ @param field_id the field ids used for custom column
  @param occurrence the occurrence of the field used for custom column
  @param result the buffer to fill with the field string
  @param expr the filter expression
@@ -3330,7 +3364,18 @@ proto_custom_set(proto_tree* tree, GSList *field_id,
                              gchar *result,
                              gchar *expr, const int size );
 
+/** Construct a display filter string for a custom column
+ @param edt epan dissecting
+ @param field_id the field ids used for custom column
+ @param occurrence the occurrence of the field used for custom column
+ @return allocated display filter string.  Needs to be freed with g_free(...) */
+gchar *
+proto_custom_get_filter(struct epan_dissect *edt, GSList *field_id, gint occurrence);
+
 /** @} */
+
+const char *
+hfinfo_char_value_format_display(int display, char buf[7], guint32 value);
 
 #ifdef __cplusplus
 }

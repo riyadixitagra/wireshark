@@ -44,7 +44,8 @@ void proto_reg_handoff_dvbci(void);
 #define AES_BLOCK_LEN 16
 #define AES_KEY_LEN 16
 
-#define EXPORTED_SAC_MSG_PROTO "CI+ SAC message"
+#define EXPORTED_SAC_MSG_PROTO "ciplus_sac_msg"
+#define EXPORTED_SAC_MSG_DESCRIPTION "CI+ SAC message"
 
 #define IS_DATA_TRANSFER(e) (e==DVBCI_EVT_DATA_CAM_TO_HOST || e==DVBCI_EVT_DATA_HOST_TO_CAM)
 
@@ -3470,7 +3471,7 @@ dissect_sac_msg(guint32 tag, tvbuff_t *tvb, gint offset,
         tvb_composite_append(clear_sac_msg_tvb, clear_sac_body_tvb);
         tvb_composite_finalize(clear_sac_msg_tvb);
 
-        exp_pdu_data = export_pdu_create_tags(pinfo, EXPORTED_SAC_MSG_PROTO, EXP_PDU_TAG_PROTO_NAME, dvbci_exp_pdu_items);
+        exp_pdu_data = export_pdu_create_tags(pinfo, EXPORTED_SAC_MSG_PROTO, EXP_PDU_TAG_DISSECTOR_NAME, dvbci_exp_pdu_items);
 
         exp_pdu_data->tvb_captured_length = tvb_captured_length(clear_sac_msg_tvb);
         exp_pdu_data->tvb_reported_length = tvb_reported_length(clear_sac_msg_tvb);
@@ -3491,7 +3492,7 @@ dissect_dvbci_exported_sac_msg(
     if (!IS_DATA_TRANSFER(evt))
         return 0;
 
-    col_append_sep_str(pinfo->cinfo, COL_PROTOCOL, NULL, EXPORTED_SAC_MSG_PROTO);
+    col_append_sep_str(pinfo->cinfo, COL_PROTOCOL, NULL, EXPORTED_SAC_MSG_DESCRIPTION);
     col_clear(pinfo->cinfo, COL_INFO);
 
     /* we only export cc_sac_data_req and _cnf, therefore, the tag can be
@@ -4426,7 +4427,7 @@ dissect_dvbci_spdu(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree,
                 break;
             }
             col_append_sep_str(pinfo->cinfo, COL_INFO, NULL, "Session opened");
-            conv = conversation_new_by_id(pinfo->num, ENDPOINT_DVBCI, CT_ID(ssnb, tcid), 0);
+            conv = conversation_new_by_id(pinfo->num, CONVERSATION_DVBCI, CT_ID(ssnb, tcid));
             /* we always add the resource id immediately after the circuit
                 was created */
             conversation_add_proto_data(conv, proto_dvbci, GUINT_TO_POINTER(res_id));
@@ -4447,7 +4448,7 @@ dissect_dvbci_spdu(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree,
             ssnb = tvb_get_ntohs(tvb, offset+1);
             proto_tree_add_item(sess_tree, hf_dvbci_sess_nb,
                     tvb, offset+1, 2, ENC_BIG_ENDIAN);
-            conv = find_conversation_by_id(pinfo->num, ENDPOINT_DVBCI, CT_ID(ssnb, tcid), 0);
+            conv = find_conversation_by_id(pinfo->num, CONVERSATION_DVBCI, CT_ID(ssnb, tcid));
             if (conv)
                 conv->last_frame = pinfo->num;
             break;
@@ -4464,7 +4465,7 @@ dissect_dvbci_spdu(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree,
     }
 
     if (ssnb && !conv)
-        conv = find_conversation_by_id(pinfo->num, ENDPOINT_DVBCI, CT_ID(ssnb, tcid), 0);
+        conv = find_conversation_by_id(pinfo->num, CONVERSATION_DVBCI, CT_ID(ssnb, tcid));
 
     /* if the packet contains no resource id, we add the cached id from
        the circuit so that each packet has a resource id that can be
@@ -6056,7 +6057,7 @@ proto_register_dvbci(void)
         },
         { &hf_dvbci_lsc_dst_port,
           { "Destination port", "dvb-ci.lsc.dst_port",
-            FT_UINT8, BASE_DEC, NULL, 0, NULL, HFILL }
+            FT_UINT16, BASE_DEC, NULL, 0, NULL, HFILL }
         },
         { &hf_dvbci_lsc_proto,
           { "Protocol", "dvb-ci.lsc.protocol",
@@ -6150,15 +6151,15 @@ proto_register_dvbci(void)
         },
         { &hf_dvbci_dlv_sys_hint_t,
           { "terrestrial network (DVB-T/T2)", "dvb-ci.opp.dlv_sys_hint.t",
-             FT_BOOLEAN, 4, TFS(&tfs_set_notset), 0x04, NULL, HFILL }
+             FT_BOOLEAN, 4, TFS(&tfs_set_notset), 0x4, NULL, HFILL }
         },
         { &hf_dvbci_dlv_sys_hint_s,
           { "satellite network (DVB-S/S2)", "dvb-ci.opp.dlv_sys_hint.s",
-             FT_BOOLEAN, 4, TFS(&tfs_set_notset), 0x02, NULL, HFILL }
+             FT_BOOLEAN, 4, TFS(&tfs_set_notset), 0x2, NULL, HFILL }
         },
         { &hf_dvbci_dlv_sys_hint_c,
           { "cable network (DVB-C/C2)", "dvb-ci.opp.dlv_sys_hint.c",
-             FT_BOOLEAN, 4, TFS(&tfs_set_notset), 0x01, NULL, HFILL }
+             FT_BOOLEAN, 4, TFS(&tfs_set_notset), 0x1, NULL, HFILL }
         },
         { &hf_dvbci_refr_req_date,
           { "Refresh request date", "dvb-ci.opp.refresh_req_date",
@@ -6430,8 +6431,7 @@ proto_register_dvbci(void)
     expert_dvbci = expert_register_protocol(proto_dvbci);
     expert_register_field_array(expert_dvbci, ei, array_length(ei));
 
-    dvbci_module = prefs_register_protocol(
-        proto_dvbci, proto_reg_handoff_dvbci);
+    dvbci_module = prefs_register_protocol(proto_dvbci, proto_reg_handoff_dvbci);
     prefs_register_string_preference(dvbci_module,
             "sek", "SAC Encryption Key", "SAC Encryption Key (16 hex bytes)",
             &dvbci_sek);
@@ -6448,7 +6448,7 @@ proto_register_dvbci(void)
             &dvbci_dissect_lsc_msg);
 
     sas_msg_dissector_table = register_dissector_table("dvb-ci.sas.app_id_str",
-                "SAS application id", proto_dvbci, FT_STRING, BASE_NONE);
+                "SAS application id", proto_dvbci, FT_STRING, STRING_CASE_SENSITIVE);
 
     register_init_routine(dvbci_init);
     reassembly_table_register(&tpdu_reassembly_table,
@@ -6458,7 +6458,8 @@ proto_register_dvbci(void)
 
 
     /* the dissector for decrypted CI+ SAC messages which we can export */
-    register_dissector(EXPORTED_SAC_MSG_PROTO,
+    register_dissector_with_description(EXPORTED_SAC_MSG_PROTO,
+        EXPORTED_SAC_MSG_DESCRIPTION,
         dissect_dvbci_exported_sac_msg, proto_dvbci);
 
     exported_pdu_tap = register_export_pdu_tap("DVB-CI");
@@ -6472,14 +6473,19 @@ proto_register_dvbci(void)
 void
 proto_reg_handoff_dvbci(void)
 {
-    dissector_add_uint("wtap_encap", WTAP_ENCAP_DVBCI, dvbci_handle);
+    static gboolean initialized = FALSE;
 
-    data_handle = find_dissector("data");
-    mpeg_pmt_handle = find_dissector_add_dependency("mpeg_pmt", proto_dvbci);
-    dvb_nit_handle = find_dissector_add_dependency("dvb_nit", proto_dvbci);
-    mime_handle = find_dissector_add_dependency("mime_dlt", proto_dvbci);
-    tcp_dissector_table = find_dissector_table("tcp.port");
-    udp_dissector_table = find_dissector_table("udp.port");
+    if (!initialized) {
+        dissector_add_uint("wtap_encap", WTAP_ENCAP_DVBCI, dvbci_handle);
+
+        data_handle = find_dissector("data");
+        mpeg_pmt_handle = find_dissector_add_dependency("mpeg_pmt", proto_dvbci);
+        dvb_nit_handle = find_dissector_add_dependency("dvb_nit", proto_dvbci);
+        mime_handle = find_dissector_add_dependency("mime_dlt", proto_dvbci);
+        tcp_dissector_table = find_dissector_table("tcp.port");
+        udp_dissector_table = find_dissector_table("udp.port");
+        initialized = TRUE;
+    }
 
     g_free(dvbci_sek_bin);
     g_free(dvbci_siv_bin);

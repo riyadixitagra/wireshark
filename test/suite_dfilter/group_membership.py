@@ -2,13 +2,11 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-import unittest
-import fixtures
+import pytest
 from suite_dfilter.dfiltertest import *
 
 
-@fixtures.uses_fixtures
-class case_membership(unittest.TestCase):
+class TestDfilterMembership:
     trace_file = "http.pcap"
 
     def test_membership_match_1(self, checkDFilterCount):
@@ -61,7 +59,7 @@ class case_membership(unittest.TestCase):
         checkDFilterCount(dfilter, 1)
 
     def test_membership_6_both_negative_range_float(self, checkDFilterCount):
-        dfilter = 'frame.time_delta in {-20 .. -.7}'
+        dfilter = 'frame.time_delta in {-20 .. -0.7}'
         checkDFilterCount(dfilter, 0)
 
     def test_membership_7_string(self, checkDFilterCount):
@@ -86,7 +84,7 @@ class case_membership(unittest.TestCase):
 
     def test_membership_11_bad_rhs_string(self, checkDFilterFail):
         dfilter = 'frame.number in {1, "foo"}'
-        error = '"foo" cannot be converted to Unsigned integer, 4 bytes.'
+        error = 'Unsigned integer (32 bits) cannot be converted from a string'
         checkDFilterFail(dfilter, error)
 
     def test_membership_12_value_string(self, checkDFilterCount):

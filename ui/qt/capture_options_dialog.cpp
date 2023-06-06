@@ -17,7 +17,7 @@
 #include "compiled_filter_output.h"
 #include "manage_interfaces_dialog.h"
 
-#include "wireshark_application.h"
+#include "main_application.h"
 
 #include "extcap.h"
 
@@ -161,7 +161,7 @@ public:
     }
 
     void setApplicable(int column, bool applicable = false) {
-        QPalette palette = wsApp->palette();
+        QPalette palette = mainApp->palette();
 
         if (applicable) {
             setText(column, QString());
@@ -181,7 +181,7 @@ CaptureOptionsDialog::CaptureOptionsDialog(QWidget *parent) :
 {
     ui->setupUi(this);
     loadGeometry();
-    setWindowTitle(wsApp->windowTitleString(tr("Capture Options")));
+    setWindowTitle(mainApp->windowTitleString(tr("Capture Options")));
 
     stat_timer_ = NULL;
     stat_cache_ = NULL;
@@ -230,13 +230,20 @@ CaptureOptionsDialog::CaptureOptionsDialog(QWidget *parent) :
     connect(&interface_item_delegate_, SIGNAL(filterChanged(QString)),
             this, SIGNAL(captureFilterTextEdited(QString)));
     connect(this, SIGNAL(ifsChanged()), this, SLOT(refreshInterfaceList()));
-    connect(wsApp, SIGNAL(localInterfaceListChanged()), this, SLOT(updateLocalInterfaces()));
+    connect(mainApp, SIGNAL(localInterfaceListChanged()), this, SLOT(updateLocalInterfaces()));
     connect(ui->browseButton, SIGNAL(clicked()), this, SLOT(browseButtonClicked()));
     connect(ui->interfaceTree, SIGNAL(itemClicked(QTreeWidgetItem*,int)), this, SLOT(itemClicked(QTreeWidgetItem*,int)));
-    connect(ui->interfaceTree, SIGNAL(itemDoubleClicked(QTreeWidgetItem*,int)), this, SLOT(itemDoubleClicked(QTreeWidgetItem*)));
+    connect(ui->interfaceTree, SIGNAL(itemDoubleClicked(QTreeWidgetItem*,int)), this, SLOT(itemDoubleClicked(QTreeWidgetItem*,int)));
     connect(ui->tempDirBrowseButton, SIGNAL(clicked()), this, SLOT(tempDirBrowseButtonClicked()));
 
+    ui->tabWidget->setCurrentIndex(0);
+
     updateWidgets();
+}
+
+CaptureOptionsDialog::~CaptureOptionsDialog()
+{
+    delete ui;
 }
 
 /* Update global device selections based on the TreeWidget selection. */
@@ -338,16 +345,6 @@ void CaptureOptionsDialog::updateWidgets()
 
     ui->compileBPF->setEnabled(can_capture);
     ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(can_capture);
-}
-
-CaptureOptionsDialog::~CaptureOptionsDialog()
-{
-    delete ui;
-}
-
-void CaptureOptionsDialog::setTab(int idx)
-{
-    ui->tabWidget->setCurrentIndex(idx);
 }
 
 void CaptureOptionsDialog::on_capturePromModeCheckBox_toggled(bool checked)
@@ -507,7 +504,7 @@ void CaptureOptionsDialog::itemClicked(QTreeWidgetItem *item, int column)
         if (device->if_info.type == IF_EXTCAP) {
             /* this checks if configuration is required and not yet provided or saved via prefs */
             QString device_name = ti->data(col_extcap_, Qt::UserRole).value<QString>();
-            if (extcap_has_configuration((const char *)(device_name.toStdString().c_str()), FALSE))
+            if (extcap_has_configuration((const char *)(device_name.toStdString().c_str())))
             {
                 emit showExtcapOptions(device_name, false);
                 return;
@@ -521,29 +518,41 @@ void CaptureOptionsDialog::itemClicked(QTreeWidgetItem *item, int column)
 #endif /* HAVE_LIBPCAP */
 }
 
-void CaptureOptionsDialog::itemDoubleClicked(QTreeWidgetItem *item)
+void CaptureOptionsDialog::itemDoubleClicked(QTreeWidgetItem *item, int column)
 {
     InterfaceTreeWidgetItem *ti = dynamic_cast<InterfaceTreeWidgetItem *>(item);
     if (!ti) return;
 
-#ifdef HAVE_LIBPCAP
-    interface_t *device;
-    QString interface_name = ti->text(col_interface_);
-    device = find_device_by_if_name(interface_name);
-    if (!device) return;
+    switch(column) {
 
-    if (device->if_info.type == IF_EXTCAP) {
-        /* this checks if configuration is required and not yet provided or saved via prefs */
-        QString device_name = ti->data(col_extcap_, Qt::UserRole).value<QString>();
-        if (extcap_has_configuration((const char *)(device_name.toStdString().c_str()), TRUE))
-        {
-            emit showExtcapOptions(device_name, true);
-            return;
+    // Double click starts capture just on columns which are not editable
+    case col_interface_:
+    case col_traffic_:
+    {
+#ifdef HAVE_LIBPCAP
+        interface_t *device;
+        QString interface_name = ti->text(col_interface_);
+        device = find_device_by_if_name(interface_name);
+        if (!device) return;
+
+        if (device->if_info.type == IF_EXTCAP) {
+            /* this checks if configuration is required and not yet provided or saved via prefs */
+            QString device_name = ti->data(col_extcap_, Qt::UserRole).value<QString>();
+            if (extcap_requires_configuration((const char *)(device_name.toStdString().c_str())))
+            {
+                emit showExtcapOptions(device_name, true);
+                return;
+            }
         }
-    }
 #endif /* HAVE_LIBPCAP */
-    emit startCapture();
-    close();
+        emit startCapture();
+        close();
+        break;
+    }
+
+    default:
+        break;
+    }
 }
 
 void CaptureOptionsDialog::on_gbStopCaptureAuto_toggled(bool checked)
@@ -610,7 +619,7 @@ void CaptureOptionsDialog::on_buttonBox_accepted()
             if (device && device->if_info.type == IF_EXTCAP) {
                 /* this checks if configuration is required and not yet provided or saved via prefs */
                 QString device_name = ti->data(col_extcap_, Qt::UserRole).value<QString>();
-                if (extcap_has_configuration((const char *)(device_name.toStdString().c_str()), TRUE))
+                if (extcap_requires_configuration((const char *)(device_name.toStdString().c_str())))
                 {
                     emit showExtcapOptions(device_name, true);
                     return;
@@ -635,7 +644,7 @@ void CaptureOptionsDialog::on_buttonBox_rejected()
 void CaptureOptionsDialog::on_buttonBox_helpRequested()
 {
     // Probably the wrong URL.
-    wsApp->helpTopicAction(HELP_CAPTURE_OPTIONS_DIALOG);
+    mainApp->helpTopicAction(HELP_CAPTURE_OPTIONS_DIALOG);
 }
 
 void CaptureOptionsDialog::updateInterfaces()
@@ -793,7 +802,8 @@ void CaptureOptionsDialog::updateInterfaces()
 
             ti->setText(col_interface_, device->display_name);
             ti->setData(col_interface_, Qt::UserRole, QString(device->name));
-            ti->setData(col_traffic_, Qt::UserRole, QVariant::fromValue(ti->points));
+            if (device->if_info.type != IF_EXTCAP)
+                ti->setData(col_traffic_, Qt::UserRole, QVariant::fromValue(ti->points));
 
             if (device->no_addresses > 0) {
                 QString addr_str = tr("%1: %2").arg(device->no_addresses > 1 ? tr("Addresses") : tr("Address")).arg(device->addresses);
@@ -1392,7 +1402,7 @@ QWidget* InterfaceTreeDelegate::createEditor(QWidget *parent, const QStyleOption
             QComboBox *cb = new QComboBox(parent);
             cb->addItems(valid_link_types);
 
-            connect(cb, SIGNAL(currentIndexChanged(QString)), this, SLOT(linkTypeChanged(QString)));
+            connect(cb, &QComboBox::currentTextChanged, this, &InterfaceTreeDelegate::linkTypeChanged);
             w = (QWidget*) cb;
             break;
         }
@@ -1447,7 +1457,7 @@ bool InterfaceTreeDelegate::eventFilter(QObject *object, QEvent *event)
     return false;
 }
 
-void InterfaceTreeDelegate::linkTypeChanged(QString selected_link_type)
+void InterfaceTreeDelegate::linkTypeChanged(const QString selected_link_type)
 {
     GList *list;
     link_row *temp;

@@ -1464,13 +1464,13 @@ dissect_uma_IE(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, int offset)
 		set_address(&dst_addr, AT_IPv4, 4, &GPRS_user_data_ipv4_address);
 
 		conversation = find_conversation(pinfo->num, &dst_addr,
-			&null_addr, ENDPOINT_UDP, GPRS_user_data_transport_UDP_port,
+			&null_addr, CONVERSATION_UDP, GPRS_user_data_transport_UDP_port,
 			0, NO_ADDR_B|NO_PORT_B);
 
 		if (conversation == NULL) {
 			/* It's not part of any conversation - create a new one. */
 			conversation = conversation_new(pinfo->num, &dst_addr,
-			    &null_addr, ENDPOINT_UDP, GPRS_user_data_transport_UDP_port ,
+			    &null_addr, CONVERSATION_UDP, GPRS_user_data_transport_UDP_port ,
 			    0, NO_ADDR2|NO_PORT2);
 
 		/* Set dissector */
@@ -1496,13 +1496,13 @@ dissect_uma_IE(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, int offset)
 		set_address(&dst_addr, AT_IPv4, 4, &unc_ipv4_address);
 
 		conversation = find_conversation(pinfo->num, &dst_addr,
-			&null_addr, ENDPOINT_TCP, UNC_tcp_port,
+			&null_addr, CONVERSATION_TCP, UNC_tcp_port,
 			0, NO_ADDR_B|NO_PORT_B);
 
 		if (conversation == NULL) {
 			/* It's not part of any conversation - create a new one. */
 			conversation = conversation_new(pinfo->num, &dst_addr,
-			    &null_addr, ENDPOINT_TCP, UNC_tcp_port,
+			    &null_addr, CONVERSATION_TCP, UNC_tcp_port,
 			    0, NO_ADDR2|NO_PORT2);
 			/* Set dissector */
 			conversation_set_dissector(conversation, uma_tcp_handle);
@@ -1986,14 +1986,14 @@ proto_register_uma(void)
 			NULL, HFILL }
 		},
 		{ &hf_uma_urr_TU3906_timer,
-			{ "TU3907 Timer value(seconds)","uma.urr.tu3906",
+			{ "TU3906 Timer value(seconds)","uma.urr.tu3906",
 			FT_UINT16,BASE_DEC,  NULL, 0x0,
-			"TU3906 Timer value(seconds)", HFILL }
+			NULL, HFILL }
 		},
 		{ &hf_uma_urr_TU3910_timer,
-			{ "TU3907 Timer value(seconds)","uma.urr.tu3910",
+			{ "TU3910 Timer value(seconds)","uma.urr.tu3910",
 			FT_UINT16,BASE_DEC,  NULL, 0x0,
-			"TU3910 Timer value(seconds)", HFILL }
+			NULL, HFILL }
 		},
 		{ &hf_uma_urr_TU3902_timer,
 			{ "TU3902 Timer value(seconds)","uma.urr.tu3902",

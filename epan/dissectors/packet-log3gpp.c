@@ -557,7 +557,7 @@ dissect_log3gpp(tvbuff_t* tvb, packet_info* pinfo, proto_tree* tree, void* data 
     col_clear(pinfo->cinfo, COL_INFO);
 
     /* Create root (protocol) tree. */
-    ti = proto_tree_add_item(tree, proto_log3gpp, tvb, offset, -1, FALSE);
+    ti = proto_tree_add_item(tree, proto_log3gpp, tvb, offset, -1, ENC_NA);
     prot3gpp_tree = proto_item_add_subtree(ti, ett_log3gpp);
 
     /*********************************************************************/
@@ -679,7 +679,7 @@ dissect_log3gpp(tvbuff_t* tvb, packet_info* pinfo, proto_tree* tree, void* data 
         proto_item* ti_local = proto_tree_add_uint(prot3gpp_tree,
             hf_log3gpp_dissected_length,
             tvb, 0, 0, tvb_reported_length(tvb) - offset);
-        PROTO_ITEM_SET_GENERATED(ti_local);
+        proto_item_set_generated(ti_local);
     }
     return tvb_reported_length(tvb);
 }

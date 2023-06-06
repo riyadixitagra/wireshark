@@ -18,14 +18,22 @@
 extern "C" {
 #endif /* __cplusplus */
 
-/* Epan Scope */
-
+/**
+ * @brief Fetch the current epan scope.
+ *
+ * Allocated memory is freed when wmem_leave_epan_scope() is called, which is normally at program exit.
+ */
 WS_DLL_PUBLIC
 wmem_allocator_t *
 wmem_epan_scope(void);
 
-/* Packet Scope */
-
+/**
+ * @brief Fetch the current packet scope.
+ *
+ * Allocated memory is freed when wmem_leave_packet_scope() is called, which is normally at the end of packet dissection.
+ * N.B. Please use pinfo->pool in new code when possible. See
+ * <https://www.wireshark.org/lists/wireshark-dev/202107/msg00052.html>
+ */
 WS_DLL_PUBLIC
 wmem_allocator_t *
 wmem_packet_scope(void);
@@ -38,8 +46,11 @@ WS_DLL_LOCAL
 void
 wmem_leave_packet_scope(void);
 
-/* File Scope */
-
+/**
+ * @brief Fetch the current file scope.
+ *
+ * Allocated memory is freed when wmem_leave_file_scope() is called, which is normally when a capture file is closed.
+ */
 WS_DLL_PUBLIC
 wmem_allocator_t *
 wmem_file_scope(void);

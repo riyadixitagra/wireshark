@@ -25,7 +25,10 @@ set( ASN_FILE_LIST
     E2AP-IEs.asn
     E2AP-PDU-Contents.asn
     E2AP-PDU-Descriptions.asn
-    e2sm-kpm-v1.asn
+    e2sm-v2.01.asn
+    e2sm-ric-v1.02.asn
+    e2sm-kpm-v2.02.asn
+    e2sm-ni-v1.00.asn
 )
 
 set( EXTRA_DIST

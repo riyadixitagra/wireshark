@@ -21,6 +21,7 @@
 #include <epan/conversation.h>
 #include <epan/wmem_scopes.h>
 #include "packet-http.h"
+#include "packet-media-type.h"
 
 void proto_register_ipp(void);
 void proto_reg_handoff_ipp(void);
@@ -394,7 +395,7 @@ dissect_ipp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void* data)
     proto_tree  *ipp_tree;
     proto_item  *ti;
     int         offset     = 0;
-    http_message_info_t *message_info = (http_message_info_t *)data;
+    media_content_info_t *content_info = (media_content_info_t *)data;
     gboolean    is_request;
     guint16     operation_status;
     const gchar *status_type;
@@ -403,14 +404,14 @@ dissect_ipp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void* data)
     ipp_conv_info_t *ipp_info;
     ipp_transaction_t *ipp_trans;
 
-    if (message_info != NULL) {
-        switch (message_info->type) {
+    if (content_info != NULL) {
+        switch (content_info->type) {
 
-        case HTTP_REQUEST:
+        case MEDIA_CONTAINER_HTTP_REQUEST:
             is_request = TRUE;
             break;
 
-        case HTTP_RESPONSE:
+        case MEDIA_CONTAINER_HTTP_RESPONSE:
             is_request = FALSE;
             break;
 
@@ -744,8 +745,8 @@ parse_attributes(tvbuff_t *tvb, int offset, proto_tree *tree)
                          */
                         attr_tree = add_octetstring_tree(as_tree, tvb, offset, name_length, name, value_length, tag);
                     }
-                    if (tag == TAG_ENDCOLLECTION && attr_tree &&  attr_tree->parent)
-                        attr_tree = attr_tree->parent;
+                    if (tag == TAG_ENDCOLLECTION)
+                        attr_tree = proto_tree_get_parent_tree(attr_tree);
                     else
                         attr_tree = add_octetstring_value(tag_desc, attr_tree, tvb, offset, name_length, name, value_length, tag);
                     break;
@@ -786,7 +787,7 @@ add_integer_tree(proto_tree *tree, tvbuff_t *tvb, int offset,
                  int name_length, const gchar *name, int value_length, guint8 tag)
 {
     int count = 0;
-    const char *type = val_to_str_const(tag, tag_vals, "unknown-%02x");
+    const char *type = val_to_str(tag, tag_vals, "unknown-%02x");
     gchar *value = NULL;
     int valoffset = offset;
 
@@ -873,28 +874,28 @@ add_integer_tree(proto_tree *tree, tvbuff_t *tvb, int offset,
                     temp = "???";
                 } else {
                     if (!strncmp(name, "printer-state", 13)) {
-                        temp = val_to_str_const(tvb_get_ntohl(tvb, valoffset), printer_state_vals, "unknown-%d");
+                        temp = val_to_str(tvb_get_ntohl(tvb, valoffset), printer_state_vals, "unknown-%d");
                     }
                     else if (!strncmp(name, "job-state", 9)) {
-                        temp = val_to_str_const(tvb_get_ntohl(tvb, valoffset), job_state_vals, "unknown-%d");
+                        temp = val_to_str(tvb_get_ntohl(tvb, valoffset), job_state_vals, "unknown-%d");
                     }
                     else if (!strncmp(name, "document-state", 14)) {
-                        temp = val_to_str_const(tvb_get_ntohl(tvb, valoffset), document_state_vals, "unknown-%d");
+                        temp = val_to_str(tvb_get_ntohl(tvb, valoffset), document_state_vals, "unknown-%d");
                     }
                     else if (!strncmp(name, "operations-supported", 20)) {
-                        temp = val_to_str_const(tvb_get_ntohl(tvb, valoffset), operation_vals, "unknown-%04x");
+                        temp = val_to_str(tvb_get_ntohl(tvb, valoffset), operation_vals, "unknown-%04x");
                     }
                     else if (!strncmp(name, "finishings", 10)) {
-                        temp = val_to_str_const(tvb_get_ntohl(tvb, valoffset), finishings_vals, "unknown-%d");
+                        temp = val_to_str(tvb_get_ntohl(tvb, valoffset), finishings_vals, "unknown-%d");
                     }
                     else if (!strncmp(name, "orientation-requested", 21) || !strncmp(name, "media-feed-orientation", 22)) {
-                        temp = val_to_str_const(tvb_get_ntohl(tvb, valoffset), orientation_vals, "unknown-%d");
+                        temp = val_to_str(tvb_get_ntohl(tvb, valoffset), orientation_vals, "unknown-%d");
                     }
                     else if (!strncmp(name, "print-quality", 13)) {
-                        temp = val_to_str_const(tvb_get_ntohl(tvb, valoffset), quality_vals, "unknown-%d");
+                        temp = val_to_str(tvb_get_ntohl(tvb, valoffset), quality_vals, "unknown-%d");
                     }
                     else if (!strncmp(name, "transmission-status", 19)) {
-                        temp = val_to_str_const(tvb_get_ntohl(tvb, valoffset), transmission_status_vals, "unknown-%d");
+                        temp = val_to_str(tvb_get_ntohl(tvb, valoffset), transmission_status_vals, "unknown-%d");
                     }
                     else {
                         temp = wmem_strdup_printf(wmem_packet_scope(), "%d", tvb_get_ntohl(tvb, offset + 1 + 2 + name_length + 2));
@@ -1006,7 +1007,7 @@ static proto_tree *
 add_octetstring_tree(proto_tree *tree, tvbuff_t *tvb, int offset, int name_length, const gchar *name, int value_length, guint8 tag)
 {
     int count = 0;
-    const char *type = val_to_str_const(tag, tag_vals, "unknown-%02x");
+    const char *type = val_to_str(tag, tag_vals, "unknown-%02x");
     gchar *value = NULL;
     int valoffset = offset;
 
@@ -1054,6 +1055,10 @@ add_octetstring_tree(proto_tree *tree, tvbuff_t *tvb, int offset, int name_lengt
                 guint8 seconds = tvb_get_guint8(tvb, valoffset + 6);
                 guint8 decisecs = tvb_get_guint8(tvb, valoffset + 7);
                 guint8 utcsign = tvb_get_guint8(tvb, valoffset + 8);
+                if (utcsign != '+' && utcsign != '-') {
+                    // XXX Add expert info
+                    utcsign = '?';
+                }
                 guint8 utchours = tvb_get_guint8(tvb, valoffset + 9);
                 guint8 utcminutes = tvb_get_guint8(tvb, valoffset + 10);
 
@@ -1286,6 +1291,10 @@ add_octetstring_value(const gchar *tag_desc, proto_tree *tree, tvbuff_t *tvb,
                 guint8 seconds = tvb_get_guint8(tvb, valoffset + 6);
                 guint8 decisecs = tvb_get_guint8(tvb, valoffset + 7);
                 guint8 utcsign = tvb_get_guint8(tvb, valoffset + 8);
+                if (utcsign != '+' && utcsign != '-') {
+                    // XXX Add expert info
+                    utcsign = '?';
+                }
                 guint8 utchours = tvb_get_guint8(tvb, valoffset + 9);
                 guint8 utcminutes = tvb_get_guint8(tvb, valoffset + 10);
 
@@ -1362,7 +1371,7 @@ add_charstring_tree(proto_tree *tree, tvbuff_t *tvb, int offset,
                     guint8 tag, int name_length, const gchar *name, int value_length)
 {
     int count = 0, valoffset = offset;
-    const char *type = val_to_str_const(tag, tag_vals, "unknown-%02x");
+    const char *type = val_to_str(tag, tag_vals, "unknown-%02x");
     gchar *value = NULL;
 
     do {
@@ -1419,6 +1428,7 @@ static void
 add_charstring_value(const gchar *tag_desc, proto_tree *tree, tvbuff_t *tvb,
                      int offset, int name_length, const gchar *name _U_, int value_length, guint8 tag)
 {
+    proto_item *ti;
     int valoffset = offset + 1 + 2 + name_length + 2;
 
     if (name_length > 0)
@@ -1426,8 +1436,14 @@ add_charstring_value(const gchar *tag_desc, proto_tree *tree, tvbuff_t *tvb,
 
     if (tag == TAG_MEMBERATTRNAME)
         proto_tree_add_item(tree, hf_ipp_memberattrname, tvb, valoffset, value_length, ENC_ASCII);
-    else
-        proto_tree_add_string_format(tree, hf_ipp_charstring_value, tvb, valoffset, value_length, NULL, "%s value: '%s'", tag_desc, tvb_format_text(wmem_packet_scope(), tvb, valoffset, value_length));
+    else {
+        ti = proto_tree_add_item(tree, hf_ipp_charstring_value, tvb, valoffset, value_length, ENC_ASCII);
+        if (strcmp(tag_desc, "") == 0) {
+            proto_item_prepend_text(ti, "string ");
+        } else {
+            proto_item_prepend_text(ti, "%s ", tag_desc);
+        }
+    }
 }
 
 static int
@@ -1437,6 +1453,11 @@ ipp_fmt_collection(tvbuff_t *tvb, int valoffset, char *buffer, int bufsize)
     guint8 tag;
     int name_length, value_length;
     int overflow = 0;
+
+    /* Should be larger to be meaningful, but at least prevent illegal
+     * memory accesses.
+     */
+    DISSECTOR_ASSERT_CMPINT(bufsize, >=, 2);
 
     *bufptr++ = '{';
     buffer ++;
@@ -1493,6 +1514,10 @@ ipp_fmt_collection(tvbuff_t *tvb, int valoffset, char *buffer, int bufsize)
       *bufptr++ = '}';
 
     *bufptr = '\0';
+    if (bufptr == bufend) {
+        /* buffer was already advanced past the initial '{' */
+        ws_utf8_truncate(buffer, bufsize - 2);
+    }
 
     return (valoffset);
 }
@@ -1527,7 +1552,7 @@ proto_register_ipp(void)
       { &hf_ipp_enum_value_print_quality, { "print-quality", "ipp.enum_value", FT_INT32, BASE_DEC, VALS(quality_vals), 0x0, NULL, HFILL }},
       { &hf_ipp_enum_value_transmission_status, { "transmission-status", "ipp.enum_value", FT_INT32, BASE_DEC, VALS(transmission_status_vals), 0x0, NULL, HFILL }},
       { &hf_ipp_outofband_value, { "out-of-band value", "ipp.outofband_value", FT_UINT8, BASE_HEX, VALS(tag_vals), 0x0, NULL, HFILL }},
-      { &hf_ipp_charstring_value, { "string value", "ipp.charstring_value", FT_STRING, BASE_NONE, NULL, 0x0, NULL, HFILL }},
+      { &hf_ipp_charstring_value, { "value", "ipp.charstring_value", FT_STRING, BASE_NONE, NULL, 0x0, NULL, HFILL }},
       { &hf_ipp_octetstring_value, { "octetString value", "ipp.octetstring_value", FT_STRING, BASE_NONE, NULL, 0x0, NULL, HFILL }},
       { &hf_ipp_datetime_value, { "dateTime value", "ipp.datetime_value", FT_BYTES, BASE_NONE, NULL, 0x0, NULL, HFILL }},
       { &hf_ipp_resolution_value, { "resolution value", "ipp.resolution_value", FT_BYTES, BASE_NONE, NULL, 0x0, NULL, HFILL }},
